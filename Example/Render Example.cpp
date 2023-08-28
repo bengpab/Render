@@ -5,6 +5,10 @@
 
 #include "../Render/Render.h"
 
+#include "imgui/imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_render.h"
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int main()
@@ -20,10 +24,23 @@ int main()
 		return 1;
 	}
 
+	{
+		std::vector<SamplerDesc> samplers(1);
+		samplers[0].AddressModeUVW(SamplerAddressMode::Wrap).FilterModeMinMagMip(SamplerFilterMode::Point);
+
+		InitSamplers(samplers.data(), samplers.size());
+	}	
+
 	RenderViewPtr view = CreateRenderViewPtr((intptr_t)hwnd);
 
 	::ShowWindow(hwnd, SW_SHOWDEFAULT);
 	::UpdateWindow(hwnd);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGui_ImplWin32_Init(hwnd);
+	ImGui_ImplRender_Init();
 
 	// Main loop
 	bool bQuit = false;
@@ -38,6 +55,11 @@ int main()
 			continue;
 		}
 
+		ImGui_ImplRender_NewFrame();
+
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
 		Render_NewFrame();
 		CommandListPtr cl = CommandList::Create();
 
@@ -46,9 +68,19 @@ int main()
 		RenderTargetView_t backBufferRtv = view->GetCurrentBackBufferRTV();
 		cl->SetRenderTargets(&backBufferRtv, 1, DepthStencilView_t::INVALID);
 
+		ImGui::ShowDemoWindow();
+
+		ImGui::Render();
+
+		ImGui_ImplRender_RenderDrawData(ImGui::GetDrawData(), cl.get());
+
 		CommandList::Execute(cl);
 		view->Present(true);
 	}
+
+	ImGui_ImplRender_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	Render_ShutDown();
 
@@ -57,11 +89,11 @@ int main()
 }
 
 // Win32 message handler
-//extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	//if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-	//	return true;
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
 
 	RenderView* rv = GetRenderViewForHwnd((intptr_t)hWnd);
 

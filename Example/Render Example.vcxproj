@@ -143,6 +143,12 @@
     <ClCompile Include="..\Render\PipelineState.cpp" />
     <ClCompile Include="..\Render\Shaders.cpp" />
     <ClCompile Include="..\Render\Textures.cpp" />
+    <ClCompile Include="imgui\imgui.cpp" />
+    <ClCompile Include="imgui\imgui_demo.cpp" />
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="imgui_impl_render.cpp" />
+    <ClCompile Include="imgui_impl_win32.cpp" />
     <ClCompile Include="Render Example.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +170,14 @@
     <ClInclude Include="..\Render\Shaders.h" />
     <ClInclude Include="..\Render\Textures.h" />
     <ClInclude Include="..\Render\View.h" />
+    <ClInclude Include="imgui\imconfig.h" />
+    <ClInclude Include="imgui\imgui.h" />
+    <ClInclude Include="imgui\imgui_internal.h" />
+    <ClInclude Include="imgui\imstb_rectpack.h" />
+    <ClInclude Include="imgui\imstb_textedit.h" />
+    <ClInclude Include="imgui\imstb_truetype.h" />
+    <ClInclude Include="imgui_impl_render.h" />
+    <ClInclude Include="imgui_impl_win32.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
