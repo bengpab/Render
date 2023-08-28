@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+*.vsidx
+*.lock
+Example/.vs/Render Example/v17/.suo
+*.opendb
+*.db-wal
+*.db-shm
+*.db
+*.ipch
+*.user
+*.ilk
+*.log
+*.pdb
+*.tlog
+*.idb
