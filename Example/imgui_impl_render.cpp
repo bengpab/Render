@@ -4,8 +4,6 @@
 
 #include <memory>
 
-#if USE_RHI
-
 static VertexShader_t g_VS;
 static PixelShader_t g_PS;
 static Texture_t g_FontTexture;
@@ -314,4 +312,3 @@ static void ImGui_ImplRender_ShutdownPlatformInterface()
 {
     ImGui::DestroyPlatformWindows();
 }
-#endif

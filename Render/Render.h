@@ -1,10 +1,7 @@
 #pragma once
 
-// Temporary define so I can test the RHI as I implement it, when fully moved over this will go away.
-// This define acts as a kind of TODO until then.
-#define USE_RHI 1
-
-#if USE_RHI
+#define RENDER_MAJOR_VERSION 1
+#define RENDER_MINOR_VERSION 0
 
 #include "Binding.h"
 #include "Buffers.h"
@@ -24,5 +21,3 @@ void Render_ShutDown();
 
 void Render_PushDebugWarningDisable(RenderDebugWarnings warning);
 void Render_PopDebugWarningDisable();
-
-#endif
