@@ -44,3 +44,4 @@ Example/.vs/Render Example/v17/.suo
 *.pdb
 *.tlog
 *.idb
+Example/imgui.ini
