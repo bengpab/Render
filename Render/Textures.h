@@ -77,6 +77,8 @@ FWD_RENDER_TYPE(UnorderedAccessView_t);
 FWD_RENDER_TYPE(RenderTargetView_t);
 FWD_RENDER_TYPE(DepthStencilView_t);
 
+bool Textures_CreateViewsForResourceFlags(Texture_t tex, RenderResourceFlags flags);
+
 ShaderResourceView_t	GetTextureSRV(Texture_t tex);
 UnorderedAccessView_t	GetTextureUAV(Texture_t tex);
 RenderTargetView_t		GetTextureRTV(Texture_t tex);
@@ -87,6 +89,8 @@ void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h);
 size_t Textures_BitsPerPixel(RenderFormat format);
 void Textures_CalculatePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch);
 void Textures_GetSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes, size_t* outRowBytes = nullptr, size_t* outNumRows = nullptr);
+
+size_t Texture_GetTextureCount();
 
 enum class TextureResourceAccessMethod : uint32_t
 {
