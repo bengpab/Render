@@ -14,47 +14,51 @@ enum class ViewResourceType : uint8_t
 
 struct TextureViewData
 {
-	Texture_t handle;
-	RenderFormat format;
-	TextureViewData(Texture_t t, RenderFormat f)
-		: handle(t)
-		, format(f)
+	Texture_t Handle;
+	RenderFormat Format;
+	uint32_t MipLevels;
+	uint32_t DepthOrArraySize;
+	TextureViewData(Texture_t inTexture, RenderFormat inFormat, uint32_t inDepthOrArraySize = 1, uint32_t mipLevels = uint32_t(-1))
+		: Handle(inTexture)
+		, Format(inFormat)
+		, MipLevels(mipLevels)
+		, DepthOrArraySize(inDepthOrArraySize)
 	{}
 };
 
 struct BufferViewData
 {
-	StructuredBuffer_t handle;
-	uint32_t firstElem;
-	uint32_t numElems;
-	BufferViewData(StructuredBuffer_t b, uint32_t fe, uint32_t ne)
-		: handle(b)
-		, firstElem(fe)
-		, numElems(ne)
+	StructuredBuffer_t Handle;
+	uint32_t FirstElem;
+	uint32_t NumElems;
+	BufferViewData(StructuredBuffer_t inBuffer, uint32_t inFirstElem, uint32_t inNumElems)
+		: Handle(inBuffer)
+		, FirstElem(inFirstElem)
+		, NumElems(inNumElems)
 	{}
 };
 
 struct ViewData
 {
-	ViewResourceType type = ViewResourceType::Unknown;
+	ViewResourceType Type = ViewResourceType::Unknown;
 	union
 	{
-		TextureViewData texture;
-		BufferViewData buffer;
+		TextureViewData Texture;
+		BufferViewData Buffer;
 	};
 
 	ViewData()
-		: type(ViewResourceType::Unknown)
+		: Type(ViewResourceType::Unknown)
 	{}
 
-	ViewData(Texture_t tex, RenderFormat format)
-		: texture(tex, format)
-		, type(ViewResourceType::Texture)
+	ViewData(Texture_t tex, RenderFormat format, uint32_t depthOrArraySize)
+		: Texture(tex, format, depthOrArraySize)
+		, Type(ViewResourceType::Texture)
 	{}
 
 	ViewData(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
-		: buffer(buf, firstElem, numElems)
-		, type(ViewResourceType::StructuredBuffer)
+		: Buffer(buf, firstElem, numElems)
+		, Type(ViewResourceType::StructuredBuffer)
 	{}
 };
 
@@ -63,11 +67,11 @@ IDArray<UnorderedAccessView_t, ViewData> g_UAVs;
 IDArray<RenderTargetView_t, ViewData> g_RTVs;
 IDArray<DepthStencilView_t, ViewData> g_DSVs;
 
-ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t arraySize)
+ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize)
 {
-	ShaderResourceView_t srv = g_SRVs.Create(ViewData(tex, format));
+	ShaderResourceView_t srv = g_SRVs.Create(ViewData(tex, format, depthOrArraySize));
 
-	if (!CreateTextureSRVImpl(srv, tex, format, dim, mipLevels, arraySize))
+	if (!CreateTextureSRVImpl(srv, tex, format, dim, mipLevels, depthOrArraySize))
 	{
 		g_SRVs.Release(srv);
 		return ShaderResourceView_t::INVALID;
@@ -76,11 +80,11 @@ ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, Textur
 	return srv;
 }
 
-UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, uint32_t arraySize)
+UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(tex, format));
+	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(tex, format, depthOrArraySize));
 
-	if (!CreateTextureUAVImpl(uav, tex, format, arraySize))
+	if (!CreateTextureUAVImpl(uav, tex, format, dim, depthOrArraySize))
 	{
 		g_UAVs.Release(uav);
 		return UnorderedAccessView_t::INVALID;
@@ -89,11 +93,11 @@ UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, uint3
 	return uav;
 }
 
-RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, uint32_t arraySize)
+RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	RenderTargetView_t rtv = g_RTVs.Create(ViewData(tex, format));
+	RenderTargetView_t rtv = g_RTVs.Create(ViewData(tex, format, depthOrArraySize));
 
-	if (!CreateTextureRTVImpl(rtv, tex, format, arraySize))
+	if (!CreateTextureRTVImpl(rtv, tex, format, dim, depthOrArraySize))
 	{
 		g_RTVs.Release(rtv);
 		return RenderTargetView_t::INVALID;
@@ -102,11 +106,11 @@ RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, uint32_t
 	return rtv;
 }
 
-DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, uint32_t arraySize)
+DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	DepthStencilView_t dsv = g_DSVs.Create(ViewData(tex, format));
+	DepthStencilView_t dsv = g_DSVs.Create(ViewData(tex, format, depthOrArraySize));
 
-	if (!CreateTextureDSVImpl(dsv, tex, format, arraySize))
+	if (!CreateTextureDSVImpl(dsv, tex, format, dim, depthOrArraySize))
 	{
 		g_DSVs.Release(dsv);
 		return DepthStencilView_t::INVALID;
@@ -141,25 +145,102 @@ UnorderedAccessView_t CreateStructuredBufferUAV(StructuredBuffer_t buf, uint32_t
 	return uav;
 }
 
-static RenderFormat GetViewDataFormat(ViewData* data)
+static RenderFormat GetViewDataFormat(const ViewData* const data)
 {
-	if (data && data->type == ViewResourceType::Texture)
-		return data->texture.format;
+	if (data && data->Type == ViewResourceType::Texture)
+		return data->Texture.Format;
 
 	return RenderFormat::UNKNOWN;
 }
 
-RenderTargetView_t AllocTextureRTV(RenderFormat format, uint32_t arraySize)
+RenderTargetView_t AllocTextureRTV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	RenderTargetView_t rtv = g_RTVs.Create(ViewData(Texture_t::INVALID, format));
+	RenderTargetView_t rtv = g_RTVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
 
-	if (!CreateTextureRTVImpl(rtv, Texture_t::INVALID, format, arraySize))
+	if (!CreateTextureRTVImpl(rtv, Texture_t::INVALID, format, dim, depthOrArraySize))
 	{
 		g_RTVs.Release(rtv);
 		return RenderTargetView_t::INVALID;
 	}
 
 	return rtv;
+}
+
+ShaderResourceView_t AllocSRV(RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize)
+{
+	ShaderResourceView_t srv = g_SRVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+
+	if (!CreateTextureSRVImpl(srv, Texture_t::INVALID, format, dim, depthOrArraySize, mipLevels))
+	{
+		g_SRVs.Release(srv);
+		return ShaderResourceView_t::INVALID;
+	}
+
+	return srv;
+}
+
+UnorderedAccessView_t AllocUAV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
+{
+	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+
+	if (!CreateTextureUAVImpl(uav, Texture_t::INVALID, format, dim, depthOrArraySize))
+	{
+		g_UAVs.Release(uav);
+		return UnorderedAccessView_t::INVALID;
+	}
+
+	return uav;
+}
+
+RenderTargetView_t AllocRTV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
+{
+	RenderTargetView_t rtv = g_RTVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+
+	if (!CreateTextureRTVImpl(rtv, Texture_t::INVALID, format, dim, depthOrArraySize))
+	{
+		g_RTVs.Release(rtv);
+		return RenderTargetView_t::INVALID;
+	}
+
+	return rtv;
+}
+
+DepthStencilView_t AllocDSV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
+{
+	DepthStencilView_t dsv = g_DSVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+
+	if (!CreateTextureDSVImpl(dsv, Texture_t::INVALID, format, dim, depthOrArraySize))
+	{
+		g_DSVs.Release(dsv);
+		return DepthStencilView_t::INVALID;
+	}
+
+	return dsv;
+}
+
+// TODO: Validate bind functions
+void BindSRV(ShaderResourceView_t srv, Texture_t texture)
+{
+	if(srv != ShaderResourceView_t::INVALID)
+		BindTextureSRVImpl(srv, texture);
+}
+
+void BindUAV(UnorderedAccessView_t uav, Texture_t texture)
+{	
+	if(uav != UnorderedAccessView_t::INVALID)
+		BindTextureUAVImpl(uav, texture);
+}
+
+void BindRTV(RenderTargetView_t rtv, Texture_t texture)
+{
+	if(rtv != RenderTargetView_t::INVALID)
+		BindTextureRTVImpl(rtv, texture);
+}
+
+void BindDSV(DepthStencilView_t dsv, Texture_t texture)
+{
+	if(dsv != DepthStencilView_t::INVALID)
+		BindTextureDSVImpl(dsv, texture);
 }
 
 RenderFormat GetSRVFormat(ShaderResourceView_t srv)
@@ -244,4 +325,24 @@ size_t Bindings_GetRenderTargetViewCount()
 size_t Bindings_GetDepthStencilViewCount()
 {
 	return g_DSVs.UsedSize();
+}
+
+uint32_t Binding_GetDescriptorIndex(ShaderResourceView_t srv)
+{
+	if (g_SRVs.Get(srv))
+	{
+		return Binding_GetDescriptorIndexImpl(srv);
+	}
+
+	return 0u;
+}
+
+uint32_t Binding_GetDescriptorIndex(UnorderedAccessView_t uav)
+{
+	if (g_UAVs.Get(uav))
+	{
+		return Binding_GetDescriptorIndexImpl(uav);
+	}
+
+	return 0u;
 }

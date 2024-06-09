@@ -1,13 +1,18 @@
 #include "../Render/Render.h"
-#include "imgui/imgui.h"
+
 #include "imgui_impl_render.h"
 
 #include <memory>
 
-static VertexShader_t g_VS;
-static PixelShader_t g_PS;
-static Texture_t g_FontTexture;
-static GraphicsPipelineState_t g_PSO;
+static RenderFormat g_TargetFormat;
+static std::string g_ShaderPath;
+
+static VertexShader_t g_VS = VertexShader_t::INVALID;
+static PixelShader_t g_PS = PixelShader_t::INVALID;
+static Texture_t g_FontTexture = Texture_t::INVALID;
+static ShaderResourceView_t g_FontSrv = ShaderResourceView_t::INVALID;
+static RootSignature_t g_RootSignature = RootSignature_t::INVALID;
+static GraphicsPipelineState_t g_PSO = GraphicsPipelineState_t::INVALID;
 static int g_VertexBufferSize = 5000;
 static int g_IndexBufferSize = 10000;
 
@@ -15,9 +20,11 @@ static int g_IndexBufferSize = 10000;
 static std::unique_ptr<ImDrawVert[]> g_VertexAlloc;
 static std::unique_ptr<ImDrawIdx[]> g_IndexAlloc;
 
-struct VERTEX_CONSTANT_BUFFER
+struct ImRenderFrameData
 {
-    float   mvp[4][4];
+    DynamicBuffer_t VertexBuffer = DynamicBuffer_t::INVALID;
+    DynamicBuffer_t IndexBuffer = DynamicBuffer_t::INVALID;
+    DynamicBuffer_t ViewBuffer = DynamicBuffer_t::INVALID;
 };
 
 // Forward Declarations
@@ -27,7 +34,7 @@ static void ImGui_ImplRender_ShutdownPlatformInterface();
 static void ImGui_ImplRender_SetupRenderState(ImDrawData* draw_data, CommandList* cl, DynamicBuffer_t vb, DynamicBuffer_t ib, DynamicBuffer_t cb)
 {
     // Setup viewport
-    Viewport vp;
+    Viewport vp{};
     ZeroMemory(&vp, sizeof(vp));
     vp.width = draw_data->DisplaySize.x;
     vp.height = draw_data->DisplaySize.y;
@@ -42,16 +49,22 @@ static void ImGui_ImplRender_SetupRenderState(ImDrawData* draw_data, CommandList
     unsigned int offset = 0;
     cl->SetVertexBuffers(0, 1, &vb, &stride, &offset);
     cl->SetIndexBuffer(ib, sizeof(ImDrawIdx) == 2 ? RenderFormat::R16_UINT : RenderFormat::R32_UINT, 0);
-    cl->BindVertexCBVs(0, 1, &cb);
+
+    if (Render_BindlessMode())
+    {
+        cl->SetGraphicsRootCBV(0, cb);
+    }
+    else
+    {
+        cl->BindVertexCBVs(0, 1, &cb);
+    }    
 }
 
-// Render function
-// (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
+IMGUI_IMPL_API ImRenderFrameData* ImGui_ImplRender_PrepareFrameData(ImDrawData* draw_data)
 {
     // Avoid rendering when minimized
     if (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f)
-        return;
+        return nullptr;
 
     if (!g_VertexAlloc || g_VertexBufferSize < draw_data->TotalVtxCount)
     {
@@ -63,7 +76,7 @@ void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
     {
         g_IndexBufferSize = draw_data->TotalIdxCount + 10000;
         g_IndexAlloc = std::make_unique<ImDrawIdx[]>(g_IndexBufferSize);
-    }   
+    }
 
     ImDrawVert* vtx_dst = g_VertexAlloc.get();
     ImDrawIdx* idx_dst = g_IndexAlloc.get();
@@ -93,11 +106,32 @@ void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
         { 0.0f,         0.0f,           0.5f,       0.0f },
         { (R+L)/(L-R),  (T+B)/(B-T),    0.5f,       1.0f },
     };
-    DynamicBuffer_t cbuf = CreateDynamicConstantBuffer (mvp, sizeof(mvp));
+    DynamicBuffer_t cbuf = CreateDynamicConstantBuffer(mvp, sizeof(mvp));
+
+    ImRenderFrameData* frameData = new ImRenderFrameData;
+    frameData->VertexBuffer = vbuf;
+    frameData->IndexBuffer = ibuf;
+    frameData->ViewBuffer = cbuf;
+
+    return frameData;
+}
+
+// Render function
+// (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
+void ImGui_ImplRender_RenderDrawData(ImRenderFrameData* frame_data, ImDrawData* draw_data, CommandList* cl)
+{
+    // Avoid rendering when minimized
+    if (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f)
+        return;
 
     GraphicsPipelineState_t prevPSO = cl->GetPreviousPSO();
 
-    ImGui_ImplRender_SetupRenderState(draw_data, cl, vbuf, ibuf, cbuf);
+    if (Render_BindlessMode())
+    {
+        cl->SetGraphicsRootDescriptorTable(2u);
+    }
+
+    ImGui_ImplRender_SetupRenderState(draw_data, cl, frame_data->VertexBuffer, frame_data->IndexBuffer, frame_data->ViewBuffer);
 
     // Render command lists
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
@@ -115,7 +149,7 @@ void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
                 // User callback, registered via ImDrawList::AddCallback()
                 // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
                 if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
-                    ImGui_ImplRender_SetupRenderState(draw_data, cl, vbuf, ibuf, cbuf);
+                    ImGui_ImplRender_SetupRenderState(draw_data, cl, frame_data->VertexBuffer, frame_data->IndexBuffer, frame_data->ViewBuffer);
                 else
                     pcmd->UserCallback(cmd_list, pcmd);
             }
@@ -130,13 +164,19 @@ void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
 
                 cl->SetScissors(&r, 1);
 
-                Texture_t texture = (Texture_t)(intptr_t)pcmd->TextureId;
-                ShaderResourceView_t srv = GetTextureSRV(texture);
+                ShaderResourceView_t srv = (ShaderResourceView_t)(intptr_t)pcmd->TextureId;
 
                 if (srv != ShaderResourceView_t::INVALID)
-                    cl->SetPipelineState(g_PSO); 
+                    cl->SetPipelineState(g_PSO);
 
-                cl->BindPixelSRVs(0, 1, &srv);
+                if (Render_BindlessMode())
+                {
+                    cl->SetGraphicsRootValue(1, Binding_GetDescriptorIndex(srv));
+                }
+                else
+                {
+                    cl->BindPixelSRVs(0, 1, &srv);
+                }
 
                 cl->DrawIndexedInstanced(pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
             }
@@ -146,6 +186,12 @@ void ImGui_ImplRender_RenderDrawData(ImDrawData* draw_data, CommandList* cl)
     }
 
     cl->SetPipelineState(prevPSO);
+}
+
+IMGUI_IMPL_API void ImGui_ImplRender_ReleaseFrameData(ImRenderFrameData* frame_data)
+{
+    if(frame_data)
+        delete frame_data;
 }
 
 static void ImGui_ImplRender_CreateFontsTexture()
@@ -169,9 +215,10 @@ static void ImGui_ImplRender_CreateFontsTexture()
         desc.data = &mip;
 
         g_FontTexture = CreateTexture(desc);
+        g_FontSrv = CreateTextureSRV(g_FontTexture, desc.format, TextureDimension::Tex2D, 1u, 1u);
     }   
 
-    io.Fonts->TexID = (ImTextureID)(g_FontTexture);
+    io.Fonts->TexID = (ImTextureID)(g_FontSrv);
 }
 
 bool ImGui_ImplRender_CreateDeviceObjects()
@@ -182,20 +229,29 @@ bool ImGui_ImplRender_CreateDeviceObjects()
     if(g_FontTexture != Texture_t::INVALID)
         ImGui_ImplRender_InvalidateDeviceObjects();
 
-    const std::string shaderPath = "ImGui.hlsl";
+    g_VS = CreateVertexShader(g_ShaderPath.c_str(), {});
+    g_PS = CreatePixelShader(g_ShaderPath.c_str(), {});
 
-    g_VS = CreateVertexShader(shaderPath.c_str(), {});
-    g_PS = CreatePixelShader(shaderPath.c_str(), {});
+    {
+        RootSignatureDesc rsDesc = {};
+        rsDesc.Flags = RootSignatureFlags::AllowInputLayout;
+        rsDesc.Slots.push_back(RootSignatureSlot::CBVSlot(0u, 0u));
+        rsDesc.Slots.push_back(RootSignatureSlot::ConstantsSlot(4u, 1u));
+        rsDesc.Slots.push_back(RootSignatureSlot::DescriptorTableSlot(0u, 0u, RootSignatureDescriptorTableType::SRV));
+        rsDesc.GlobalSamplers.resize(1u);
+        rsDesc.GlobalSamplers[0].AddressModeUVW(SamplerAddressMode::Wrap).FilterModeMinMagMip(SamplerFilterMode::Point);
+
+        g_RootSignature = CreateRootSignature(rsDesc);
+    }
 
     {
         GraphicsPipelineStateDesc pipeDesc = {};
-        pipeDesc.primTopo = PrimitiveTopologyType::Triangle;
-        pipeDesc.fillMode = FillMode::Solid;
-        pipeDesc.cullMode = CullMode::None;
-        pipeDesc.depthEnabled = false;
-        pipeDesc.blendMode[0].Default();
-        pipeDesc.numRenderTargets = 1;
-        pipeDesc.vs = g_VS;
+        pipeDesc.RasterizerDesc(PrimitiveTopologyType::Triangle, FillMode::Solid, CullMode::None)
+                .DepthDesc(false)
+                .TargetBlendDesc({ g_TargetFormat }, { BlendMode::Default() })
+                .VertexShader(g_VS)
+                .PixelShader(g_PS)
+                .RootSignature(g_RootSignature);
 
         InputElementDesc local_layout[] =
         {
@@ -204,7 +260,6 @@ bool ImGui_ImplRender_CreateDeviceObjects()
             { "COLOR",    0, RenderFormat::R8G8B8A8_UNORM, 0, (size_t)(&((ImDrawVert*)0)->col), InputClassification::PerVertex, 0 },
         };
 
-        pipeDesc.ps = g_PS;
         g_PSO = CreateGraphicsPipelineState(pipeDesc, local_layout, 3);
     }
 
@@ -213,7 +268,12 @@ bool ImGui_ImplRender_CreateDeviceObjects()
     return true;
 }
 
-bool ImGui_ImplRender_Init()
+RootSignature_t ImGui_ImplRender_GetRootSignature()
+{
+    return g_RootSignature;
+}
+
+bool ImGui_ImplRender_Init(RenderFormat targetFormat, const char* shaderPath)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_render";
@@ -222,6 +282,9 @@ bool ImGui_ImplRender_Init()
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         ImGui_ImplRender_InitPlatformInterface();
+
+    g_TargetFormat = targetFormat;
+    g_ShaderPath = shaderPath;
 
     return true;
 }
@@ -244,6 +307,7 @@ void ImGui_ImplRender_InvalidateDeviceObjects()
         return;
 
     Render_Release(g_FontTexture); g_FontTexture = {};
+    Render_Release(g_FontSrv);     g_FontSrv = {};
     Render_Release(g_PSO); g_PSO = {};
 }
 
@@ -287,7 +351,11 @@ static void ImGui_ImplRender_RenderWindow(ImGuiViewport* viewport, void*)
     RenderTargetView_t rtv = data->GetCurrentBackBufferRTV();
     cl->SetRenderTargets(&rtv, 1, DepthStencilView_t::INVALID);
 
-    ImGui_ImplRender_RenderDrawData(viewport->DrawData, cl.get());
+    ImRenderFrameData* frameData = ImGui_ImplRender_PrepareFrameData(viewport->DrawData);
+
+    ImGui_ImplRender_RenderDrawData(frameData, viewport->DrawData, cl.get());
+
+    ImGui_ImplRender_ReleaseFrameData(frameData);
 
     CommandList::Execute(cl);
 }

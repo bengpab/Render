@@ -8,16 +8,37 @@
 #include "CommandList.h"
 #include "PipelineState.h"
 #include "RenderTypes.h"
+#include "RootSignature.h"
 #include "Samplers.h"
 #include "Shaders.h"
 #include "Textures.h"
 #include "View.h"
 
+// TODO: This could be a bool instead and set at launch
 #define RENDER_DEBUG 1
-bool Render_Init();
+
+struct RenderInitParams
+{
+	bool DebugEnabled = false;
+
+	std::vector<RenderDebugWarnings> DisabledWarnings;
+
+	RootSignatureDesc RootSigDesc;
+};
+
+bool Render_Init(const RenderInitParams& params);
 bool Render_Initialised();
-void Render_NewFrame();
+
+// Reset systems access by the frame update
+void Render_BeginFrame();
+
+// Begin rendering
+void Render_BeginRenderFrame();
+
 void Render_ShutDown();
 
 void Render_PushDebugWarningDisable(RenderDebugWarnings warning);
 void Render_PopDebugWarningDisable();
+
+bool Render_BindlessMode();
+const char* Render_ApiId();

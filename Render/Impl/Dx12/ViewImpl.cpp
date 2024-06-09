@@ -4,9 +4,8 @@
 
 #include "../../Binding.h"
 #include "../../CommandList.h"
-#include "../../Textures.h"
 
-#include <dxgi1_2.h>
+#include <dxgi1_3.h>
 #include <map>
 
 #ifdef _MSC_VER
@@ -20,6 +19,7 @@ struct RenderViewImpl
 	ComPtr<IDXGISwapChain1> DxSwapChain;
 	Texture_t Textures[RenderView::NumBackBuffers];
 	RenderTargetView_t Rtv[RenderView::NumBackBuffers];
+	uint64_t FrameFenceValue[RenderView::NumBackBuffers];
 	uint32_t FrameId = 0;
 };
 
@@ -35,7 +35,7 @@ RenderView::~RenderView()
 		Render_Release(Impl->Rtv[i]);
 		Render_Release(Impl->Textures[i]);
 	}
-
+	
 	g_views.erase(Hwnd);
 }
 
@@ -59,30 +59,33 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 		Impl->Textures[i] = Texture_t::INVALID;
 	}
 
-	CommandList::ReleaseAll();
+	Dx12_TexturesProcessPendingDeletes(true);
 
-	Impl->DxSwapChain->ResizeBuffers(0, (UINT)Width, (UINT)Height, DXGI_FORMAT_UNKNOWN, 0);
+	DXENSURE(Impl->DxSwapChain->ResizeBuffers(0, (UINT)Width, (UINT)Height, DXGI_FORMAT_UNKNOWN, 0));
 
-	//for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
-	for (uint32_t i = 0; i < 1; i++)
+	for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
 	{
-		ComPtr<ID3D11Resource> backBuffer = nullptr;
+		ComPtr<ID3D12Resource> backBuffer = nullptr;
 
 		Impl->DxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
 
 		Impl->Textures[i] = AllocTexture();
 
-		Dx11_SetTextureResource(Impl->Textures[i], backBuffer);
+		Dx12_SetTextureResource(Impl->Textures[i], backBuffer);		
 
 		Impl->Rtv[i] = CreateTextureRTV(Impl->Textures[i], BackBufferFormat, TextureDimension::Tex2D, 1);
-	}
+	}	
 }
 
 void RenderView::Present(bool vsync)
 {
 	Impl->DxSwapChain->Present(vsync, 0);
 
+	Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers] =	Dx12_EndGraphicsFrame();
+
 	Impl->FrameId++;
+
+	DXENSURE(g_render.DxFrameFence->SetEventOnCompletion(Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers], nullptr));
 }
 
 RenderViewPtr CreateRenderViewPtr(intptr_t hwnd)
@@ -101,7 +104,7 @@ RenderView* CreateRenderView(intptr_t hwnd)
 
 	sd.Width = 0;
 	sd.Height = 0;
-	sd.Format = Dx11_Format(RenderView::BackBufferFormat);
+	sd.Format = Dx12_Format(RenderView::BackBufferFormat);
 	sd.Stereo = FALSE;
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
@@ -111,11 +114,13 @@ RenderView* CreateRenderView(intptr_t hwnd)
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 
+	UINT factoryFlags = g_render.Debug ? DXGI_CREATE_FACTORY_DEBUG : 0u;
+
 	ComPtr<IDXGIFactory2> factory;
-	if (FAILED(CreateDXGIFactory(IID_PPV_ARGS(&factory))))
+	if (!DXENSURE(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&factory))))
 		return nullptr;
 
-	if (FAILED(factory->CreateSwapChainForHwnd(g_render.device.Get(), (HWND)hwnd, &sd, NULL, NULL, &rv->Impl->DxSwapChain)))
+	if (!DXENSURE(factory->CreateSwapChainForHwnd(g_render.DirectQueue.DxCommandQueue.Get(), (HWND)hwnd, &sd, NULL, NULL, &rv->Impl->DxSwapChain)))
 		return nullptr;
 
 	g_views[hwnd] = rv;
@@ -129,7 +134,7 @@ RenderView* GetRenderViewForHwnd(intptr_t hwnd)
 	return iter != g_views.end() ? iter->second : nullptr;
 }
 
-void RenderView::ClearCurrentBackBufferTarget( CommandList* cl )
+void RenderView::ClearCurrentBackBufferTarget(CommandList* cl)
 {
 	constexpr float DefaultClearCol[4] = { 0.0f, 0.0f, 0.2f, 0.0f };
 	ClearCurrentBackBufferTarget( cl, DefaultClearCol );
@@ -146,12 +151,10 @@ void RenderView::ClearCurrentBackBufferTarget(CommandList* cl, const float clear
 
 Texture_t RenderView::GetCurrentBackBufferTexture() const
 {
-	//return Impl->Textures[Impl->FrameId % RenderView::NumBackBuffers];
-	return Impl->Textures[0];
+	return Impl->Textures[Impl->FrameId % RenderView::NumBackBuffers];
 }
 
 RenderTargetView_t RenderView::GetCurrentBackBufferRTV() const
 {
-	//return Impl->Rtv[Impl->FrameId % RenderView::NumBackBuffers];
-	return Impl->Rtv[0];
+	return Impl->Rtv[Impl->FrameId % RenderView::NumBackBuffers];
 }

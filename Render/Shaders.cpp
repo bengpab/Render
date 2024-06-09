@@ -4,6 +4,8 @@
 
 #include "Impl/ShadersImpl.h"
 
+#include "Render.h"
+
 struct ShaderData
 {
 	bool compiled = false;
@@ -15,6 +17,17 @@ IDArray<VertexShader_t,		ShaderData>	g_VertexShaders;
 IDArray<PixelShader_t,		ShaderData>	g_PixelShaders;
 IDArray<GeometryShader_t,	ShaderData>	g_GeometryShaders;
 IDArray<ComputeShader_t,	ShaderData>	g_ComputeShaders;
+
+static void AppendShaderPlatformMacros(ShaderMacros* macros)
+{
+	macros->push_back({ Render_ApiId(), "1" });
+
+	if (Render_BindlessMode())
+	{
+		macros->push_back({ "_BINDLESS", "1" });
+		macros->push_back({ "_BINDLESS_MAX", "1" });
+	}
+}
 
 static void UpdateShader(ShaderData* data, const char* path, const ShaderMacros& macros)
 {
@@ -36,6 +49,8 @@ VertexShader_t CreateVertexShader(const char* path, const ShaderMacros& macros)
 
 	data->macros.push_back({ "_VS", "1" });
 
+	AppendShaderPlatformMacros(&data->macros);
+
 	if (!CompileVertexShader(newShader, path, data->macros))
 	{
 		g_VertexShaders.Release(newShader);
@@ -53,6 +68,8 @@ PixelShader_t CreatePixelShader(const char* path, const ShaderMacros& macros)
 	UpdateShader(data, path, macros);
 
 	data->macros.push_back({ "_PS", "1" });
+
+	AppendShaderPlatformMacros(&data->macros);
 
 	if (!CompilePixelShader(newShader, path, data->macros))
 	{
@@ -72,6 +89,8 @@ GeometryShader_t CreateGeometryShader(const char* path, const ShaderMacros& macr
 
 	data->macros.push_back({ "_GS", "1" });
 
+	AppendShaderPlatformMacros(&data->macros);
+
 	if (!CompileGeometryShader(newShader, path, data->macros))
 	{
 		g_GeometryShaders.Release(newShader);
@@ -89,6 +108,8 @@ ComputeShader_t CreateComputeShader(const char* path, const ShaderMacros& macros
 	UpdateShader(data, path, macros);
 
 	data->macros.push_back({ "_CS", "1" });
+
+	AppendShaderPlatformMacros(&data->macros);
 
 	if (!CompileComputeShader(newShader, path, data->macros))
 	{

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "RenderTypes.h"
-#include "Binding.h"
+
+FWD_RENDER_TYPE(Texture_t);
+FWD_RENDER_TYPE(RenderTargetView_t);
 
 #include <memory>
 
@@ -17,16 +19,18 @@ struct RenderView
 	void Present(bool vsync);
 
 	void ClearCurrentBackBufferTarget(CommandList* cl);
+	void ClearCurrentBackBufferTarget(CommandList* cl, const float clearCol[4]);
 
-	RenderTargetView_t GetCurrentBackBufferRTV();
+	Texture_t GetCurrentBackBufferTexture() const;
+	RenderTargetView_t GetCurrentBackBufferRTV() const;
 
-	intptr_t hwnd;
-	std::unique_ptr<RenderViewImpl> impl;
-	uint32_t width = 0;
-	uint32_t height = 0;
+	intptr_t Hwnd;
+	std::unique_ptr<RenderViewImpl> Impl;
+	uint32_t Width = 0;
+	uint32_t Height = 0;
 
 	static constexpr RenderFormat BackBufferFormat = RenderFormat::R8G8B8A8_UNORM;
-	static constexpr uint32_t NumBackBuffers = 2;
+	static constexpr uint32_t NumBackBuffers = 2u;
 };
 
 typedef std::shared_ptr<RenderView> RenderViewPtr;

@@ -9,11 +9,6 @@ struct TextureData
 {
     TextureCreateDescEx desc;
     std::string debugName;
-
-    ShaderResourceView_t srv = ShaderResourceView_t::INVALID;
-    UnorderedAccessView_t uav = UnorderedAccessView_t::INVALID;
-    RenderTargetView_t rtv = RenderTargetView_t::INVALID;
-    DepthStencilView_t dsv = DepthStencilView_t::INVALID;
 };
 
 IDArray<Texture_t, TextureData> g_Textures;
@@ -39,17 +34,13 @@ Texture_t CreateTexture(const TextureCreateDesc& desc)
     descEx.width = desc.width;
     descEx.height = desc.height;
     descEx.flags = desc.flags;
-    descEx.arraySize = 1;
+    descEx.depthOrArraySize = 1;
     descEx.data = desc.data;
     descEx.dimension = TextureDimension::Tex2D;
     descEx.resourceFormat = desc.format;
     descEx.usage = ResourceUsage::Default;
     descEx.cpuAccess = TextureCPUAccess::None;
-    descEx.srvFormat = desc.format;
-    descEx.uavFormat = desc.format;
-    descEx.rtvFormat = desc.format;
-    descEx.dsvFormat = desc.format;
-    
+
     return CreateTextureEx(descEx);
 }
 
@@ -66,45 +57,14 @@ Texture_t CreateTextureEx(const TextureCreateDescEx& desc)
     TextureData* data = g_Textures.Get(newTex);
     data->desc = desc;
 
-    if ((desc.flags & RenderResourceFlags::SRV) != RenderResourceFlags::None)
-    {
-        data->srv = CreateTextureSRV(newTex, desc.srvFormat, desc.dimension, desc.mipCount, desc.arraySize);
-        if (data->srv == ShaderResourceView_t::INVALID)
-        {
-            g_Textures.Release(newTex);
-            return Texture_t::INVALID;
-        }
-    }
+    return newTex;
+}
 
-    if ((desc.flags & RenderResourceFlags::UAV) != RenderResourceFlags::None)
-    {
-        data->uav = CreateTextureUAV(newTex, desc.uavFormat, desc.arraySize);
-        if (data->uav == UnorderedAccessView_t::INVALID)
-        {
-            g_Textures.Release(newTex);
-            return Texture_t::INVALID;
-        }
-    }
+Texture_t AllocTexture()
+{
+    Texture_t newTex = g_Textures.Create();
 
-    if ((desc.flags & RenderResourceFlags::RTV) != RenderResourceFlags::None)
-    {
-        data->rtv = CreateTextureRTV(newTex, desc.rtvFormat, desc.arraySize);
-        if (data->rtv == RenderTargetView_t::INVALID)
-        {
-            g_Textures.Release(newTex);
-            return Texture_t::INVALID;
-        }
-    }
-
-    if ((desc.flags & RenderResourceFlags::DSV) != RenderResourceFlags::None)
-    {
-        data->dsv = CreateTextureDSV(newTex, desc.dsvFormat, desc.arraySize);
-        if (data->dsv == DepthStencilView_t::INVALID)
-        {
-            g_Textures.Release(newTex);
-            return Texture_t::INVALID;
-        }
-    }
+    AllocTextureImpl(newTex);
 
     return newTex;
 }
@@ -128,85 +88,20 @@ void Render_AddRef(Texture_t tex)
 
 void Render_Release(Texture_t tex)
 {
-    if (TextureData* data = g_Textures.Release(tex))
+    if (g_Textures.Release(tex))
     {
-        ReleaseSRV(data->srv);
-        ReleaseUAV(data->uav);
-        ReleaseRTV(data->rtv);
-        ReleaseDSV(data->dsv);
+        DestroyTexture(tex);
     }
 }
 
-bool Textures_CreateViewsForResourceFlags(Texture_t tex, RenderResourceFlags flags)
+bool Textures_SupportsDescriptors(Texture_t tex, RenderResourceFlags flags)
 {
-    bool succeeded = true;
-
-    if (TextureData* data = g_Textures.Get(tex))
+    if (const TextureData* data = g_Textures.Get(tex))
     {
-        const TextureCreateDescEx& desc = data->desc;
-
-        if (data->srv == ShaderResourceView_t::INVALID && (flags & RenderResourceFlags::SRV) != RenderResourceFlags::None)
-        {
-            data->srv = CreateTextureSRV(tex, desc.srvFormat, desc.dimension, desc.mipCount, desc.arraySize);
-
-            succeeded |= data->srv != ShaderResourceView_t::INVALID;
-        }
-
-        if (data->uav == UnorderedAccessView_t::INVALID && (flags & RenderResourceFlags::UAV) != RenderResourceFlags::None)
-        {
-            data->uav = CreateTextureUAV(tex, desc.uavFormat, desc.arraySize);
-
-            succeeded |= data->uav != UnorderedAccessView_t::INVALID;
-        }
-
-        if (data->rtv == RenderTargetView_t::INVALID && (flags & RenderResourceFlags::RTV) != RenderResourceFlags::None)
-        {
-            data->rtv = CreateTextureRTV(tex, desc.rtvFormat, desc.arraySize);
-
-            succeeded |= data->rtv != RenderTargetView_t::INVALID;
-        }
-
-        if (data->dsv == DepthStencilView_t::INVALID && (flags & RenderResourceFlags::DSV) != RenderResourceFlags::None)
-        {
-            data->dsv = CreateTextureDSV(tex, desc.dsvFormat, desc.arraySize);
-
-            succeeded |= data->dsv != DepthStencilView_t::INVALID;
-        }
+        return (data->desc.flags & flags) == flags;
     }
 
-    return succeeded;
-}
-
-ShaderResourceView_t GetTextureSRV(Texture_t tex)
-{
-    if (TextureData* data = g_Textures.Get(tex))
-        return data->srv;
-
-    return ShaderResourceView_t::INVALID;
-}
-
-UnorderedAccessView_t GetTextureUAV(Texture_t tex)
-{
-    if (TextureData* data = g_Textures.Get(tex))
-        return data->uav;
-
-    return UnorderedAccessView_t::INVALID;
-}
-
-RenderTargetView_t GetTextureRTV(Texture_t tex)
-{
-    if (TextureData* data = g_Textures.Get(tex))
-        return data->rtv;
-
-    return RenderTargetView_t::INVALID;
-}
-
-DepthStencilView_t GetTextureDSV(Texture_t tex)
-{
-    if (TextureData* data = g_Textures.Get(tex))
-        return data->dsv;
-
-    return DepthStencilView_t::INVALID;
+    return false;
 }
 
 void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h)

@@ -131,7 +131,7 @@ D3D11_BLEND_DESC CreateBS(const BlendMode* bm, uint8_t count)
 
 	for (uint8_t i = 1; i < count; i++)
 	{
-		if (bm[i].opaque != bm[0].opaque)
+		if (bm[i].Opaque != bm[0].Opaque)
 		{
 			bs.IndependentBlendEnable = true;
 			break;
@@ -140,13 +140,13 @@ D3D11_BLEND_DESC CreateBS(const BlendMode* bm, uint8_t count)
 
 	for (uint8_t i = 0; i < count; i++)
 	{
-		bs.RenderTarget[i].BlendEnable = bm[i].enabled;
-		bs.RenderTarget[i].SrcBlend = GetBlend(bm[i].srcBlend);
-		bs.RenderTarget[i].DestBlend = GetBlend(bm[i].dstBlend);
-		bs.RenderTarget[i].BlendOp = GetBlendOp(bm[i].op);
-		bs.RenderTarget[i].SrcBlendAlpha = GetBlend(bm[i].srcBlendAlpha);
-		bs.RenderTarget[i].DestBlendAlpha = GetBlend(bm[i].dstBlendAlpha);
-		bs.RenderTarget[i].BlendOpAlpha = GetBlendOp(bm[i].opAlpha);
+		bs.RenderTarget[i].BlendEnable = bm[i].BlendEnabled;
+		bs.RenderTarget[i].SrcBlend = GetBlend(bm[i].SrcBlend);
+		bs.RenderTarget[i].DestBlend = GetBlend(bm[i].DstBlend);
+		bs.RenderTarget[i].BlendOp = GetBlendOp(bm[i].Op);
+		bs.RenderTarget[i].SrcBlendAlpha = GetBlend(bm[i].SrcBlendAlpha);
+		bs.RenderTarget[i].DestBlendAlpha = GetBlend(bm[i].DstBlendAlpha);
+		bs.RenderTarget[i].BlendOpAlpha = GetBlendOp(bm[i].OpAlpha);
 		bs.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	}
 
@@ -174,15 +174,15 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	Dx11GraphicsPipelineState* pso = AllocGraphicsPipeline(handle);
 
 	{
-		pso->vs = desc.vs;
-		pso->gs = desc.gs;
-		pso->ps = desc.ps;
+		pso->vs = desc.Vs;
+		pso->gs = desc.Gs;
+		pso->ps = desc.Ps;
 
-		pso->pt = GetPrimTopo(desc.primTopo);
+		pso->pt = GetPrimTopo(desc.PrimTopo);
 	}
 	
 	{
-		D3D11_DEPTH_STENCIL_DESC dss = CreateDSS(desc.depthEnabled, desc.depthCompare);
+		D3D11_DEPTH_STENCIL_DESC dss = CreateDSS(desc.DepthEnabled, desc.DepthCompare);
 		if (FAILED(g_render.device->CreateDepthStencilState(&dss, &pso->dss)))
 		{
 			fprintf(stderr, "CompileGraphicsPipelineState failed to create depth state");
@@ -191,7 +191,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	}
 
 	{
-		D3D11_RASTERIZER_DESC rs = CreateRS(desc.fillMode, desc.cullMode, desc.depthBias, desc.depthBiasClamp, desc.slopeScaleDepthBias);
+		D3D11_RASTERIZER_DESC rs = CreateRS(desc.Fill, desc.Cull, desc.DepthBias, desc.DepthBiasClamp, desc.SlopeScaleDepthBias);
 		if (FAILED(g_render.device->CreateRasterizerState(&rs, &pso->rs)))
 		{
 			fprintf(stderr, "CompileGraphicsPipelineState failed to create raster state");
@@ -200,7 +200,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	}
 
 	{
-		D3D11_BLEND_DESC bs = CreateBS(desc.blendMode, desc.numRenderTargets);
+		D3D11_BLEND_DESC bs = CreateBS(desc.Blends, desc.NumRenderTargets);
 		if (FAILED(g_render.device->CreateBlendState(&bs, &pso->bs)))
 		{
 			fprintf(stderr, "CompileGraphicsPipelineState failed to create blend state");
@@ -208,9 +208,9 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 		}			
 	}
 
-	if (inputs != nullptr && inputCount && desc.vs != VertexShader_t::INVALID)
+	if (inputs != nullptr && inputCount && desc.Vs != VertexShader_t::INVALID)
 	{
-		ID3DBlob* blob = Dx11_GetVertexShaderBlob(desc.vs);
+		ID3DBlob* blob = Dx11_GetVertexShaderBlob(desc.Vs);
 		assert(blob != nullptr && "Failed creating input layout, vertex blob is null");
 
 		std::vector<D3D11_INPUT_ELEMENT_DESC> dxLayout;

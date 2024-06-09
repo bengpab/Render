@@ -1,16 +1,9 @@
 #include "../TexturesImpl.h"
 
 #include "RenderImpl.h"
+#include "SparseArray.h"
 
-std::vector<ComPtr<ID3D11Resource>> g_DxTextures;
-
-static ComPtr<ID3D11Resource>& AllocTexture2D(Texture_t tex)
-{
-	if ((size_t)tex >= g_DxTextures.size())
-		g_DxTextures.resize((size_t)tex + 1);
-
-	return g_DxTextures[(size_t)tex];
-}
+SparseArray<ComPtr<ID3D11Resource>, Texture_t> g_DxTextures;
 
 static UINT Dx11_CpuAccessFlag(TextureCPUAccess access)
 {
@@ -25,9 +18,16 @@ static UINT Dx11_CpuAccessFlag(TextureCPUAccess access)
 	return flag;
 }
 
+bool AllocTextureImpl(Texture_t tex)
+{
+	g_DxTextures.Alloc(tex);
+
+	return true;
+}
+
 bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 {
-	auto& dxTex = AllocTexture2D(tex);
+	auto& dxTex = g_DxTextures.Alloc(tex);
 
 	const UINT bindFlags = Dx11_BindFlags(desc.flags);
 	const DXGI_FORMAT resourceFormat = Dx11_Format(desc.resourceFormat);
@@ -37,8 +37,8 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 	std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> subRes = nullptr; 
 	if (desc.data)
 	{
-		subRes = std::make_unique<D3D11_SUBRESOURCE_DATA[]>(desc.mipCount * desc.arraySize);
-		for (size_t i = 0; i < desc.mipCount * desc.arraySize; i++)
+		subRes = std::make_unique<D3D11_SUBRESOURCE_DATA[]>(desc.mipCount * desc.depthOrArraySize);
+		for (size_t i = 0; i < desc.mipCount * desc.depthOrArraySize; i++)
 		{
 			subRes[i].pSysMem = desc.data[i].data;
 			subRes[i].SysMemPitch = static_cast<UINT>(desc.data[i].rowPitch);
@@ -53,7 +53,7 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 		D3D11_TEXTURE1D_DESC dxDesc;
 		dxDesc.Width = static_cast<UINT>(desc.width);
 		dxDesc.MipLevels = static_cast<UINT>(desc.mipCount);
-		dxDesc.ArraySize = static_cast<UINT>(desc.arraySize);
+		dxDesc.ArraySize = static_cast<UINT>(desc.depthOrArraySize);
 		dxDesc.Format = resourceFormat;
 		dxDesc.Usage = usage;
 		dxDesc.BindFlags = bindFlags;
@@ -74,7 +74,7 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 		dxDesc.Width = static_cast<UINT>(desc.width);
 		dxDesc.Height = static_cast<UINT>(desc.height);
 		dxDesc.MipLevels = static_cast<UINT>(desc.mipCount);
-		dxDesc.ArraySize = static_cast<UINT>(desc.arraySize);
+		dxDesc.ArraySize = static_cast<UINT>(desc.depthOrArraySize);
 		dxDesc.Format = resourceFormat;
 		dxDesc.SampleDesc.Count = 1;
 		dxDesc.SampleDesc.Quality = 0;
@@ -95,7 +95,7 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 		D3D11_TEXTURE3D_DESC dxDesc;
 		dxDesc.Width = static_cast<UINT>(desc.width);
 		dxDesc.Height = static_cast<UINT>(desc.height);
-		dxDesc.Depth = static_cast<UINT>(desc.depth);
+		dxDesc.Depth = static_cast<UINT>(desc.depthOrArraySize);
 		dxDesc.MipLevels = static_cast<UINT>(desc.mipCount);
 		dxDesc.Format = resourceFormat;
 		dxDesc.Usage = usage;
@@ -119,7 +119,7 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 
 bool UpdateTextureImpl(Texture_t tex, const void* const data, uint32_t width, uint32_t height, RenderFormat format)
 {
-	if ((size_t)tex < g_DxTextures.size())
+	if (!g_DxTextures.Valid(tex))
 		return false;
 
 	D3D11_TEXTURE2D_DESC td;
@@ -140,29 +140,29 @@ bool UpdateTextureImpl(Texture_t tex, const void* const data, uint32_t width, ui
 	if (!SUCCEEDED(g_render.device->CreateTexture2D(&td, &subRes, &stagingTex)))
 		return false;
 
-	g_render.context->CopyResource(g_DxTextures[(uint32_t)tex].Get(), stagingTex.Get());
+	g_render.context->CopyResource(g_DxTextures[tex].Get(), stagingTex.Get());
 
 	return true;
 }
 
 void DestroyTexture(Texture_t tex)
 {
-	g_DxTextures[(uint32_t)tex] = nullptr;
+	g_DxTextures[tex] = nullptr;
 }
 
 ID3D11Resource* Dx11_GetTexture(Texture_t tex)
 {
-	return (size_t)tex > 0 && (size_t)tex < g_DxTextures.size() ? g_DxTextures[(uint32_t)tex].Get() : nullptr;
+	return g_DxTextures.Valid(tex) ? g_DxTextures[tex].Get() : nullptr;
 }
 
 TextureResourceAccessScope::TextureResourceAccessScope(Texture_t resource, TextureResourceAccessMethod method, uint32_t subResourceIndex)
 	: mappedTex(resource)
 	, subResIdx(subResourceIndex)
 {
-	ID3D11Resource* dxRes = g_DxTextures[(uint32_t)mappedTex].Get();
-
-	if (!dxRes)
+	if (!g_DxTextures.Valid(mappedTex))
 		return;
+
+	ID3D11Resource* dxRes = g_DxTextures[mappedTex].Get();
 
 	D3D11_MAP mapType;
 	if (method == TextureResourceAccessMethod::Read)
@@ -186,5 +186,13 @@ TextureResourceAccessScope::TextureResourceAccessScope(Texture_t resource, Textu
 TextureResourceAccessScope::~TextureResourceAccessScope()
 {
 	if(ptr)
-		g_render.context->Unmap(g_DxTextures[(uint32_t)mappedTex].Get(), subResIdx);
+		g_render.context->Unmap(g_DxTextures[mappedTex].Get(), subResIdx);
+}
+
+void Dx11_SetTextureResource(Texture_t tex, const ComPtr<ID3D11Resource>& resource)
+{
+	if (g_DxTextures.Valid(tex))
+	{
+		g_DxTextures[tex] = resource;
+	}
 }

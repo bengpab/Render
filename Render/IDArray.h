@@ -18,6 +18,13 @@ struct IDArray
 		return id;
 	}
 
+	ID Create(const DataType& data)
+	{
+		ID id = MakeID();
+		Data[(uint32_t)id] = data;
+		return id;
+	}
+
 	ID Create(DataType&& data)
 	{
 		ID id = MakeID();
@@ -34,12 +41,30 @@ struct IDArray
 
 	void Update(ID id, DataType& data)
 	{
+		assert((size_t)id < RefCounts.size());
 		Data[(uint32_t)id] = data;
 	}
 
 	void AddRef(ID id)
 	{
+		assert((size_t)id < RefCounts.size());
 		RefCounts[(uint32_t)id]++;
+	}
+
+	uint32_t RefCount(ID id) const
+	{
+		assert((size_t)id < RefCounts.size());
+		return RefCounts[(size_t)id];
+	}
+
+	bool Reffed(ID id) const
+	{
+		return RefCount(id) > 0u;
+	}
+
+	bool Valid(ID id) const noexcept
+	{
+		return (size_t)id < RefCounts.size() && RefCounts[(uint32_t)id] > 0;
 	}
 
 	DataType* Release(ID id)
@@ -63,18 +88,31 @@ struct IDArray
 
 	DataType* Get(ID id)
 	{
-		return RefCounts[(uint32_t)id] ? &Data[(uint32_t)id] : nullptr;
+		return (Valid(id) && Reffed(id)) ? &Data[(uint32_t)id] : nullptr;
 	}
 
 	inline std::vector<DataType>& GetArray() noexcept { return Data; }
-	inline uint32_t RefCount(ID id) const noexcept { return RefCounts[(uint32_t)id] > 0; }
 	inline size_t Size() const noexcept { return Data.size(); }
 	inline size_t UsedSize() const noexcept { return Data.size() - FreeIDs.size(); }
+	auto begin() noexcept { return Data.begin(); }
+	auto end() noexcept { return Data.end(); }
+
+	DataType& operator[](ID id) { return Data[(size_t)id]; }
+	const DataType& operator[](ID id) const { return Data[(size_t)id]; }
+
+	template<typename Func>
+	void ForEachNullIfValid(Func&& func)
+	{
+		for (size_t i = 0; i < Data.size(); i++)
+		{
+			func(Valid((ID)i) ? &Data[i] : nullptr);
+		}
+	}
 
 private:
-	std::vector<ID>		FreeIDs;
-	std::vector<DataType> Data;
-	std::vector<uint32_t> RefCounts;
+	std::vector<ID>			FreeIDs;
+	std::vector<DataType>	Data;
+	std::vector<uint32_t>	RefCounts;
 
 	ID MakeID()
 	{

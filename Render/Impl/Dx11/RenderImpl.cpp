@@ -4,7 +4,7 @@
 
 Dx11RenderGlobals g_render;
 
-bool Render_Init()
+bool CreateDeviceAndContext(bool debug)
 {
 	UINT createDeviceFlags = 0;
 #if RENDER_DEBUG
@@ -31,14 +31,29 @@ bool Render_Init()
 	return true;
 }
 
+bool Render_Init(const RenderInitParams& params)
+{
+	if (!CreateDeviceAndContext(params.DebugEnabled))
+		return false;
+
+	g_render.MainRootSig = CreateRootSignature(params.RootSigDesc);
+
+	return true;
+}
+
 bool Render_Initialised()
 {
 	return g_render.device != nullptr;
 }
 
-void Render_NewFrame()
+void Render_BeginFrame()
 {
 	DynamicBuffers_NewFrame();
+}
+
+void Render_BeginRenderFrame()
+{
+
 }
 
 void Render_ShutDown()
@@ -95,4 +110,14 @@ void Render_PopDebugWarningDisable()
 		}
 	}
 #endif
+}
+
+bool Render_BindlessMode()
+{
+	return false;
+}
+
+const char* Render_ApiId()
+{
+	return "RAPI_DX11";
 }

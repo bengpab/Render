@@ -52,6 +52,26 @@ ComputePipelineState_t CreateComputePipelineState(const ComputePipelineStateDesc
     return pso;
 }
 
+const GraphicsPipelineStateDesc* GetGraphicsPipelineStateDesc(GraphicsPipelineState_t pso)
+{
+    if (const GraphicsPipelineStateData* data = g_GraphicsPipelineStates.Get(pso))
+    {
+        return &data->desc;
+    }
+
+    return nullptr;
+}
+
+const ComputePipelineStateDesc* GetComputePipelineStateDesc(ComputePipelineState_t pso)
+{
+    if (const ComputePipelineStateData* data = g_ComputePipelineStates.Get(pso))
+    {
+        return &data->desc;
+    }
+
+    return nullptr;
+}
+
 void Render_Release(GraphicsPipelineState_t pso)
 {
     if (g_GraphicsPipelineStates.Release(pso))

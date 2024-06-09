@@ -13,23 +13,19 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int main()
 {
-    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"Render Example", NULL };
-    ::RegisterClassEx(&wc);
-    HWND hwnd = ::CreateWindow(wc.lpszClassName, L"Render Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"Render Example", NULL };
+	::RegisterClassEx(&wc);
+	HWND hwnd = ::CreateWindow(wc.lpszClassName, L"Render Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
 
-	if (!Render_Init())
+	RenderInitParams params;
+	params.DebugEnabled = true;
+
+	if (!Render_Init(params))
 	{
 		Render_ShutDown();
 		::UnregisterClass(wc.lpszClassName, wc.hInstance);
 		return 1;
 	}
-
-	{
-		std::vector<SamplerDesc> samplers(1);
-		samplers[0].AddressModeUVW(SamplerAddressMode::Wrap).FilterModeMinMagMip(SamplerFilterMode::Point);
-
-		InitSamplers(samplers.data(), samplers.size());
-	}	
 
 	RenderViewPtr view = CreateRenderViewPtr((intptr_t)hwnd);
 
@@ -40,7 +36,7 @@ int main()
 	ImGui::CreateContext();
 
 	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplRender_Init();
+	ImGui_ImplRender_Init(RenderFormat::R8G8B8A8_UNORM, "imgui.hlsl");
 
 	// Main loop
 	bool bQuit = false;
@@ -55,26 +51,48 @@ int main()
 			continue;
 		}
 
-		ImGui_ImplRender_NewFrame();
+		Render_BeginFrame();
 
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+		{
+			ImGui_ImplRender_NewFrame();
 
-		Render_NewFrame();
-		CommandListPtr cl = CommandList::Create();
+			ImGui_ImplWin32_NewFrame();
 
-		view->ClearCurrentBackBufferTarget(cl.get());
+			ImGui::NewFrame();
+
+			ImGui::ShowDemoWindow();
+
+			ImGui::Render();
+		}
+
+		ImRenderFrameData* frameData = ImGui_ImplRender_PrepareFrameData(ImGui::GetDrawData());
+
+		Render_BeginRenderFrame();
+
+		CommandListSubmissionGroup clGroup(CommandListType::GRAPHICS);
+
+		CommandList* cl = clGroup.CreateCommandList();
+
+		cl->TransitionResource(view->GetCurrentBackBufferTexture(), ResourceTransitionState::PRESENT, ResourceTransitionState::RENDER_TARGET);
 
 		RenderTargetView_t backBufferRtv = view->GetCurrentBackBufferRTV();
+
+		constexpr float DefaultClearCol[4] = { 0.0f, 0.0f, 0.2f, 0.0f };
+
+		cl->ClearRenderTarget(backBufferRtv, DefaultClearCol);
+
 		cl->SetRenderTargets(&backBufferRtv, 1, DepthStencilView_t::INVALID);
 
-		ImGui::ShowDemoWindow();
+		cl->SetRootSignature(ImGui_ImplRender_GetRootSignature());
 
-		ImGui::Render();
+		ImGui_ImplRender_RenderDrawData(frameData, ImGui::GetDrawData(), cl);
 
-		ImGui_ImplRender_RenderDrawData(ImGui::GetDrawData(), cl.get());
+		ImGui_ImplRender_ReleaseFrameData(frameData);
 
-		CommandList::Execute(cl);
+		cl->TransitionResource(view->GetCurrentBackBufferTexture(), ResourceTransitionState::RENDER_TARGET, ResourceTransitionState::PRESENT);
+
+		clGroup.Submit();
+
 		view->Present(true);
 	}
 

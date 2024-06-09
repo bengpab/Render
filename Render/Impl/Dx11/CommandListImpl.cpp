@@ -22,21 +22,34 @@ CommandList::~CommandList()
 void CommandList::Begin()
 {
 	impl->context->ClearState();
-	const UINT samplerCount = (UINT)Dx11_GetSamplerCount();
-	for (UINT s = 0; s < samplerCount; s++)
-	{
-		ID3D11SamplerState* ss = Dx11_GetSampler(s);
-
-		impl->context->VSSetSamplers(s, 1, &ss);
-		impl->context->CSSetSamplers(s, 1, &ss);
-		impl->context->PSSetSamplers(s, 1, &ss);
-	}
 }
 
 void CommandList::Finish()
 {
 	impl->context->FinishCommandList(FALSE, &impl->commandList);
-	lastPipeline = GraphicsPipelineState_t::INVALID;
+	LastPipeline = GraphicsPipelineState_t::INVALID;
+}
+
+void CommandList::SetRootSignature()
+{
+	SetRootSignature(g_render.MainRootSig);
+}
+
+void CommandList::SetRootSignature(RootSignature_t rs)
+{
+	if (rs != BoundRootSignature)
+	{
+		const auto* globalSamplers = Dx11_GetGlobalSamplers(rs);
+
+		if (globalSamplers)
+		{
+			impl->context->VSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
+			impl->context->CSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
+			impl->context->PSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
+		}
+
+		BoundRootSignature = rs;
+	}
 }
 
 void CommandList::ClearRenderTarget(RenderTargetView_t rtv, const float col[4])
@@ -106,7 +119,7 @@ void CommandList::SetScissors(const ScissorRect* const scissors, size_t num)
 
 void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 {
-	if (pso == lastPipeline)
+	if (pso == LastPipeline)
 		return;
 
 	Dx11GraphicsPipelineState* dxPso = Dx11_GetGraphicsPipelineState(pso);
@@ -121,13 +134,13 @@ void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 	impl->context->PSSetShader(Dx11_GetPixelShader(dxPso->ps), nullptr, 0);
 	impl->context->CSSetShader(nullptr, nullptr, 0);
 
-	lastComputePipeline = ComputePipelineState_t::INVALID;
-	lastPipeline = pso;
+	LastComputePipeline = ComputePipelineState_t::INVALID;
+	LastPipeline = pso;
 }
 
 void CommandList::SetPipelineState(ComputePipelineState_t pso)
 {
-	if (pso == lastComputePipeline)
+	if (pso == LastComputePipeline)
 		return;
 
 	Dx11ComputePipelineState* dxPso = Dx11_GetComputePipelineState(pso);
@@ -135,8 +148,8 @@ void CommandList::SetPipelineState(ComputePipelineState_t pso)
 	//impl->context->ClearState();
 	impl->context->CSSetShader(Dx11_GetComputeShader(dxPso->_cs), nullptr, 0);
 
-	lastPipeline = GraphicsPipelineState_t::INVALID;
-	lastComputePipeline = pso;
+	LastPipeline = GraphicsPipelineState_t::INVALID;
+	LastComputePipeline = pso;
 }
 
 void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const VertexBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets)
@@ -329,6 +342,22 @@ void CommandList::BindComputeCBVs(uint32_t startSlot, uint32_t count, const Dyna
 	}
 }
 
+void CommandList::SetGraphicsRootValue(uint32_t slot, uint32_t value) { assert(0); }
+void CommandList::SetComputeRootValue(uint32_t slot, uint32_t value) { assert(0); }
+void CommandList::SetGraphicsRootCBV(uint32_t slot, ConstantBuffer_t cb) { assert(0); }
+void CommandList::SetComputeRootCBV(uint32_t slot, ConstantBuffer_t cb) { assert(0); }
+void CommandList::SetGraphicsRootCBV(uint32_t slot, DynamicBuffer_t cb) { assert(0); }
+void CommandList::SetComputeRootCBV(uint32_t slot, DynamicBuffer_t cb) { assert(0); }
+void CommandList::SetGraphicsRootSRV(uint32_t slot, ShaderResourceView_t srv) { assert(0); }
+void CommandList::SetComputeRootSRV(uint32_t slot, ShaderResourceView_t srv) { assert(0); }
+void CommandList::SetGraphicsRootUAV(uint32_t slot, UnorderedAccessView_t uav) { assert(0); }
+void CommandList::SetComputeRootUAV(uint32_t slot, UnorderedAccessView_t uav) { assert(0); }
+void CommandList::SetGraphicsRootDescriptorTable(uint32_t slot) { assert(0); }
+void CommandList::SetComputeRootDescriptorTable(uint32_t slot) { assert(0); }
+
+void CommandList::TransitionResource(Texture_t tex, ResourceTransitionState before, ResourceTransitionState after) {}
+void CommandList::UAVBarrier(Texture_t tex) {}
+
 CommandListPtr CommandList::Create()
 {
 	if (!g_FreeCommandLists.empty())
@@ -352,6 +381,24 @@ CommandListPtr CommandList::Create()
 
 		return cl;
 	}
+}
+
+CommandListPtr CommandList::Create(CommandListType type)
+{
+	return CommandList::Create();
+}
+
+CommandList* CommandList::CreateRaw(CommandListType type)
+{
+	CommandListImpl* impl = new CommandListImpl;
+
+	g_render.device->CreateDeferredContext(0, &impl->context);
+
+	CommandList* cl = new CommandList(impl);
+
+	cl->Begin();
+
+	return cl;
 }
 
 void CommandList::Execute(CommandListPtr& cl)
@@ -390,4 +437,30 @@ void CommandList::ExecuteAndStall(CommandListPtr& cl)
 void CommandList::ReleaseAll()
 {
 	g_FreeCommandLists.clear();
+}
+
+CommandListImpl* CommandList::GetCommandListImpl()
+{
+	return impl.get();
+}
+
+CommandList* CommandListSubmissionGroup::CreateCommandList()
+{
+	CommandLists.emplace_back(std::unique_ptr<CommandList>(CommandList::CreateRaw(Type)));
+
+	return CommandLists.back().get();
+}
+
+void CommandListSubmissionGroup::Submit()
+{
+	for (size_t i = 0; i < CommandLists.size(); i++)
+	{
+		CommandListImpl* impl = CommandLists[i]->GetCommandListImpl();
+
+		impl->context->FinishCommandList(FALSE, &impl->commandList);
+
+		g_render.context->ExecuteCommandList(impl->commandList.Get(), FALSE);
+		
+		g_FreeCommandLists.push_back(CommandListPtr(CommandLists[i].release()));
+	}
 }

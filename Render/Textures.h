@@ -8,9 +8,12 @@ enum class TextureDimension : uint8_t
 {
 	Unknown,
 	Tex1D,
+	Tex1DArray,
 	Tex2D,
+	Tex2DArray,
+	Cubemap,
+	CubemapArray,
 	Tex3D,
-	Cubemap
 };
 
 struct MipData
@@ -30,6 +33,8 @@ struct TextureCreateDesc
 	RenderFormat format			= RenderFormat::UNKNOWN;
 	RenderResourceFlags flags	= RenderResourceFlags::None;
 	MipData* data				= nullptr;
+
+	std::wstring DebugName;
 };
 
 enum class TextureCPUAccess : uint8_t
@@ -42,11 +47,10 @@ IMPLEMENT_FLAGS(TextureCPUAccess, uint8_t);
 
 struct TextureCreateDescEx
 {
-	uint32_t width				= 0;
-	uint32_t height				= 0;
-	uint32_t depth				= 1;
-	uint32_t arraySize			= 1;
-	uint32_t mipCount			= 1;
+	uint32_t width				= 0u;
+	uint32_t height				= 0u;
+	uint32_t depthOrArraySize	= 1u;
+	uint32_t mipCount			= 1u;
 	TextureDimension dimension	= TextureDimension::Unknown;
 	RenderResourceFlags flags	= RenderResourceFlags::None;	
 	ResourceUsage usage			= ResourceUsage::Default;
@@ -54,15 +58,15 @@ struct TextureCreateDescEx
 	const MipData* data			= nullptr;	
 
 	RenderFormat resourceFormat = RenderFormat::UNKNOWN;
-	RenderFormat srvFormat		= RenderFormat::UNKNOWN;
-	RenderFormat uavFormat		= RenderFormat::UNKNOWN;
-	RenderFormat rtvFormat		= RenderFormat::UNKNOWN;
-	RenderFormat dsvFormat		= RenderFormat::UNKNOWN;
+
+	std::wstring DebugName;
 };
 
 Texture_t CreateTexture(const void* const data, RenderFormat format, uint32_t width, uint32_t height);
 Texture_t CreateTexture(const TextureCreateDesc& desc);
 Texture_t CreateTextureEx(const TextureCreateDescEx& desc);
+
+Texture_t AllocTexture();
 
 // The params here are for validation to ensure we are copying the intended data.
 void UpdateTexture(Texture_t tex, const void* const data, uint32_t width, uint32_t height, RenderFormat format);
@@ -72,17 +76,7 @@ void SetTextureName(Texture_t tex, const char* name);
 void Render_AddRef(Texture_t tex);
 void Render_Release(Texture_t tex);
 
-FWD_RENDER_TYPE(ShaderResourceView_t);
-FWD_RENDER_TYPE(UnorderedAccessView_t);
-FWD_RENDER_TYPE(RenderTargetView_t);
-FWD_RENDER_TYPE(DepthStencilView_t);
-
-bool Textures_CreateViewsForResourceFlags(Texture_t tex, RenderResourceFlags flags);
-
-ShaderResourceView_t	GetTextureSRV(Texture_t tex);
-UnorderedAccessView_t	GetTextureUAV(Texture_t tex);
-RenderTargetView_t		GetTextureRTV(Texture_t tex);
-DepthStencilView_t		GetTextureDSV(Texture_t tex);
+bool Textures_SupportsDescriptors(Texture_t tex, RenderResourceFlags flags);
 
 void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h);
 

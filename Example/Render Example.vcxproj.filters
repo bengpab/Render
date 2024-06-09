@@ -25,6 +25,9 @@
     <Filter Include="Source Files\imgui">
       <UniqueIdentifier>{9c658428-c7a4-427b-b55d-064c185dd5b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Render\Impl\Dx">
+      <UniqueIdentifier>{749d79e3-dc18-4fef-8f72-028848207073}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Render Example.cpp">
@@ -95,6 +98,15 @@
     </ClCompile>
     <ClCompile Include="imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Render\RootSignature.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Render\Impl\Dx11\RootSignatureImpl.cpp">
+      <Filter>Source Files\Render\Impl\Dx11</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Render\Impl\Dx\DxErrorHandling.cpp">
+      <Filter>Source Files\Render\Impl\Dx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +187,18 @@
     </ClInclude>
     <ClInclude Include="imgui_impl_win32.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Render\RootSignature.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Render\SparseArray.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Render\Impl\RootSignatureImpl.h">
+      <Filter>Source Files\Render\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Render\Impl\Dx\DxErrorHandling.h">
+      <Filter>Source Files\Render\Impl\Dx</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

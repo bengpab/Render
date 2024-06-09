@@ -35,6 +35,13 @@ enum class SamplerComparisonFunc : uint8_t
 	Always
 };
 
+enum class SamplerBorderColor : uint8_t
+{
+	TransparentBlack,
+	OpaqueBlack,
+	OpaqueWhite,
+};
+
 struct SamplerDesc
 {
 	union
@@ -63,7 +70,7 @@ struct SamplerDesc
 	float minLOD = 0.0f;
 	float maxLOD = 0.0f;
 	float mipLODBias = 0.0f;
-	float borderColor[4];
+	SamplerBorderColor borderColor = SamplerBorderColor::TransparentBlack;
 	uint32_t maxAnisotropy = 0;
 
 	inline SamplerDesc& AddressModeUVW(SamplerAddressMode am)
@@ -81,13 +88,9 @@ struct SamplerDesc
 		comparison = cf; return *this;
 	}
 
-	inline SamplerDesc& BorderColorRGBA(float col)
+	inline SamplerDesc& BorderColor(SamplerBorderColor col)
 	{
-		borderColor[0] = borderColor[1] = borderColor[2] = borderColor[3] = col; return *this;
+		borderColor = col; return *this;
 	}
 };
-
-void InitSamplers(const SamplerDesc* const descs, size_t count);
-
-size_t Samplers_GetSamplerCount();
 

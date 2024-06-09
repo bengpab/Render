@@ -12,13 +12,25 @@
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-#define RENDER_TYPE(t) enum class t : uint64_t {INVALID}
-#define FWD_RENDER_TYPE(t) enum class t : uint64_t
+#define RENDER_TYPE(t) enum class t : uint32_t {INVALID}
+#define FWD_RENDER_TYPE(t) enum class t : uint32_t
 
 #define IMPLEMENT_FLAGS(e, underlyingType) \
 constexpr inline e operator&(e lhs, e rhs) noexcept {return (e)((underlyingType)lhs & (underlyingType)rhs); } \
 constexpr inline e operator|(e lhs, e rhs) noexcept {return (e)((underlyingType)lhs | (underlyingType)rhs); } \
 inline e& operator|=(e& lhs, e rhs) noexcept {return lhs = (e)((underlyingType)lhs | (underlyingType)rhs); } \
+
+template<typename EnumT, EnumT TInvalidVal = EnumT(0)>
+constexpr bool HasEnumFlags(EnumT flags, EnumT value)
+{
+    return (flags & value) != TInvalidVal;
+}
+
+template<typename EnumT>
+constexpr EnumT AddEnumFlags(EnumT flags, EnumT value)
+{
+    return flags | value;
+}
 
 enum class RenderDebugWarnings : uint32_t
 {
@@ -205,4 +217,19 @@ enum class ResourceUsage : uint8_t
 {
     Default,
     Staging,
+};
+
+enum class ResourceTransitionState : uint8_t
+{
+    COMMON,
+    RENDER_TARGET,
+    UNORDERED_ACCESS,
+    DEPTH_WRITE,
+    DEPTH_READ,
+    NON_PIXEL_SHADER_RESOURCE,
+    PIXEL_SHADER_RESOURCE,
+    READ,
+    PRESENT,
+    COPY_DEST,
+    COPY_SRC,
 };

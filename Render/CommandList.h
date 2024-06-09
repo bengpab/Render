@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RootSignature.h"
 #include "RenderTypes.h"
 #include "PipelineState.h"
 
@@ -15,16 +16,43 @@ FWD_RENDER_TYPE(VertexBuffer_t);
 FWD_RENDER_TYPE(DynamicBuffer_t);
 FWD_RENDER_TYPE(Texture_t);
 
+enum class CommandListType : uint8_t
+{
+	GRAPHICS,
+	COMPUTE,
+	COPY
+};
+
+struct CommandList;
 struct CommandListImpl;
 
-typedef std::shared_ptr<struct CommandList> CommandListPtr;
+typedef std::shared_ptr<CommandList> CommandListPtr;
+
+struct CommandListSubmissionGroup
+{
+	explicit CommandListSubmissionGroup(CommandListType type)
+		: Type(type)
+	{}
+
+	CommandList* CreateCommandList();
+
+	void Submit();
+
+private:
+	CommandListType Type;
+	std::vector<std::unique_ptr<CommandList>> CommandLists;
+};
 
 struct CommandList
 {
 	CommandList() = delete;
 	CommandList(CommandListImpl* cl); // Takes ownership of pointer.
+	CommandList(CommandListImpl* cl, CommandListType type); // Takes ownership of pointer.
 	CommandList(const CommandList&) = delete;
 	~CommandList();
+
+	void SetRootSignature();
+	void SetRootSignature(RootSignature_t rs);
 
 	void ClearRenderTarget(RenderTargetView_t rtv, const float col[4]);
 	void ClearDepth(DepthStencilView_t dsv, float depth);
@@ -64,14 +92,39 @@ struct CommandList
 	void BindComputeCBVs(uint32_t startSlot, uint32_t count, const ConstantBuffer_t* const cbvs);
 	void BindComputeCBVs(uint32_t startSlot, uint32_t count, const DynamicBuffer_t* const cbvs);
 
-	GraphicsPipelineState_t GetPreviousPSO() const noexcept { return lastPipeline; }
-	ComputePipelineState_t GetPreviousComputePSO() const noexcept { return lastComputePipeline; }
+	// Bindless Command
+	void SetGraphicsRootValue(uint32_t slot, uint32_t value);
+	void SetComputeRootValue(uint32_t slot, uint32_t value);
+
+	void SetGraphicsRootCBV(uint32_t slot, ConstantBuffer_t cb);
+	void SetComputeRootCBV(uint32_t slot, ConstantBuffer_t cb);
+	void SetGraphicsRootCBV(uint32_t slot, DynamicBuffer_t cb);
+	void SetComputeRootCBV(uint32_t slot, DynamicBuffer_t cb);
+
+	void SetGraphicsRootSRV(uint32_t slot, ShaderResourceView_t srv);
+	void SetComputeRootSRV(uint32_t slot, ShaderResourceView_t srv);
+
+	void SetGraphicsRootUAV(uint32_t slot, UnorderedAccessView_t uav);
+	void SetComputeRootUAV(uint32_t slot, UnorderedAccessView_t uav);
+
+	void SetGraphicsRootDescriptorTable(uint32_t slot);
+	void SetComputeRootDescriptorTable(uint32_t slot);
+
+	void TransitionResource(Texture_t tex, ResourceTransitionState before, ResourceTransitionState after);
+	void UAVBarrier(Texture_t tex);
+
+	GraphicsPipelineState_t GetPreviousPSO() const noexcept { return LastPipeline; }
+	ComputePipelineState_t GetPreviousComputePSO() const noexcept { return LastComputePipeline; }
 
 	static CommandListPtr Create();
+	static CommandListPtr Create(CommandListType type);
+	static CommandList* CreateRaw(CommandListType type);
 	static void Execute(CommandListPtr& cl);
 	static void ExecuteAndStall(CommandListPtr& cl);
 
 	static void ReleaseAll();
+
+	CommandListImpl* GetCommandListImpl();
 
 public:
 
@@ -95,8 +148,11 @@ public:
 private:
 	std::unique_ptr<CommandListImpl> impl;
 
-	GraphicsPipelineState_t lastPipeline = GraphicsPipelineState_t::INVALID;
-	ComputePipelineState_t lastComputePipeline = ComputePipelineState_t::INVALID;
+	RootSignature_t BoundRootSignature = RootSignature_t::INVALID;
+	GraphicsPipelineState_t LastPipeline = GraphicsPipelineState_t::INVALID;
+	ComputePipelineState_t LastComputePipeline = ComputePipelineState_t::INVALID;
+
+	CommandListType Type = CommandListType::GRAPHICS;
 
 	void Begin();
 	void Finish();

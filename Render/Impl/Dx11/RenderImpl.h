@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../../RenderTypes.h"
-#include "../../Shaders.h"
+#include "Impl/Dx/DxErrorHandling.h"
+#include "RenderTypes.h"
+#include "RootSignature.h"
+#include "Shaders.h"
 #include "Dx11Types.h"
 
 FWD_RENDER_TYPE(VertexShader_t);
@@ -29,6 +31,8 @@ struct Dx11RenderGlobals
 {
 	ComPtr<ID3D11Device> device = nullptr;
 	ComPtr<ID3D11DeviceContext> context = nullptr;
+
+	RootSignature_t MainRootSig = RootSignature_t::INVALID;
 };
 
 extern Dx11RenderGlobals g_render;
@@ -79,4 +83,6 @@ DXGI_FORMAT Dx11_Format(RenderFormat format);
 UINT Dx11_BindFlags(RenderResourceFlags flags);
 void Dx11_CalculatePitch(DXGI_FORMAT format, UINT width, UINT height, UINT* rowPitch, UINT* slicePitch);
 
-void DX11_CreateBackBufferRTV(RenderTargetView_t rtv, ID3D11Resource* backBufferResource);
+void Dx11_SetTextureResource(Texture_t tex, const ComPtr<ID3D11Resource>& resource);
+
+const std::vector<ID3D11SamplerState*>* Dx11_GetGlobalSamplers(RootSignature_t rs);

@@ -70,6 +70,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -104,6 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\Render;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\Render;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,11 +144,14 @@
     <ClCompile Include="..\Render\Impl\Dx11\Dx11Types.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\PipelineStateImpl.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\RenderImpl.cpp" />
+    <ClCompile Include="..\Render\Impl\Dx11\RootSignatureImpl.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\SamplersImpl.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\ShadersImpl.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\TexturesImpl.cpp" />
     <ClCompile Include="..\Render\Impl\Dx11\ViewImpl.cpp" />
+    <ClCompile Include="..\Render\Impl\Dx\DxErrorHandling.cpp" />
     <ClCompile Include="..\Render\PipelineState.cpp" />
+    <ClCompile Include="..\Render\RootSignature.cpp" />
     <ClCompile Include="..\Render\Shaders.cpp" />
     <ClCompile Include="..\Render\Textures.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -160,14 +171,18 @@
     <ClInclude Include="..\Render\Impl\BuffersImpl.h" />
     <ClInclude Include="..\Render\Impl\Dx11\Dx11Types.h" />
     <ClInclude Include="..\Render\Impl\Dx11\RenderImpl.h" />
+    <ClInclude Include="..\Render\Impl\Dx\DxErrorHandling.h" />
     <ClInclude Include="..\Render\Impl\PipelineStateImpl.h" />
+    <ClInclude Include="..\Render\Impl\RootSignatureImpl.h" />
     <ClInclude Include="..\Render\Impl\ShadersImpl.h" />
     <ClInclude Include="..\Render\Impl\TexturesImpl.h" />
     <ClInclude Include="..\Render\PipelineState.h" />
     <ClInclude Include="..\Render\Render.h" />
     <ClInclude Include="..\Render\RenderTypes.h" />
+    <ClInclude Include="..\Render\RootSignature.h" />
     <ClInclude Include="..\Render\Samplers.h" />
     <ClInclude Include="..\Render\Shaders.h" />
+    <ClInclude Include="..\Render\SparseArray.h" />
     <ClInclude Include="..\Render\Textures.h" />
     <ClInclude Include="..\Render\View.h" />
     <ClInclude Include="imgui\imconfig.h" />
