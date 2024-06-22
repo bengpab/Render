@@ -2,6 +2,9 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
+
 RENDER_TYPE(VertexBuffer_t);
 RENDER_TYPE(IndexBuffer_t);
 RENDER_TYPE(StructuredBuffer_t);
@@ -21,22 +24,24 @@ void UpdateVertexBuffer(VertexBuffer_t vb, const void* const data, size_t size);
 void UpdateIndexBuffer(IndexBuffer_t ib, const void* const data, size_t size);
 void UpdateConstantBuffer(ConstantBuffer_t cb, const void* const data, size_t size);
 
-void Render_Release(VertexBuffer_t vb);
-void Render_Release(IndexBuffer_t ib);
-void Render_Release(StructuredBuffer_t sb);
-void Render_Release(ConstantBuffer_t cb);
+void RenderRelease(VertexBuffer_t vb);
+void RenderRelease(IndexBuffer_t ib);
+void RenderRelease(StructuredBuffer_t sb);
+void RenderRelease(ConstantBuffer_t cb);
 
-void Render_Ref(VertexBuffer_t vb);
-void Render_Ref(IndexBuffer_t ib);
-void Render_Ref(StructuredBuffer_t sb);
-void Render_Ref(ConstantBuffer_t cb);
+void RenderRef(VertexBuffer_t vb);
+void RenderRef(IndexBuffer_t ib);
+void RenderRef(StructuredBuffer_t sb);
+void RenderRef(ConstantBuffer_t cb);
 
 void DynamicBuffers_NewFrame();
 
 struct CommandList;
-void Buffers_Upload(CommandList* cl);
+void UploadBuffers(CommandList* cl);
 
-size_t Buffers_GetVertexBufferCount();
-size_t Buffers_GetIndexBufferCount();
-size_t Buffers_GetStructuredBufferCount();
-size_t Buffers_GetConstantBufferCount();
+size_t GetVertexBufferCount();
+size_t GetIndexBufferCount();
+size_t GetStructuredBufferCount();
+size_t GetConstantBufferCount();
+
+}

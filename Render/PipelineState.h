@@ -5,55 +5,58 @@
 #include "RenderTypes.h"
 #include "RootSignature.h"
 
+namespace tpr
+{
+
 RENDER_TYPE(GraphicsPipelineState_t);
 RENDER_TYPE(ComputePipelineState_t);
 
 enum class PrimitiveTopologyType : uint8_t
 {
-	Undefined,
-	Point,
-	Line,
-	Triangle,
-	Patch
+	UNDEFINED,
+	POINT,
+	LINE,
+	TRIANGLE,
+	PATCH,
 };
 
 enum class FillMode : uint8_t
 {
-	Solid,
-	Wireframe
+	SOLID,
+	WIREFRAME,
 };
 
 enum class CullMode : uint8_t
 {
-	None,
-	Front,
-	Back
+	NONE,
+	FRONT,
+	BACK,
 };
 
 enum class BlendType : uint8_t
 {
-	Zero = 1,
-	One = 2,
-	SrcColor = 3,
-	InvSrcColor = 4,
-	SrcAlpha = 5,
-	InvSrcAlpha = 6,
-	DstAlpha = 7,
-	InvDstAlpha = 8,
-	DstColor = 9,
-	InvDstColor = 10,
-	SrcAlphaSat = 11,
-	Count
+	ZERO,
+	ONE,
+	SRC_COLOR,
+	INV_SRC_COLOR,
+	SRC_ALPHA,
+	INV_SRC_ALPHA,
+	DST_ALPHA,
+	INV_DST_ALPHA,
+	DST_COLOR,
+	INV_DST_COLOR,
+	SRC_ALPHA_SAT,
+	COUNT,
 };
 
 enum class BlendOp : uint8_t
 {
-	Add = 1,
-	Subtract = 2,
-	RevSubtract = 3,
-	Min = 4,
-	Max = 5,
-	Count
+	ADD,
+	SUBTRACT,
+	REV_SUBTRACT,
+	MIN,
+	MAX,
+	COUNT,
 };
 
 struct BlendMode
@@ -79,12 +82,12 @@ struct BlendMode
 
 	constexpr BlendMode()
 		: BlendEnabled(false)
-		, SrcBlend(BlendType::One)
-		, DstBlend(BlendType::One)
-		, Op(BlendOp::Add)
-		, SrcBlendAlpha(BlendType::One)
-		, DstBlendAlpha(BlendType::One)
-		, OpAlpha(BlendOp::Add)
+		, SrcBlend(BlendType::ONE)
+		, DstBlend(BlendType::ONE)
+		, Op(BlendOp::ADD)
+		, SrcBlendAlpha(BlendType::ONE)
+		, DstBlendAlpha(BlendType::ONE)
+		, OpAlpha(BlendOp::ADD)
 	{}
 
 	constexpr BlendMode(bool enabled, BlendType srcBlend, BlendType dstBlend, BlendOp op, BlendType srcBlendAlpha, BlendType dstBlendAlpha, BlendOp opAlpha)
@@ -97,43 +100,38 @@ struct BlendMode
 		, OpAlpha(opAlpha)
 	{}
 
-	static constexpr BlendMode Default() { return BlendMode(true, BlendType::SrcAlpha, BlendType::InvSrcAlpha, BlendOp::Add, BlendType::One, BlendType::One, BlendOp::Add); }
-	static constexpr BlendMode Add() { return BlendMode(true, BlendType::One, BlendType::One, BlendOp::Add, BlendType::One, BlendType::One, BlendOp::Add); }
+	static constexpr BlendMode Default() { return BlendMode(true, BlendType::SRC_ALPHA, BlendType::INV_SRC_ALPHA, BlendOp::ADD, BlendType::ONE, BlendType::ONE, BlendOp::ADD); }
+	static constexpr BlendMode Add() { return BlendMode(true, BlendType::ONE, BlendType::ONE, BlendOp::ADD, BlendType::ONE, BlendType::ONE, BlendOp::ADD); }
 	static constexpr BlendMode None() { return BlendMode(); }
 };
 
 enum class ComparisionFunc : uint8_t
 {
-	Never = 1,
-	Less = 2,
-	Equal = 3,
-	LessEqual = 4,
-	Greater = 5,
-	NotEqual = 6,
-	GreaterEqual = 7,
-	Always = 8
+	NEVER,
+	LESS,
+	EQUAL,
+	LESS_EQUAL,
+	GREATER,
+	NOT_EQUAL,
+	GREATER_EQUAL,
+	ALWAYS,
 };
-
-//struct RootSignature_t
-//{
-//	int x;
-//};
 
 struct GraphicsPipelineStateDesc
 {
 	static constexpr uint32_t MaxRenderTargets = 8u;
 
 	// Rasterizer desc
-	PrimitiveTopologyType PrimTopo = PrimitiveTopologyType::Undefined;
-	FillMode Fill = FillMode::Solid;
-	CullMode Cull = CullMode::Back;
+	PrimitiveTopologyType PrimTopo = PrimitiveTopologyType::UNDEFINED;
+	FillMode Fill = FillMode::SOLID;
+	CullMode Cull = CullMode::BACK;
 	int DepthBias = 0;
 	float DepthBiasClamp = 0.0f;
 	float SlopeScaleDepthBias = 0.0f;
 
 	// Depth desc
 	bool DepthEnabled = false;
-	ComparisionFunc DepthCompare = ComparisionFunc::Never;
+	ComparisionFunc DepthCompare = ComparisionFunc::NEVER;
 	RenderFormat DsvFormat = RenderFormat::UNKNOWN;
 
 	// Target Desc
@@ -160,7 +158,7 @@ struct GraphicsPipelineStateDesc
 		return *this; 
 	}
 
-	GraphicsPipelineStateDesc& DepthDesc(bool enabled, ComparisionFunc cf = ComparisionFunc::Never, RenderFormat dsvFormat = RenderFormat::UNKNOWN) 
+	GraphicsPipelineStateDesc& DepthDesc(bool enabled, ComparisionFunc cf = ComparisionFunc::NEVER, RenderFormat dsvFormat = RenderFormat::UNKNOWN) 
 	{
 		DepthEnabled = enabled; 
 		DepthCompare = cf;
@@ -186,7 +184,7 @@ struct GraphicsPipelineStateDesc
 
 struct ComputePipelineStateDesc
 {
-	ComputeShader_t cs = ComputeShader_t::INVALID;
+	ComputeShader_t Cs = ComputeShader_t::INVALID;
 	RootSignature_t RootSignatureOverride = RootSignature_t::INVALID;
 
 	std::wstring DebugName;
@@ -198,8 +196,13 @@ ComputePipelineState_t CreateComputePipelineState(const ComputePipelineStateDesc
 const GraphicsPipelineStateDesc* GetGraphicsPipelineStateDesc(GraphicsPipelineState_t pso);
 const ComputePipelineStateDesc* GetComputePipelineStateDesc(ComputePipelineState_t pso);
 
-void Render_Release(GraphicsPipelineState_t pso);
-void Render_Release(ComputePipelineState_t pso);
+void RenderRef(GraphicsPipelineState_t pso);
+void RenderRef(ComputePipelineState_t pso);
 
-size_t PipelineStates_GetGraphicsPipelineStateCount();
-size_t PipelineStates_GetComputePipelineStateCount();
+void RenderRelease(GraphicsPipelineState_t pso);
+void RenderRelease(ComputePipelineState_t pso);
+
+size_t GetGraphicsPipelineStateCount();
+size_t GetComputePipelineStateCount();
+
+}

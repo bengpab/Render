@@ -2,6 +2,9 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
+
 RENDER_TYPE(VertexShader_t);
 RENDER_TYPE(PixelShader_t);
 RENDER_TYPE(GeometryShader_t);
@@ -31,9 +34,21 @@ PixelShader_t		CreatePixelShader(const char* path, const ShaderMacros& macros = 
 GeometryShader_t	CreateGeometryShader(const char* path, const ShaderMacros& macros = {});
 ComputeShader_t		CreateComputeShader(const char* path, const ShaderMacros& macros = {});
 
-size_t Shaders_GetVertexShaderCount();
-size_t Shaders_GetPixelShaderCount();
-size_t Shaders_GetGeometryShaderCount();
-size_t Shaders_GetComputeShaderCount();
+size_t GetVertexShaderCount();
+size_t GetPixelShaderCount();
+size_t GetGeometryShaderCount();
+size_t GetComputeShaderCount();
 
 void ReloadShaders();
+
+void RenderRef(VertexShader_t vs);
+void RenderRef(PixelShader_t ps);
+void RenderRef(GeometryShader_t gs);
+void RenderRef(ComputeShader_t cs);
+
+void RenderRelease(VertexShader_t vs);
+void RenderRelease(PixelShader_t ps);
+void RenderRelease(GeometryShader_t gs);
+void RenderRelease(ComputeShader_t cs);
+
+}

@@ -6,6 +6,9 @@
 
 #include <memory>
 
+namespace tpr
+{
+
 FWD_RENDER_TYPE(ShaderResourceView_t);
 FWD_RENDER_TYPE(RenderTargetView_t);
 FWD_RENDER_TYPE(DepthStencilView_t);
@@ -157,3 +160,5 @@ private:
 	void Begin();
 	void Finish();
 };
+
+}

@@ -2,6 +2,8 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
 RENDER_TYPE(ShaderResourceView_t);
 RENDER_TYPE(UnorderedAccessView_t);
 RENDER_TYPE(RenderTargetView_t);
@@ -36,20 +38,21 @@ RenderFormat GetUAVFormat(UnorderedAccessView_t uav);
 RenderFormat GetRTVFormat(RenderTargetView_t rtv);
 RenderFormat GetDSVFormat(DepthStencilView_t dsv);
 
-void ReleaseSRV(ShaderResourceView_t srv);
-void ReleaseUAV(UnorderedAccessView_t uav);
-void ReleaseRTV(RenderTargetView_t rtv);
-void ReleaseDSV(DepthStencilView_t dsv);
+void RenderRef(ShaderResourceView_t srv);
+void RenderRef(UnorderedAccessView_t uav);
+void RenderRef(RenderTargetView_t rtv);
+void RenderRef(DepthStencilView_t dsv);
 
-void Render_Release(ShaderResourceView_t srv);
-void Render_Release(UnorderedAccessView_t uav);
-void Render_Release(RenderTargetView_t rtv);
-void Render_Release(DepthStencilView_t dsv);
+void RenderRelease(ShaderResourceView_t srv);
+void RenderRelease(UnorderedAccessView_t uav);
+void RenderRelease(RenderTargetView_t rtv);
+void RenderRelease(DepthStencilView_t dsv);
 
-size_t Bindings_GetShaderResourceViewCount();
-size_t Bindings_GetUnorderedAccessViewCount();
-size_t Bindings_GetRenderTargetViewCount();
-size_t Bindings_GetDepthStencilViewCount();
+size_t GetShaderResourceViewCount();
+size_t GetUnorderedAccessViewCount();
+size_t GetRenderTargetViewCount();
+size_t GetDepthStencilViewCount();
 
-uint32_t Binding_GetDescriptorIndex(ShaderResourceView_t srv);
-uint32_t Binding_GetDescriptorIndex(UnorderedAccessView_t uav);
+uint32_t GetDescriptorIndex(ShaderResourceView_t srv);
+uint32_t GetDescriptorIndex(UnorderedAccessView_t uav);
+}

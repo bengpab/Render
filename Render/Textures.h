@@ -2,25 +2,28 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
+
 RENDER_TYPE(Texture_t);
 
 enum class TextureDimension : uint8_t
 {
-	Unknown,
-	Tex1D,
-	Tex1DArray,
-	Tex2D,
-	Tex2DArray,
-	Cubemap,
-	CubemapArray,
-	Tex3D,
+	UNKNOWN,
+	TEX1D,
+	TEX1D_ARRAY,
+	TEX2D,
+	TEX2D_ARRAY,
+	CUBEMAP,
+	CUBEMAP_ARRAY,
+	TEX3D,
 };
 
 struct MipData
 {
-	size_t rowPitch = 0;
-	size_t slicePitch = 0;
-	const void* data = nullptr;
+	size_t RowPitch = 0;
+	size_t SlicePitch = 0;
+	const void* Data = nullptr;
 
 	MipData() = default;
 	MipData(const void* data, RenderFormat format, uint32_t width, uint32_t height);
@@ -28,36 +31,36 @@ struct MipData
 
 struct TextureCreateDesc
 {
-	uint32_t width				= 0;
-	uint32_t height				= 0;
-	RenderFormat format			= RenderFormat::UNKNOWN;
-	RenderResourceFlags flags	= RenderResourceFlags::None;
-	MipData* data				= nullptr;
+	uint32_t Width				= 0;
+	uint32_t Height				= 0;
+	RenderFormat Format			= RenderFormat::UNKNOWN;
+	RenderResourceFlags Flags	= RenderResourceFlags::NONE;
+	MipData* Data				= nullptr;
 
 	std::wstring DebugName;
 };
 
 enum class TextureCPUAccess : uint8_t
 {
-	None,
-	Read = (1u << 0u),
-	Write = (1u << 1u),
+	NONE,
+	READ = (1u << 0u),
+	WRITE = (1u << 1u),
 };
 IMPLEMENT_FLAGS(TextureCPUAccess, uint8_t);
 
 struct TextureCreateDescEx
 {
-	uint32_t width				= 0u;
-	uint32_t height				= 0u;
-	uint32_t depthOrArraySize	= 1u;
-	uint32_t mipCount			= 1u;
-	TextureDimension dimension	= TextureDimension::Unknown;
-	RenderResourceFlags flags	= RenderResourceFlags::None;	
-	ResourceUsage usage			= ResourceUsage::Default;
-	TextureCPUAccess cpuAccess	= TextureCPUAccess::None;
-	const MipData* data			= nullptr;	
-
-	RenderFormat resourceFormat = RenderFormat::UNKNOWN;
+	uint32_t Width							= 0u;
+	uint32_t Height							= 0u;
+	uint32_t DepthOrArraySize				= 1u;
+	uint32_t MipCount						= 1u;
+	TextureDimension Dimension				= TextureDimension::UNKNOWN;
+	RenderResourceFlags Flags				= RenderResourceFlags::NONE;	
+	ResourceUsage Usage						= ResourceUsage::DEFAULT;
+	TextureCPUAccess CpuAccess				= TextureCPUAccess::NONE;
+	const MipData* Data						= nullptr;	
+	ResourceTransitionState InitialState	= ResourceTransitionState::COMMON;
+	RenderFormat ResourceFormat				= RenderFormat::UNKNOWN;
 
 	std::wstring DebugName;
 };
@@ -73,18 +76,18 @@ void UpdateTexture(Texture_t tex, const void* const data, uint32_t width, uint32
 
 void SetTextureName(Texture_t tex, const char* name);
 
-void Render_AddRef(Texture_t tex);
-void Render_Release(Texture_t tex);
+void RenderRef(Texture_t tex);
+void RenderRelease(Texture_t tex);
 
-bool Textures_SupportsDescriptors(Texture_t tex, RenderResourceFlags flags);
+bool TextureSupportsDescriptors(Texture_t tex, RenderResourceFlags flags);
 
 void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h);
 
-size_t Textures_BitsPerPixel(RenderFormat format);
-void Textures_CalculatePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch);
-void Textures_GetSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes, size_t* outRowBytes = nullptr, size_t* outNumRows = nullptr);
+size_t BitsPerPixel(RenderFormat format);
+void CalculateTexturePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch);
+void GetTextureSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes, size_t* outRowBytes = nullptr, size_t* outNumRows = nullptr);
 
-size_t Texture_GetTextureCount();
+size_t GetTextureCount();
 
 enum class TextureResourceAccessMethod : uint32_t
 {
@@ -95,14 +98,16 @@ enum class TextureResourceAccessMethod : uint32_t
 
 struct TextureResourceAccessScope
 {
-	void* ptr = nullptr;
+	void* Ptr = nullptr;
 
-	size_t rowPitch = 0;
-	size_t depthPitch = 0;
+	size_t RowPitch = 0;
+	size_t DepthPitch = 0;
 
-	Texture_t mappedTex = Texture_t::INVALID;
-	uint32_t subResIdx = 0;
+	Texture_t MappedTex = Texture_t::INVALID;
+	uint32_t SubResIdx = 0;
 
 	explicit TextureResourceAccessScope(Texture_t resource, TextureResourceAccessMethod method, uint32_t subResourceIndex);
 	~TextureResourceAccessScope();
 };
+
+}

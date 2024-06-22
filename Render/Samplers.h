@@ -2,44 +2,43 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
+
 enum class SamplerAddressMode : uint8_t
 {
-	Wrap,
-	Mirror,
-	Clamp,
-	Border,
-	MirrorOnce
+	WRAP,
+	MIRROR,
+	CLAMP,
+	BORDER,
+	MIRROR_ONCE
 };
-
-static constexpr uint32_t kDefaultSamplerAddressMode = ((uint32_t)SamplerAddressMode::Wrap << 16) | ((uint32_t)SamplerAddressMode::Wrap << 8) | ((uint32_t)SamplerAddressMode::Wrap);
 
 enum class SamplerFilterMode : uint8_t
 {
-	Point,
-	Linear,
-	Anisotropic
+	POINT,
+	LINEAR,
+	ANISOTROPIC,
 };
-
-static constexpr uint32_t kDefaultSamplerFilterMode = ((uint32_t)SamplerFilterMode::Linear << 16) | ((uint32_t)SamplerFilterMode::Linear << 8) | ((uint32_t)SamplerFilterMode::Linear);
 
 enum class SamplerComparisonFunc : uint8_t
 {
-	None,
-	Never,
-	Less,
-	Equal,
-	LessEqual,
-	Greater,
-	NotEqual,
-	GreaterEqual,
-	Always
+	NONE,
+	NEVER,
+	LESS,
+	EQUAL,
+	LESS_EQUAL,
+	GREATER,
+	NOT_EQUAL,
+	GREATER_EQUAL,
+	ALWAYS,
 };
 
 enum class SamplerBorderColor : uint8_t
 {
-	TransparentBlack,
-	OpaqueBlack,
-	OpaqueWhite,
+	TRANSPARENT_BLACK,
+	OPAQUE_BLACK,
+	OPAQUE_WHITE,
 };
 
 struct SamplerDesc
@@ -48,49 +47,50 @@ struct SamplerDesc
 	{
 		struct
 		{
-			SamplerAddressMode AddressU;
-			SamplerAddressMode AddressV;
-			SamplerAddressMode AddressW;
-		};
-		uint32_t AddressMode = kDefaultSamplerAddressMode;
+			SamplerAddressMode U = SamplerAddressMode::WRAP;
+			SamplerAddressMode V = SamplerAddressMode::WRAP;
+			SamplerAddressMode W = SamplerAddressMode::WRAP;
+		} AddressMode;
+		uint32_t Opaque;
 	};
 
 	union
 	{
 		struct
 		{
-			SamplerFilterMode Min;
-			SamplerFilterMode Mag;
-			SamplerFilterMode Mip;
-		};
-		uint32_t FilterMode = kDefaultSamplerFilterMode;
+			SamplerFilterMode Min = SamplerFilterMode::LINEAR;
+			SamplerFilterMode Mag = SamplerFilterMode::LINEAR;
+			SamplerFilterMode Mip = SamplerFilterMode::LINEAR;
+		} FilterMode;
+		uint32_t Opaque;
 	};
 
-	SamplerComparisonFunc comparison = SamplerComparisonFunc::None;
-	float minLOD = 0.0f;
-	float maxLOD = 0.0f;
-	float mipLODBias = 0.0f;
-	SamplerBorderColor borderColor = SamplerBorderColor::TransparentBlack;
-	uint32_t maxAnisotropy = 0;
+	SamplerComparisonFunc Comparison = SamplerComparisonFunc::NONE;
+	float MinLOD = 0.0f;
+	float MaxLOD = 0.0f;
+	float MipLODBias = 0.0f;
+	SamplerBorderColor BorderColor = SamplerBorderColor::TRANSPARENT_BLACK;
+	uint32_t MaxAnisotropy = 0;
 
 	inline SamplerDesc& AddressModeUVW(SamplerAddressMode am)
 	{
-		AddressU = AddressV = AddressW = am; return *this;		
+		AddressMode.U = AddressMode.V = AddressMode.W = am; return *this;		
 	}
 
 	inline SamplerDesc& FilterModeMinMagMip(SamplerFilterMode fm)
 	{
-		Min = Mag = Mip = fm; return *this;
+		FilterMode.Min = FilterMode.Mag = FilterMode.Mip = fm; return *this;
 	}
 
 	inline SamplerDesc& ComparisonFunc(SamplerComparisonFunc cf)
 	{
-		comparison = cf; return *this;
+		Comparison = cf; return *this;
 	}
 
-	inline SamplerDesc& BorderColor(SamplerBorderColor col)
+	inline SamplerDesc& BorderCol(SamplerBorderColor col)
 	{
-		borderColor = col; return *this;
+		BorderColor = col; return *this;
 	}
 };
 
+}

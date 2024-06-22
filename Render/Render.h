@@ -14,8 +14,8 @@
 #include "Textures.h"
 #include "View.h"
 
-// TODO: This could be a bool instead and set at launch
-#define RENDER_DEBUG 1
+namespace tpr
+{
 
 struct RenderInitParams
 {
@@ -42,3 +42,5 @@ void Render_PopDebugWarningDisable();
 
 bool Render_BindlessMode();
 const char* Render_ApiId();
+
+}

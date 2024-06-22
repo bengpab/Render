@@ -3,39 +3,42 @@
 #include "RenderTypes.h"
 #include "Samplers.h"
 
+namespace tpr
+{
+
 enum class RootSignatureFlags : uint32_t
 {
-	None = 0u,
-	AllowInputLayout = (1u << 0u),
+	NONE = 0u,
+	ALLOW_INPUT_LAYOUT = (1u << 0u),
 };
 IMPLEMENT_FLAGS(RootSignatureFlags, uint32_t);
 
 enum class RootSignatureSlotType : uint32_t
 {
-	None = 0u,
-	Constants,
+	NONE,
+	CONSTANTS,
 	CBV,
 	SRV,
 	UAV,
-	DescriptorTable,
+	DESCRIPTOR_TABLE,
 };
 
 enum class RootSignatureDescriptorTableType : uint32_t
 {
-	None,
+	NONE,
 	SRV,
 	UAV,
 };
 
 struct RootSignatureSlot
 {
-	RootSignatureSlotType Type = RootSignatureSlotType::None;
+	RootSignatureSlotType Type = RootSignatureSlotType::NONE;
 
 	uint32_t BaseRegister = 0;
 	uint32_t BaseRegisterSpace = 0;
 
 	// Descriptor Table Settings
-	RootSignatureDescriptorTableType DescriptorTableType = RootSignatureDescriptorTableType::None;
+	RootSignatureDescriptorTableType DescriptorTableType = RootSignatureDescriptorTableType::NONE;
 	uint32_t RangeCount;
 
 	// Constants Settings
@@ -51,7 +54,7 @@ struct RootSignatureSlot
 
 	static constexpr RootSignatureSlot ConstantsSlot(uint32_t num32BitVals, uint32_t reg)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::Constants, reg);
+		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::CONSTANTS, reg);
 		slot.Num32BitVals = num32BitVals;
 		return slot;
 	}
@@ -72,7 +75,7 @@ struct RootSignatureSlot
 
 	static constexpr RootSignatureSlot DescriptorTableSlot(uint32_t baseReg, uint32_t baseSpace, RootSignatureDescriptorTableType tableType, uint32_t rangeCount = (uint32_t)0xffff)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::DescriptorTable, baseReg);
+		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::DESCRIPTOR_TABLE, baseReg);
 		slot.DescriptorTableType = tableType;
 		slot.RangeCount = rangeCount;
 		slot.BaseRegisterSpace = baseSpace;
@@ -82,7 +85,7 @@ struct RootSignatureSlot
 
 struct RootSignatureDesc
 {
-	RootSignatureFlags Flags = RootSignatureFlags::None;
+	RootSignatureFlags Flags = RootSignatureFlags::NONE;
 	std::vector<RootSignatureSlot> Slots;
 	std::vector<SamplerDesc> GlobalSamplers;
 };
@@ -91,7 +94,9 @@ RENDER_TYPE(RootSignature_t);
 
 RootSignature_t CreateRootSignature(const RootSignatureDesc& desc);
 
-void Render_Ref(RootSignature_t rs);
-void Render_Release(RootSignature_t rs);
+void RenderRef(RootSignature_t rs);
+void RenderRelease(RootSignature_t rs);
 
 const RootSignatureDesc* RootSignature_GetDesc(RootSignature_t rs);
+
+}

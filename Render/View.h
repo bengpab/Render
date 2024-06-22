@@ -2,6 +2,9 @@
 
 #include "RenderTypes.h"
 
+namespace tpr
+{
+
 FWD_RENDER_TYPE(Texture_t);
 FWD_RENDER_TYPE(RenderTargetView_t);
 
@@ -38,3 +41,5 @@ typedef std::shared_ptr<RenderView> RenderViewPtr;
 RenderViewPtr CreateRenderViewPtr(intptr_t hwnd);
 RenderView* CreateRenderView(intptr_t hwnd);
 RenderView* GetRenderViewForHwnd(intptr_t hwnd);
+
+}

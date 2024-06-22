@@ -9,6 +9,9 @@
 
 #include <wrl.h>
 
+namespace tpr
+{
+
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
@@ -155,13 +158,13 @@ enum class RenderFormat : uint32_t
     P8 = 113,
     A8P8 = 114,
     B4G4R4A4_UNORM = 115,
-    Count
+    COUNT,
 };
 
 enum class InputClassification : uint32_t
 {
-	PerVertex = 0,
-	PerInstance = 1,
+	PER_VERTEX,
+	PER_INSTANCE,
 };
 
 struct InputElementDesc
@@ -205,7 +208,7 @@ struct ScissorRect
 
 enum class RenderResourceFlags : uint8_t
 {
-    None = 0u,
+    NONE = 0u,
     SRV = (1u << 0u),
     UAV = (1u << 1u),
     RTV = (1u << 2u),
@@ -215,8 +218,8 @@ IMPLEMENT_FLAGS(RenderResourceFlags, uint8_t)
 
 enum class ResourceUsage : uint8_t
 {
-    Default,
-    Staging,
+    DEFAULT,
+    STAGING,
 };
 
 enum class ResourceTransitionState : uint8_t
@@ -233,3 +236,5 @@ enum class ResourceTransitionState : uint8_t
     COPY_DEST,
     COPY_SRC,
 };
+
+}
