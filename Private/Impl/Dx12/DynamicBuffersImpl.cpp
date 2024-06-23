@@ -66,7 +66,7 @@ struct DynamicUploadBuffer
 
 	bool InFlight(uint64_t graphicsFrameFence, uint64_t computeFrameFence) const
 	{
-		return graphicsFrameFence <= GraphicsFrameFence && computeFrameFence <= ComputeFrameFence;
+		return graphicsFrameFence <= GraphicsFrameFence || computeFrameFence <= ComputeFrameFence;
 	}
 
 private:
