@@ -353,6 +353,13 @@ void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 
 	LastPipeline = pso;
 
+	ID3D12PipelineState* dxPso = Dx12_GetPipelineState(pso);
+
+	if (!dxPso)
+	{
+		return;
+	}
+
 	if (const GraphicsPipelineStateDesc* desc = GetGraphicsPipelineStateDesc(pso))
 	{
 		impl->CL.DxCl->IASetPrimitiveTopology(Dx12_PrimitiveTopology(desc->PrimTopo));
@@ -370,7 +377,14 @@ void CommandList::SetPipelineState(ComputePipelineState_t pso)
 
 	LastComputePipeline = pso;
 
-	impl->CL.DxCl->SetPipelineState(Dx12_GetPipelineState(pso));
+	ID3D12PipelineState* dxPso = Dx12_GetPipelineState(pso);
+
+	if(!dxPso)
+	{
+		return;
+	}
+
+	impl->CL.DxCl->SetPipelineState(dxPso);
 }
 
 void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const VertexBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets)

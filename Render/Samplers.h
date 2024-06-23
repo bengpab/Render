@@ -43,26 +43,28 @@ enum class SamplerBorderColor : uint8_t
 
 struct SamplerDesc
 {
+	SamplerDesc() = default;
+
 	union
 	{
 		struct
 		{
-			SamplerAddressMode U = SamplerAddressMode::WRAP;
-			SamplerAddressMode V = SamplerAddressMode::WRAP;
-			SamplerAddressMode W = SamplerAddressMode::WRAP;
+			SamplerAddressMode U;
+			SamplerAddressMode V;
+			SamplerAddressMode W;
 		} AddressMode;
-		uint32_t Opaque;
+		uint32_t Opaque = 0;
 	};
 
 	union
 	{
 		struct
 		{
-			SamplerFilterMode Min = SamplerFilterMode::LINEAR;
-			SamplerFilterMode Mag = SamplerFilterMode::LINEAR;
-			SamplerFilterMode Mip = SamplerFilterMode::LINEAR;
+			SamplerFilterMode Min;
+			SamplerFilterMode Mag;
+			SamplerFilterMode Mip;
 		} FilterMode;
-		uint32_t Opaque;
+		uint32_t Opaque = 0;
 	};
 
 	SamplerComparisonFunc Comparison = SamplerComparisonFunc::NONE;

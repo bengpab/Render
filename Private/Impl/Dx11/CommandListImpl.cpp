@@ -125,7 +125,15 @@ void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 	if (pso == LastPipeline)
 		return;
 
+	LastComputePipeline = ComputePipelineState_t::INVALID;
+	LastPipeline = pso;
+
 	Dx11GraphicsPipelineState* dxPso = Dx11_GetGraphicsPipelineState(pso);
+
+	if (!dxPso)
+	{
+		return;
+	}	
 
 	impl->context->IASetPrimitiveTopology(dxPso->pt);
 	impl->context->IASetInputLayout(dxPso->il.Get());
@@ -136,9 +144,6 @@ void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 	impl->context->GSSetShader(Dx11_GetGeometryShader(dxPso->gs), nullptr, 0);
 	impl->context->PSSetShader(Dx11_GetPixelShader(dxPso->ps), nullptr, 0);
 	impl->context->CSSetShader(nullptr, nullptr, 0);
-
-	LastComputePipeline = ComputePipelineState_t::INVALID;
-	LastPipeline = pso;
 }
 
 void CommandList::SetPipelineState(ComputePipelineState_t pso)
@@ -146,13 +151,17 @@ void CommandList::SetPipelineState(ComputePipelineState_t pso)
 	if (pso == LastComputePipeline)
 		return;
 
-	Dx11ComputePipelineState* dxPso = Dx11_GetComputePipelineState(pso);
-
-	//impl->context->ClearState();
-	impl->context->CSSetShader(Dx11_GetComputeShader(dxPso->_cs), nullptr, 0);
-
 	LastPipeline = GraphicsPipelineState_t::INVALID;
 	LastComputePipeline = pso;
+
+	Dx11ComputePipelineState* dxPso = Dx11_GetComputePipelineState(pso);
+
+	if(!dxPso)
+	{
+		return;
+	}
+
+	impl->context->CSSetShader(Dx11_GetComputeShader(dxPso->_cs), nullptr, 0);
 }
 
 void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const VertexBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets)
