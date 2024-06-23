@@ -114,19 +114,19 @@ target_sources(RenderDx12 PRIVATE
 add_custom_command(TARGET RenderDx11 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
-"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}")
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/dxcompiler.dll")
 
 add_custom_command(TARGET RenderDx11 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
-"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}")
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/dxcompiler.dll")
 
 add_custom_command(TARGET RenderDx12 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxil.dll"
-"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}")
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/dxil.dll")
 
 add_custom_command(TARGET RenderDx12 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxil.dll"
-"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}")
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/dxil.dll")
