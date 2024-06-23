@@ -35,6 +35,7 @@ void RenderRef(StructuredBuffer_t sb);
 void RenderRef(ConstantBuffer_t cb);
 
 void DynamicBuffers_NewFrame();
+void DynamicBuffers_EndFrame();
 
 struct CommandList;
 void UploadBuffers(CommandList* cl);

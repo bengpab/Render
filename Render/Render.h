@@ -35,6 +35,8 @@ void Render_BeginFrame();
 // Begin rendering
 void Render_BeginRenderFrame();
 
+void Render_EndFrame();
+
 void Render_ShutDown();
 
 void Render_PushDebugWarningDisable(RenderDebugWarnings warning);

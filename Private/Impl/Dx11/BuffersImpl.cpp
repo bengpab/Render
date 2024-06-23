@@ -211,6 +211,11 @@ void DynamicBuffers_NewFrame()
 	g_DxDynamicBuffers.resize(1);
 }
 
+void DynamicBuffers_EndFrame()
+{
+
+}
+
 void UploadBuffers(CommandList* cl)
 {
 	(void)cl;

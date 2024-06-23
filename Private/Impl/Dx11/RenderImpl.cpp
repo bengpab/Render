@@ -61,6 +61,11 @@ void Render_BeginRenderFrame()
 
 }
 
+void Render_EndFrame()
+{
+	DynamicBuffers_EndFrame();
+}
+
 void Render_ShutDown()
 {
 	g_render.DeviceContext = nullptr;

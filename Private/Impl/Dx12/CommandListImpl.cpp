@@ -209,9 +209,9 @@ Dx12CommandList Dx12_AccquireCommandList(D3D12_COMMAND_LIST_TYPE type)
 
 uint64_t Dx12_FlushQueue(Dx12CommandQueue& queue)
 {
-	uint64_t fenceVal = queue.FenceValue;
+	uint64_t fenceVal = ++queue.FenceValue;
 
-	queue.DxFence->Signal(++queue.FenceValue);
+	queue.DxFence->Signal(fenceVal);
 
 	queue.DxFence->SetEventOnCompletion(fenceVal, nullptr);
 

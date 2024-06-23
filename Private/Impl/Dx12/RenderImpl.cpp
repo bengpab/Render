@@ -136,9 +136,6 @@ bool Render_Init(const RenderInitParams& params)
 	g_render.ComputeQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	g_render.CopyQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 
-	if (!DXENSURE(g_render.DxDevice->CreateFence(g_render.FrameFenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_render.DxFrameFence))))
-		return {};
-
 	return true;
 }
 
@@ -156,6 +153,11 @@ void Render_BeginRenderFrame()
 {
 	Dx12_DescriptorsBeginFrame();
 	Dx12_TexturesBeginFrame();
+}
+
+void Render_EndFrame()
+{
+	DynamicBuffers_EndFrame();
 }
 
 void Render_ShutDown()
@@ -245,20 +247,6 @@ D3D12_RESOURCE_STATES Dx12_ResourceState(ResourceTransitionState state)
 	assert(0 && "Dx12_ResourceState unsupported state");
 
 	return (D3D12_RESOURCE_STATES)0;
-}
-
-uint64_t Dx12_EndGraphicsFrame()
-{
-	DXENSURE(g_render.DirectQueue.DxCommandQueue->Signal(g_render.DxFrameFence.Get(), ++g_render.FrameFenceValue));
-
-	return g_render.FrameFenceValue;
-}
-
-uint64_t Dx12_EndComputeFrame()
-{
-	DXENSURE(g_render.ComputeQueue.DxCommandQueue->Signal(g_render.DxComputeFence.Get(), ++g_render.ComputeFenceValue));
-
-	return g_render.ComputeFenceValue;
 }
 
 D3D12_HEAP_PROPERTIES Dx12_HeapProps(D3D12_HEAP_TYPE type)

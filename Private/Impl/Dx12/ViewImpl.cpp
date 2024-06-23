@@ -24,6 +24,8 @@ struct RenderViewImpl
 	RenderTargetView_t Rtv[RenderView::NumBackBuffers];
 	uint64_t FrameFenceValue[RenderView::NumBackBuffers];
 	uint32_t FrameId = 0;
+
+	ComPtr<ID3D12Fence> DxFrameFence;
 };
 
 RenderView::RenderView()
@@ -40,6 +42,12 @@ RenderView::~RenderView()
 	}
 	
 	g_views.erase(Hwnd);
+}
+
+void RenderView::Sync()
+{
+	uint64_t fenceVal = Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers];
+	DXENSURE(Impl->DxFrameFence->SetEventOnCompletion(fenceVal, nullptr));
 }
 
 void RenderView::Resize(uint32_t x, uint32_t y)
@@ -64,6 +72,11 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 
 	Dx12_TexturesProcessPendingDeletes(true);
 
+	for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
+	{
+		DXENSURE(Impl->DxFrameFence->SetEventOnCompletion(Impl->FrameFenceValue[i], nullptr));
+	}
+
 	DXENSURE(Impl->DxSwapChain->ResizeBuffers(0, (UINT)Width, (UINT)Height, DXGI_FORMAT_UNKNOWN, 0));
 
 	for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
@@ -77,18 +90,28 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 		Dx12_SetTextureResource(Impl->Textures[i], backBuffer);		
 
 		Impl->Rtv[i] = CreateTextureRTV(Impl->Textures[i], BackBufferFormat, TextureDimension::TEX2D, 1);
-	}	
+	}
+
+	// After recreating the swap chain, synchronise our frame ID back to slot 0.
+	// Otherwise starting on target 1 throws an error.
+	while (Impl->FrameId % RenderView::NumBackBuffers != 0)
+	{
+		Impl->FrameId++;
+	}
 }
 
-void RenderView::Present(bool vsync)
+void RenderView::Present(bool vsync, bool sync)
 {
 	Impl->DxSwapChain->Present(vsync, 0);
 
-	Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers] =	Dx12_EndGraphicsFrame();
+	Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers] = ++Impl->FrameId;
 
-	Impl->FrameId++;
+	g_render.DirectQueue.DxCommandQueue->Signal(Impl->DxFrameFence.Get(), Impl->FrameId);
 
-	DXENSURE(g_render.DxFrameFence->SetEventOnCompletion(Impl->FrameFenceValue[Impl->FrameId % RenderView::NumBackBuffers], nullptr));
+	if (sync)
+	{
+		Sync();
+	}		
 }
 
 RenderViewPtr CreateRenderViewPtr(intptr_t hwnd)
@@ -124,6 +147,9 @@ RenderView* CreateRenderView(intptr_t hwnd)
 		return nullptr;
 
 	if (!DXENSURE(factory->CreateSwapChainForHwnd(g_render.DirectQueue.DxCommandQueue.Get(), (HWND)hwnd, &sd, NULL, NULL, &rv->Impl->DxSwapChain)))
+		return nullptr;
+
+	if (!DXENSURE(g_render.DxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&rv->Impl->DxFrameFence))))
 		return nullptr;
 
 	g_views[hwnd] = rv;

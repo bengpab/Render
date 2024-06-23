@@ -51,11 +51,12 @@ struct DynamicUploadBuffer
 		return Allocate(sizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 	}
 
-	void Reset(uint64_t frameFence)
+	void Reset(uint64_t graphicsFrameFence, uint64_t ComputeFrameFence)
 	{
 		CurrentPage = nullptr;
 		AvailablePages = Pages;
-		FrameFence = frameFence;
+		GraphicsFrameFence = graphicsFrameFence;
+		ComputeFrameFence = ComputeFrameFence;
 
 		for (auto& page : AvailablePages)
 		{
@@ -63,9 +64,9 @@ struct DynamicUploadBuffer
 		}
 	}
 
-	bool InFlight(uint64_t frameFence) const
+	bool InFlight(uint64_t graphicsFrameFence, uint64_t computeFrameFence) const
 	{
-		return frameFence <= FrameFence;
+		return graphicsFrameFence <= GraphicsFrameFence && computeFrameFence <= ComputeFrameFence;
 	}
 
 private:
@@ -147,12 +148,14 @@ private:
 
 	AllocationPage* CurrentPage = nullptr;
 
-	uint64_t FrameFence = 0u;
+	uint64_t GraphicsFrameFence = 0u;
+	uint64_t ComputeFrameFence = 0u;
 };
 
 DynamicUploadBuffer* g_dynamicUploadBuffer = nullptr;
 std::vector<DynamicAllocation> g_dynamicBuffers;
 
+std::vector<DynamicUploadBuffer> g_ActiveDynamicBuffers;
 std::vector<DynamicUploadBuffer> g_InFlightDynamicBuffers;
 std::vector<DynamicUploadBuffer> g_AvailableDynamicBuffers;
 
@@ -186,13 +189,17 @@ DynamicBuffer_t CreateDynamicConstantBuffer(const void* const data, size_t size)
 
 void DynamicBuffers_NewFrame()
 {
-	g_dynamicBuffers.clear();
+	assert(g_dynamicUploadBuffer == nullptr && "DynamicBuffers_NewFrame called without DynamicBuffers_EndFrame");
 
-	const uint64_t frameFence = g_render.FrameFenceValue;
+	g_dynamicBuffers.clear();
+	g_dynamicBuffers.push_back({});
+
+	const uint64_t graphicsFrameFence = g_render.DirectQueue.DxFence->GetCompletedValue();
+	const uint64_t computeFrameFence = g_render.ComputeQueue.DxFence->GetCompletedValue();
 
 	for (int32_t i = (int32_t)g_InFlightDynamicBuffers.size() - 1; i >= 0; --i)
 	{
-		if (!g_InFlightDynamicBuffers[i].InFlight(frameFence))
+		if (!g_InFlightDynamicBuffers[i].InFlight(graphicsFrameFence, computeFrameFence))
 		{
 			g_AvailableDynamicBuffers.emplace_back(std::move(g_InFlightDynamicBuffers[i]));
 			g_InFlightDynamicBuffers.erase(g_InFlightDynamicBuffers.begin() + i);
@@ -204,13 +211,28 @@ void DynamicBuffers_NewFrame()
 		g_AvailableDynamicBuffers.resize(1);
 	}
 
-	g_InFlightDynamicBuffers.emplace_back(std::move(g_AvailableDynamicBuffers.back()));
+	g_ActiveDynamicBuffers.emplace_back(std::move(g_AvailableDynamicBuffers.back()));
 
 	g_AvailableDynamicBuffers.pop_back();
 
-	g_dynamicUploadBuffer = &g_InFlightDynamicBuffers.back();
+	g_dynamicUploadBuffer = &g_ActiveDynamicBuffers.back();
+}
 
-	g_dynamicUploadBuffer->Reset(g_render.FrameFenceValue + 1);
+void DynamicBuffers_EndFrame()
+{
+	const uint64_t graphicsFrameFence = Dx12_Signal(CommandListType::GRAPHICS);
+	const uint64_t computeFrameFence = Dx12_Signal(CommandListType::COMPUTE);
+
+	for (DynamicUploadBuffer& buf : g_ActiveDynamicBuffers)
+	{
+		buf.Reset(graphicsFrameFence, computeFrameFence);
+
+		g_InFlightDynamicBuffers.emplace_back(std::move(buf));
+	}
+
+	g_ActiveDynamicBuffers.clear();
+
+	g_dynamicUploadBuffer = nullptr;
 }
 
 D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(DynamicBuffer_t db, uint32_t offset, uint32_t stride)

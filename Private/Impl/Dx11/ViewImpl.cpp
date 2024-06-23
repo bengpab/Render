@@ -81,8 +81,15 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 	}
 }
 
-void RenderView::Present(bool vsync)
+void RenderView::Sync()
 {
+
+}
+
+void RenderView::Present(bool vsync, bool sync)
+{
+	(void)sync;
+
 	Impl->DxSwapChain->Present(vsync, 0);
 
 	Impl->FrameId++;

@@ -67,21 +67,12 @@ struct Dx12RenderGlobals
 
 	RootSignature_t RootSignature = RootSignature_t::INVALID;
 
-	ComPtr<ID3D12Fence> DxFrameFence;
-	ComPtr<ID3D12Fence> DxComputeFence;
-
-	uint64_t FrameFenceValue = 0;
-	uint64_t ComputeFenceValue = 0;
-
 	bool Debug = false;
 };
 
 extern Dx12RenderGlobals g_render;
 
 uint64_t Dx12_FlushQueue(Dx12CommandQueue& queue);
-
-uint64_t Dx12_EndGraphicsFrame();
-uint64_t Dx12_EndComputeFrame();
 
 IDxcBlob* Dx12_GetVertexShaderBlob(VertexShader_t vs);
 IDxcBlob* Dx12_GetPixelShaderBlob(PixelShader_t ps);
