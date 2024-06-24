@@ -111,12 +111,26 @@ target_sources(RenderDx12 PRIVATE
                 "Private/Impl/Dxc/DXCompiler.h"
 )
 
+# Dx11 only needs to copy the dxcompiler
+
 add_custom_command(TARGET RenderDx11 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/dxcompiler.dll")
 
 add_custom_command(TARGET RenderDx11 POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy_if_different
+"${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/dxcompiler.dll")
+
+# Dx12 must copy both dxcompiler and dxil
+
+add_custom_command(TARGET RenderDx12 POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy_if_different
+"${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/dxcompiler.dll")
+
+add_custom_command(TARGET RenderDx12 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxcompiler.dll"
 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/dxcompiler.dll")
