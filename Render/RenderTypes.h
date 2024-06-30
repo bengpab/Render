@@ -9,14 +9,32 @@
 
 #include <wrl.h>
 
+#define RENDER_TYPE(t) enum class t : uint32_t {INVALID}
+#define FWD_RENDER_TYPE(t) enum class t : uint32_t
+
 namespace tpr
 {
 
+FWD_RENDER_TYPE(ShaderResourceView_t);
+FWD_RENDER_TYPE(UnorderedAccessView_t);
+FWD_RENDER_TYPE(RenderTargetView_t);
+FWD_RENDER_TYPE(DepthStencilView_t);
+FWD_RENDER_TYPE(VertexBuffer_t);
+FWD_RENDER_TYPE(IndexBuffer_t);
+FWD_RENDER_TYPE(StructuredBuffer_t);
+FWD_RENDER_TYPE(ConstantBuffer_t);
+FWD_RENDER_TYPE(DynamicBuffer_t);
+FWD_RENDER_TYPE(GraphicsPipelineState_t);
+FWD_RENDER_TYPE(ComputePipelineState_t);
+FWD_RENDER_TYPE(RootSignature_t);
+FWD_RENDER_TYPE(VertexShader_t);
+FWD_RENDER_TYPE(PixelShader_t);
+FWD_RENDER_TYPE(GeometryShader_t);
+FWD_RENDER_TYPE(ComputeShader_t);
+FWD_RENDER_TYPE(Texture_t);
+
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
-
-#define RENDER_TYPE(t) enum class t : uint32_t {INVALID}
-#define FWD_RENDER_TYPE(t) enum class t : uint32_t
 
 #define IMPLEMENT_FLAGS(e, underlyingType) \
 constexpr inline e operator&(e lhs, e rhs) noexcept {return (e)((underlyingType)lhs & (underlyingType)rhs); } \
