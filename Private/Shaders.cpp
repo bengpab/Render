@@ -11,6 +11,12 @@
 namespace tpr
 {
 
+ShaderMacro::ShaderMacro(const char* define, uint32_t value)
+	: _define(define)
+{
+	_value = std::to_string(value);
+}
+
 struct ShaderData
 {
 	bool Compiled = false;

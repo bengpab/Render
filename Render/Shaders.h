@@ -26,6 +26,8 @@ struct ShaderMacro
 		: _define(define)
 		, _value(value)
 	{}
+
+	ShaderMacro(const char* define, uint32_t value);
 };
 typedef std::vector<ShaderMacro> ShaderMacros;
 
