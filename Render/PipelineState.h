@@ -180,6 +180,13 @@ struct GraphicsPipelineStateDesc
 		return *this;
 	}
 
+	GraphicsPipelineStateDesc& TargetBlendDesc(const GraphicsPipelineTargetDesc& desc)
+	{
+		TargetDesc = desc;
+
+		return *this;
+	}
+
 	GraphicsPipelineStateDesc& VertexShader(VertexShader_t vs) { Vs = vs; return *this; }
 	GraphicsPipelineStateDesc& GeomstryShader(GeometryShader_t gs) { Gs = gs; return *this; }
 	GraphicsPipelineStateDesc& PixelShader(PixelShader_t ps) { Ps = ps; return *this; }
