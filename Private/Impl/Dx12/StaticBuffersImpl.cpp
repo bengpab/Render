@@ -148,7 +148,7 @@ public:
 		}
 
 		size_t newOffset = alignedOffset + alignedSize;
-		size_t newSize = (smallestBlockBySizeIt->first + alignedOffset) - alignedSize;
+		size_t newSize = (smallestBlockIt->first + offsetDiff) - alignedSize;
 
 		FreeBlocksBySize.erase(smallestBlockBySizeIt);
 		FreeBlocksByOffset.erase(smallestBlockIt);
@@ -290,7 +290,7 @@ public:
 
 struct BufferAllocationPool
 {
-	std::vector<BufferAllocationPage> Pages;
+	std::vector<std::unique_ptr<BufferAllocationPage>> Pages;
 	std::vector<BufferAllocationSingleBuffer> SingleBuffers;
 
 	BufferAllocation AllocSmallBuffer(size_t size, size_t alignment, const void* const pData)
@@ -299,9 +299,9 @@ struct BufferAllocationPool
 
 		BufferAllocation alloc = {};
 
-		for (BufferAllocationPage& page : Pages)
+		for (std::unique_ptr<BufferAllocationPage>& page : Pages)
 		{
-			alloc = page.Alloc(size, alignment, pData);
+			alloc = page->Alloc(size, alignment, pData);
 
 			if (alloc.Size > 0)
 			{
@@ -309,9 +309,9 @@ struct BufferAllocationPool
 			}
 		}
 
-		BufferAllocationPage& page = Pages.emplace_back();
+		std::unique_ptr<BufferAllocationPage>& page = Pages.emplace_back(std::make_unique<BufferAllocationPage>());
 
-		alloc = page.Alloc(size, alignment, pData);
+		alloc = page->Alloc(size, alignment, pData);
 
 		if (alloc.Size < size)
 		{
@@ -375,9 +375,9 @@ struct BufferAllocationPool
 			auto it = Pages.begin();
 			for (; it != Pages.end(); it++)
 			{
-				if (it->GetGpuAddress() == alloc.pGPUMem)
+				if (it->get()->GetGpuAddress() == alloc.pGPUMem)
 				{
-					it->Update(alloc, pData);
+					it->get()->Update(alloc, pData);
 
 					return;
 				}
@@ -415,9 +415,9 @@ struct BufferAllocationPool
 			auto it = Pages.begin();
 			for (; it != Pages.end(); it++)
 			{
-				if (it->GetGpuAddress() == alloc.pGPUMem)
+				if (it->get()->GetGpuAddress() == alloc.pGPUMem)
 				{
-					it->Free(alloc);
+					it->get()->Free(alloc);
 				}
 			}
 		}

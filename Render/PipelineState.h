@@ -117,10 +117,20 @@ enum class ComparisionFunc : uint8_t
 	ALWAYS,
 };
 
-struct GraphicsPipelineStateDesc
+struct GraphicsPipelineTargetDesc
 {
 	static constexpr uint32_t MaxRenderTargets = 8u;
 
+	RenderFormat Formats[MaxRenderTargets] = {};
+	BlendMode Blends[MaxRenderTargets] = {};
+	uint8_t NumRenderTargets = 0;
+
+	GraphicsPipelineTargetDesc() = default;
+	GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends);
+};
+
+struct GraphicsPipelineStateDesc
+{
 	// Rasterizer desc
 	PrimitiveTopologyType PrimTopo = PrimitiveTopologyType::UNDEFINED;
 	FillMode Fill = FillMode::SOLID;
@@ -134,10 +144,7 @@ struct GraphicsPipelineStateDesc
 	ComparisionFunc DepthCompare = ComparisionFunc::NEVER;
 	RenderFormat DsvFormat = RenderFormat::UNKNOWN;
 
-	// Target Desc
-	RenderFormat TargetFormats[MaxRenderTargets];
-	BlendMode Blends[MaxRenderTargets];
-	uint8_t NumRenderTargets = 1;
+	GraphicsPipelineTargetDesc TargetDesc = {};
 	
 	VertexShader_t Vs = VertexShader_t::INVALID;
 	GeometryShader_t Gs = GeometryShader_t::INVALID;
@@ -168,10 +175,7 @@ struct GraphicsPipelineStateDesc
 
 	GraphicsPipelineStateDesc& TargetBlendDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends)
 	{
-		NumRenderTargets = (uint8_t)(targetDescs.size() < blends.size() ? targetDescs.size() : blends.size());
-
-		memcpy(TargetFormats, targetDescs.begin(), NumRenderTargets * sizeof(RenderFormat));
-		memcpy(Blends, blends.begin(), NumRenderTargets * sizeof(BlendMode));
+		TargetDesc = GraphicsPipelineTargetDesc(targetDescs, blends);
 
 		return *this;
 	}

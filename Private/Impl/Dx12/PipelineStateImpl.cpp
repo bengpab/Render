@@ -174,24 +174,24 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 
 	dxDesc.BlendState.AlphaToCoverageEnable = FALSE;
 
-	for (uint8_t i = 1; i < desc.NumRenderTargets; i++)
+	for (uint8_t i = 1; i < desc.TargetDesc.NumRenderTargets; i++)
 	{
-		if (desc.Blends[i].Opaque != desc.Blends[0].Opaque)
+		if (desc.TargetDesc.Blends[i].Opaque != desc.TargetDesc.Blends[0].Opaque)
 		{
 			dxDesc.BlendState.IndependentBlendEnable = true;
 			break;
 		}
 	}
 
-	for (uint8_t i = 0; i < desc.NumRenderTargets; i++)
+	for (uint8_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
 	{
-		dxDesc.BlendState.RenderTarget[i].BlendEnable = desc.Blends[i].BlendEnabled;
-		dxDesc.BlendState.RenderTarget[i].SrcBlend = GetBlend(desc.Blends[i].SrcBlend);
-		dxDesc.BlendState.RenderTarget[i].DestBlend = GetBlend(desc.Blends[i].DstBlend);
-		dxDesc.BlendState.RenderTarget[i].BlendOp = GetBlendOp(desc.Blends[i].Op);
-		dxDesc.BlendState.RenderTarget[i].SrcBlendAlpha = GetBlend(desc.Blends[i].SrcBlendAlpha);
-		dxDesc.BlendState.RenderTarget[i].DestBlendAlpha = GetBlend(desc.Blends[i].DstBlendAlpha);
-		dxDesc.BlendState.RenderTarget[i].BlendOpAlpha = GetBlendOp(desc.Blends[i].OpAlpha);
+		dxDesc.BlendState.RenderTarget[i].BlendEnable = desc.TargetDesc.Blends[i].BlendEnabled;
+		dxDesc.BlendState.RenderTarget[i].SrcBlend = GetBlend(desc.TargetDesc.Blends[i].SrcBlend);
+		dxDesc.BlendState.RenderTarget[i].DestBlend = GetBlend(desc.TargetDesc.Blends[i].DstBlend);
+		dxDesc.BlendState.RenderTarget[i].BlendOp = GetBlendOp(desc.TargetDesc.Blends[i].Op);
+		dxDesc.BlendState.RenderTarget[i].SrcBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].SrcBlendAlpha);
+		dxDesc.BlendState.RenderTarget[i].DestBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].DstBlendAlpha);
+		dxDesc.BlendState.RenderTarget[i].BlendOpAlpha = GetBlendOp(desc.TargetDesc.Blends[i].OpAlpha);
 		dxDesc.BlendState.RenderTarget[i].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 	}
 
@@ -236,11 +236,11 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	dxDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	dxDesc.PrimitiveTopologyType = GetPrimTopoType(desc.PrimTopo);
 
-	dxDesc.NumRenderTargets = desc.NumRenderTargets;
+	dxDesc.NumRenderTargets = desc.TargetDesc.NumRenderTargets;
 	
-	for (uint32_t i = 0; i < desc.NumRenderTargets; i++)
+	for (uint32_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
 	{
-		dxDesc.RTVFormats[i] = Dx12_Format(desc.TargetFormats[i]);
+		dxDesc.RTVFormats[i] = Dx12_Format(desc.TargetDesc.Formats[i]);
 	}
 
 	dxDesc.DSVFormat = Dx12_Format(desc.DsvFormat);

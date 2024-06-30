@@ -29,14 +29,14 @@ static D3D11_COMPARISON_FUNC GetComparisonFunc(ComparisionFunc f)
 {
 	switch (f)
 	{
-	case ComparisionFunc::NEVER:		return D3D11_COMPARISON_NEVER;
-	case ComparisionFunc::LESS:			return D3D11_COMPARISON_LESS;
-	case ComparisionFunc::EQUAL:		return D3D11_COMPARISON_EQUAL;
-	case ComparisionFunc::LESS_EQUAL:	return D3D11_COMPARISON_LESS_EQUAL;
-	case ComparisionFunc::GREATER:		return D3D11_COMPARISON_GREATER;
+	case ComparisionFunc::NEVER:			return D3D11_COMPARISON_NEVER;
+	case ComparisionFunc::LESS:				return D3D11_COMPARISON_LESS;
+	case ComparisionFunc::EQUAL:			return D3D11_COMPARISON_EQUAL;
+	case ComparisionFunc::LESS_EQUAL:		return D3D11_COMPARISON_LESS_EQUAL;
+	case ComparisionFunc::GREATER:			return D3D11_COMPARISON_GREATER;
 	case ComparisionFunc::NOT_EQUAL:		return D3D11_COMPARISON_NOT_EQUAL;
 	case ComparisionFunc::GREATER_EQUAL:	return D3D11_COMPARISON_GREATER_EQUAL;
-	case ComparisionFunc::ALWAYS:		return D3D11_COMPARISON_ALWAYS;
+	case ComparisionFunc::ALWAYS:			return D3D11_COMPARISON_ALWAYS;
 	}
 
 	assert(0 && "Unsupported comparison func");
@@ -203,7 +203,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	}
 
 	{
-		D3D11_BLEND_DESC bs = CreateBS(desc.Blends, desc.NumRenderTargets);
+		D3D11_BLEND_DESC bs = CreateBS(desc.TargetDesc.Blends, desc.TargetDesc.NumRenderTargets);
 		if (FAILED(g_render.Device->CreateBlendState(&bs, &pso->bs)))
 		{
 			fprintf(stderr, "CompileGraphicsPipelineState failed to create blend state");

@@ -16,6 +16,16 @@ struct ComputePipelineStateData
     ComputePipelineStateDesc Desc;
 };
 
+GraphicsPipelineTargetDesc::GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> formats, std::initializer_list<BlendMode> blends)
+{
+    assert(formats.size() == blends.size() && "GraphicsPipelineTargetDesc ctor target desc and blend mismatch");
+
+    NumRenderTargets = (uint8_t)(formats.size());
+
+    memcpy(Formats, formats.begin(), NumRenderTargets * sizeof(RenderFormat));
+    memcpy(Blends, blends.begin(), NumRenderTargets * sizeof(BlendMode));
+}
+
 IDArray<GraphicsPipelineState_t, GraphicsPipelineStateData> g_GraphicsPipelineStates;
 IDArray<ComputePipelineState_t, ComputePipelineStateData> g_ComputePipelineStates;
 
