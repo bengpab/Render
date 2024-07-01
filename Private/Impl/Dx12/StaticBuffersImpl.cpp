@@ -107,10 +107,10 @@ public:
 	{
 		size_t alignedSize = AlignUp(size, alignment);
 
-		if (alignedSize > FreeSize)
-		{
-			return {};
-		}
+		//if (alignedSize > FreeSize)
+		//{
+		//	return {};
+		//}
 
 		FreeBlocksBySizeMap::const_iterator smallestBlockBySizeIt = FreeBlocksBySize.lower_bound(alignedSize);
 		FreeBlocksByOffsetMap::const_iterator smallestBlockIt = FreeBlocksByOffset.cend();
@@ -140,6 +140,11 @@ public:
 			return {};
 		}
 
+		if (alignedOffset + alignedSize > AllocationPageSize)
+		{
+			__debugbreak();
+		}
+
 		if (offsetDiff > 0)
 		{
 			FreeBlocksByOffsetMap::const_iterator smallestBlockIt = smallestBlockBySizeIt->second;
@@ -148,7 +153,7 @@ public:
 		}
 
 		size_t newOffset = alignedOffset + alignedSize;
-		size_t newSize = (smallestBlockIt->first + offsetDiff) - alignedSize;
+		size_t newSize = smallestBlockBySizeIt->first - alignedSize;
 
 		FreeBlocksBySize.erase(smallestBlockBySizeIt);
 		FreeBlocksByOffset.erase(smallestBlockIt);
@@ -165,7 +170,7 @@ public:
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 
-		FreeSize -= size;
+		//FreeSize -= size;
 
 		alloc.SingleBuffer = false;
 
@@ -224,7 +229,7 @@ public:
 
 		AddFreeBlock(newOffset, newSize);
 
-		FreeSize += newSize;
+		//FreeSize += newSize;
 	}
 };
 
