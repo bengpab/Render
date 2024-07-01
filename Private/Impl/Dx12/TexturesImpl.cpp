@@ -158,6 +158,11 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 
 		uploadResource->Unmap(0u, nullptr);
 
+		// Process pending deletes on upload because we dont want loads of texture upload requests
+		// to saturate upload memory
+		// When making threadsafe revisit this
+		Dx12_TexturesProcessPendingDeletes(false);
+
 		CommandListPtr uploadCl = CommandList::Create(CommandListType::COPY);
 
 		ID3D12GraphicsCommandList* dxcl = Dx12_GetCommandList(uploadCl.get());
