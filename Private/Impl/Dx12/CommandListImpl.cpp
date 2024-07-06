@@ -427,7 +427,7 @@ void CommandList::CopyTexture(Texture_t dst, Texture_t src)
 
 void CommandList::DrawIndexedInstanced(uint32_t numIndices, uint32_t numInstances, uint32_t startIndex, uint32_t startVertex, uint32_t startInstance)
 {
-	impl->CL.DxCl->DrawIndexedInstanced((UINT)numIndices, (UINT)numIndices, (UINT)startIndex, (UINT)startVertex, (UINT)startInstance);
+	impl->CL.DxCl->DrawIndexedInstanced((UINT)numIndices, (UINT)numInstances, (UINT)startIndex, (UINT)startVertex, (UINT)startInstance);
 }
 
 void CommandList::DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32_t startVertex, uint32_t startInstance)
