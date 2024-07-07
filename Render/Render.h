@@ -1,7 +1,7 @@
 #pragma once
 
 #define RENDER_MAJOR_VERSION 1
-#define RENDER_MINOR_VERSION 0
+#define RENDER_MINOR_VERSION 1
 
 #include "Binding.h"
 #include "Buffers.h"

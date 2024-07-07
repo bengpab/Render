@@ -1,0 +1,16 @@
+## Render 1.1
+- Added: Support for multiple viewports, mainly for ImGui docking branch. This includes a new option to sync backbuffer flips after the present call, or to delay the sync until the next viewport frame.
+         It is more efficient to sync at the start of a frame when you know you will be processing command lists for other viewports as the backbuffer will be more likely to become available before then.
+- Added: RenderTypes.h now includes forwards for all render types so you don't need to include "Render.h" in your headers.
+- Added: GraphicsPipelineTargetDesc structure to capture the render pass state for a PSO.
+- Added: ShaderMacro constructor that accepts a uint
+- Added: REVISIT D3D12 textures now flush the upload queue on create so that batch creating textures doesnt saturate memory with processed upload buffers. A proper async loading strategy is needed to handle this correctly
+
+- Updated: The project layout so that it works better as a drop in lib. Public code now sits in the top level and private within the 'Private' folder.
+
+- Fixed: An issue where setting an INVALID PSO would cause a nullptr crash. In the event we set an invalid PSO now the command list early outs.
+- Fixed: D3D12 requires both dxil.dll and dxcompiler.dll to operate, but the D3D12 makefile would only copy the former.
+- Fixed: D3D12 dynamic buffers InFlight check always returning false causing active buffers to be rewritten while in use.
+- Fixed: D3D12 static buffer pages were not allocated in fixed positions in the page array, meaning that reallocations of the pages array invalidated internal iterator handles for tracking allocations.
+- Fixed: D3D12 static buffer allocation strategy incorrectly calculating the remaining size of a block when doing a partial alloc.
+- Fixed: D3D12 CommandList::DrawIndexedInstanced was passing numIndices into the numInstances slot causing horrendous draw calls.
