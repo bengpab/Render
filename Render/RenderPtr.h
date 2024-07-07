@@ -1,0 +1,79 @@
+#pragma once
+
+namespace tpr
+{
+
+template<typename RenderType_t>
+struct RenderPtr
+{
+	RenderPtr()
+		: Handle(RenderType_t::INVALID)
+	{}
+
+	// copy, increase ref
+	RenderPtr(const RenderPtr& other)
+		: Handle(other.Handle)
+	{
+		RenderRef(Handle);
+	}
+
+	// move, do nothing
+	RenderPtr(RenderPtr&& other) = default;
+
+	~RenderPtr()
+	{
+		RenderRelease(Handle);
+	}
+
+	// We always assume the incoming type is reffed already 
+	RenderPtr(RenderType_t handle)
+		: Handle(handle)
+	{}
+
+	RenderPtr& operator=(const RenderPtr& other)
+	{
+		if (&this->Handle != &other)
+		{
+			RenderRelease(Handle);
+			Handle = other.Handle;
+			RenderRef(Handle);
+		}
+		return *this;
+	}
+
+	RenderPtr& operator=(RenderPtr&& other)
+	{
+		if (&this->Handle != &other)
+		{
+			RenderRelease(Handle);
+			Handle = other.Handle;
+			other.Handle = RenderType_t::INVALID;
+		}
+		return *this;
+	}
+
+	operator RenderType_t() const
+	{
+		return Handle;
+	}
+
+	RenderType_t Get() const 
+	{ 
+		return Handle; 
+	}
+
+	operator bool() const
+	{
+		return Handle != RenderType_t::INVALID;
+	}
+
+	const RenderType_t* operator&() const
+	{
+		return &Handle;
+	}
+
+private:
+	RenderType_t Handle = RenderType_t::INVALID;
+};
+
+}

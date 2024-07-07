@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RenderPtr.h"
+
 #include <assert.h>
 #include <cstdint>
 
@@ -32,6 +34,19 @@ FWD_RENDER_TYPE(PixelShader_t);
 FWD_RENDER_TYPE(GeometryShader_t);
 FWD_RENDER_TYPE(ComputeShader_t);
 FWD_RENDER_TYPE(Texture_t);
+
+using ShaderResourceViewPtr = RenderPtr<ShaderResourceView_t>;
+using UnorderedAccessViewPtr = RenderPtr<UnorderedAccessView_t>;
+using RenderTargetViewPtr = RenderPtr<RenderTargetView_t>;
+using DepthStencilViewPtr = RenderPtr<DepthStencilView_t>;
+using VertexBufferPtr = RenderPtr<VertexBuffer_t>;
+using IndexBufferPtr = RenderPtr<IndexBuffer_t>;
+using StructuredBufferPtr = RenderPtr<StructuredBuffer_t>;
+using ConstantBufferPtr = RenderPtr<ConstantBuffer_t>;
+using GraphicsPipelineStatePtr = RenderPtr<GraphicsPipelineState_t>;
+using ComputePipelineStatePtr = RenderPtr<ComputePipelineState_t>;
+using RootSignaturePtr = RenderPtr<RootSignature_t>;
+using TexturePtr = RenderPtr<Texture_t>;
 
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;

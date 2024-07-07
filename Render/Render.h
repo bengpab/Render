@@ -14,6 +14,8 @@
 #include "Textures.h"
 #include "View.h"
 
+#include "RenderPtr.h"
+
 namespace tpr
 {
 

@@ -64,12 +64,12 @@ struct IDArray
 
 	bool Valid(ID id) const noexcept
 	{
-		return (size_t)id < RefCounts.size() && RefCounts[(uint32_t)id] > 0;
+		return id != ID::INVALID && (size_t)id < RefCounts.size() && RefCounts[(uint32_t)id] > 0;
 	}
 
 	DataType* Release(ID id)
 	{
-		if (id == ID::INVALID || RefCounts[(uint32_t)id] == 0)
+		if (!Valid(id))
 			return nullptr;
 
 		if (--RefCounts[(uint32_t)id] == 0)
