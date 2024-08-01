@@ -74,27 +74,24 @@ ConstantBuffer_t CreateConstantBuffer(const void* const data, size_t size)
 
 void UpdateVertexBuffer(VertexBuffer_t vb, const void* const data, size_t size)
 {
-	if (BufferData* bufData = g_VertexBuffers.Get(vb))
+	if (g_VertexBuffers.Valid(vb))
 	{
-		assert(size <= bufData->size);
 		UpdateVertexBufferImpl(vb, data, size);
 	}
 }
 
 void UpdateIndexBuffer(IndexBuffer_t ib, const void* const data, size_t size)
 {
-	if (BufferData* bufData = g_IndexBuffers.Get(ib))
+	if (g_IndexBuffers.Valid(ib))
 	{
-		assert(size <= bufData->size);
 		UpdateIndexBufferImpl(ib, data, size);
 	}
 }
 
 void UpdateConstantBuffer(ConstantBuffer_t cb, const void* const data, size_t size)
 {
-	if (BufferData* bufData = g_ConstantBuffers.Get(cb))
+	if (g_ConstantBuffers.Valid(cb))
 	{
-		assert(size <= bufData->size);
 		UpdateConstantBufferImpl(cb, data, size);
 	}
 }

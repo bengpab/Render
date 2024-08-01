@@ -34,7 +34,7 @@ struct Dx12CommandQueue
 {
 	ComPtr<ID3D12CommandQueue> DxCommandQueue;
 	ComPtr<ID3D12Fence> DxFence;
-	uint64_t FenceValue = 0u;
+	std::atomic<uint64_t> FenceValue = 0u;
 };
 
 struct Dx12CommandAllocator
@@ -55,6 +55,12 @@ struct Dx12DescriptorHeap
 	ComPtr<ID3D12DescriptorHeap> DxHeap;
 	uint64_t DirectFenceValue = 0u;
 	uint64_t ComputeFenceValue = 0u;
+};
+
+struct Dx12GraphicsPipelineStateDesc
+{
+	ComPtr<ID3D12PipelineState> PSO = nullptr;
+	D3D12_PRIMITIVE_TOPOLOGY PrimTopo = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 };
 
 struct Dx12RenderGlobals
@@ -101,7 +107,7 @@ void Dx12_SubmitDsvDescriptorHeap(Dx12DescriptorHeap&& heap, uint64_t graphicsFe
 D3D12_CPU_DESCRIPTOR_HANDLE Dx12_RtvDescriptorHandle(ID3D12DescriptorHeap* heap, RenderTargetView_t rtv);
 D3D12_CPU_DESCRIPTOR_HANDLE Dx12_DsvDescriptorHandle(ID3D12DescriptorHeap* heap, DepthStencilView_t dsv);
 
-ID3D12PipelineState* Dx12_GetPipelineState(GraphicsPipelineState_t pso);
+Dx12GraphicsPipelineStateDesc* Dx12_GetPipelineState(GraphicsPipelineState_t pso);
 ID3D12PipelineState* Dx12_GetPipelineState(ComputePipelineState_t pso);
 
 D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(VertexBuffer_t vb, uint32_t offset, uint32_t stride);
@@ -126,11 +132,14 @@ D3D12_COMMAND_LIST_TYPE Dx12_CommandListType(CommandListType type);
 
 Dx12CommandQueue* Dx12_GetCommandQueue(CommandListType type);
 uint64_t Dx12_Signal(CommandListType queue);
+void Dx12_SignalFence(ID3D12Fence* dxFence, CommandListType queue, uint64_t value);
 void Dx12_Wait(CommandListType queue, uint64_t value);
 
 D3D12_HEAP_PROPERTIES Dx12_HeapProps(D3D12_HEAP_TYPE type);
 D3D12_RESOURCE_DESC Dx12_BufferDesc(size_t size, D3D12_RESOURCE_FLAGS flags);
 ComPtr<ID3D12Resource> Dx12_CreateBuffer(size_t size, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flags);
+
+ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue);
 
 ID3D12RootSignature* Dx12_GetRootSignature(RootSignature_t rs);
 

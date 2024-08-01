@@ -53,11 +53,11 @@ std::string CreateShaderIDStr(const char* path, const ShaderMacros& macros)
 }
 
 template<typename T>
-T FindShader(const IDArray<T, ShaderData>& loaded, const std::string& shaderIDStr)
+T FindShader(IDArray<T, ShaderData>& loaded, const std::string& shaderIDStr)
 {
 	T found = T::INVALID;
 
-	loaded.ForEachValidConst([&](T handle, const ShaderData& data)
+	loaded.ForEachValid([&](T handle, const ShaderData& data)
 	{
 		if (shaderIDStr == data.ShaderIDStr)
 		{
@@ -74,7 +74,7 @@ static void AppendShaderPlatformMacros(ShaderMacros* macros)
 {
 	macros->push_back({ Render_ApiId(), "1" });
 
-	if (Render_BindlessMode())
+	if (Render_IsBindless())
 	{
 		macros->push_back({ "_BINDLESS", "1" });
 		macros->push_back({ "_BINDLESS_MAX", "1" });
@@ -106,11 +106,17 @@ ShaderHandle CreateShader(const char* path, const ShaderMacros& macros, const ch
 	if (handle == ShaderHandle::INVALID)
 	{
 		handle = shaderArray.Create();
-		ShaderData* data = shaderArray.Get(handle);
 
-		UpdateShader(data, path, fullMacros, shaderIdStr);
+		{
+			// TODO Multithread: Would be nicer if we could forward the constructor values to the shader in create I think to avoid this extra lock
+			auto lock = shaderArray.ReadScopeLock();
 
-		if (!CompileShader(handle, path, data->Macros))
+			ShaderData* data = shaderArray.Get(handle);
+
+			UpdateShader(data, path, fullMacros, shaderIdStr);
+		}
+
+		if (!CompileShader(handle, path, fullMacros))
 		{
 			shaderArray.Release(handle);
 			return ShaderHandle::INVALID;
@@ -161,9 +167,9 @@ size_t Shaders_GetComputeShaderCount()
 }
 
 template<typename ShaderHandle>
-void ReloadShaderType(const IDArray<ShaderHandle, ShaderData>& shaderArray)
+void ReloadShaderType(IDArray<ShaderHandle, ShaderData>& shaderArray)
 {
-	shaderArray.ForEachValidConst([] (ShaderHandle handle, const ShaderData& data)
+	shaderArray.ForEachValid([] (ShaderHandle handle, const ShaderData& data)
 	{
 		if (data.Compiled)
 		{

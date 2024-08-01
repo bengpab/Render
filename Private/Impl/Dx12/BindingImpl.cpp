@@ -45,22 +45,29 @@ struct DSVDescriptor
 };
 
 IDArray<SRVUAV_t, SRVUAVDescriptor> g_SrvUavDescriptors;
+
 SparseArray<RTVDescriptor, RenderTargetView_t> g_RtvDescriptors;
+std::shared_mutex g_RtvMutex;
+
 SparseArray<DSVDescriptor, DepthStencilView_t> g_DsvDescriptors;
+std::shared_mutex g_DsvMutex;
 
 struct DescriptorHeaps
 {
-	uint32_t DescriptorCount = 0u;
 	UINT DescriptorHandleIncrement = 0u;
 
 	std::vector<Dx12DescriptorHeap> FreeHeaps;
 	std::queue<Dx12DescriptorHeap> PendingDeletion;
 	std::queue<Dx12DescriptorHeap> InFlightHeaps;
 
+	std::mutex Mutex;
+
 	virtual Dx12DescriptorHeap CreateHeap() = 0;
 
 	void BeginFrame()
 	{
+		auto lock = std::scoped_lock(Mutex);
+
 		if (!InFlightHeaps.empty() || !PendingDeletion.empty())
 		{
 			const uint64_t directFenceCurrent = g_render.DirectQueue.DxFence->GetCompletedValue();
@@ -100,6 +107,8 @@ struct DescriptorHeaps
 
 	Dx12DescriptorHeap AccquireHeap()
 	{
+		auto lock = std::scoped_lock(Mutex);
+
 		Dx12DescriptorHeap heap = {};
 
 		if (!FreeHeaps.empty())
@@ -115,8 +124,10 @@ struct DescriptorHeaps
 		return heap;
 	}
 
-	void HeapChanged(uint32_t desciptorCount)
+	void HeapChanged()
 	{
+		auto lock = std::scoped_lock(Mutex);
+
 		FreeHeaps.clear();
 
 		while(!InFlightHeaps.empty())
@@ -124,8 +135,16 @@ struct DescriptorHeaps
 			PendingDeletion.emplace(std::move(InFlightHeaps.front()));
 			InFlightHeaps.pop();
 		}
+	}
 
-		DescriptorCount = desciptorCount;
+	void SubmitHeap(Dx12DescriptorHeap&& heap, uint64_t graphicsFenceValue, uint64_t computeFenceValue)
+	{
+		auto lock = std::scoped_lock(Mutex);
+
+		heap.DirectFenceValue = graphicsFenceValue;
+		heap.ComputeFenceValue = computeFenceValue;
+
+		InFlightHeaps.emplace(std::move(heap));
 	}
 };
 
@@ -133,14 +152,13 @@ struct SrvUavDescriptorHeaps : public DescriptorHeaps
 {
 	virtual Dx12DescriptorHeap CreateHeap() override
 	{
-		if (DescriptorCount <= 0)
-			return {};
-
 		Dx12DescriptorHeap heap = {};
+
+		auto lock = g_SrvUavDescriptors.ReadScopeLock(); // Lock here so size stays consistent between NumDescriptors and during the loop
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		desc.NumDescriptors = DescriptorCount;
+		desc.NumDescriptors = (UINT)g_SrvUavDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1u;
 
@@ -193,14 +211,11 @@ struct RtvDescriptorHeap : public DescriptorHeaps
 {
 	virtual Dx12DescriptorHeap CreateHeap() override
 	{
-		if (DescriptorCount <= 0)
-			return {};
-
 		Dx12DescriptorHeap heap = {};
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		desc.NumDescriptors = DescriptorCount;
+		desc.NumDescriptors = (UINT)g_RtvDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 		desc.NodeMask = 1u;
 
@@ -234,14 +249,11 @@ struct DsvDescriptorHeap : public DescriptorHeaps
 {
 	virtual Dx12DescriptorHeap CreateHeap() override
 	{
-		if (DescriptorCount <= 0)
-			return {};
-
 		Dx12DescriptorHeap heap = {};
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		desc.NumDescriptors = DescriptorCount;
+		desc.NumDescriptors = (UINT)g_DsvDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 		desc.NodeMask = 1u;
 
@@ -277,14 +289,11 @@ DsvDescriptorHeap g_DsvHeap;
 
 SparseArray<SRVUAV_t, ShaderResourceView_t> g_SrvDescriptorRemap;
 SparseArray<SRVUAV_t, UnorderedAccessView_t> g_UavDescriptorRemap;
+std::shared_mutex g_SrvUavRemapMutex;
 
 bool CreateTextureSRVImpl(ShaderResourceView_t srv, Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize)
 {
-	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create();
-
-	g_SrvDescriptorRemap.AllocCopy(srv, heapHandle);
-
-	SRVUAVDescriptor& descriptor = g_SrvUavDescriptors[heapHandle];
+	SRVUAVDescriptor descriptor = {};
 
 	descriptor.Type = DescriptorType::SRV;
 	descriptor.Resource = Dx12_GetTextureResource(tex);
@@ -350,23 +359,25 @@ bool CreateTextureSRVImpl(ShaderResourceView_t srv, Texture_t tex, RenderFormat 
 	}
 	else
 	{
-		g_SrvUavDescriptors.Release(heapHandle);
-		g_SrvDescriptorRemap.Free(srv);
 		return false;
 	}
 
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create(descriptor);
+
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
+
+		g_SrvDescriptorRemap.AllocCopy(srv, heapHandle);
+	}	
+
+	g_SrvUavHeap.HeapChanged();
 
 	return true;
 }
 
 bool CreateTextureUAVImpl(UnorderedAccessView_t uav, Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create();
-
-	g_UavDescriptorRemap.AllocCopy(uav, heapHandle);
-
-	SRVUAVDescriptor& descriptor = g_SrvUavDescriptors[heapHandle];
+	SRVUAVDescriptor descriptor = {};
 
 	descriptor.Type = DescriptorType::UAV;
 	descriptor.Resource = Dx12_GetTextureResource(tex);
@@ -423,20 +434,25 @@ bool CreateTextureUAVImpl(UnorderedAccessView_t uav, Texture_t tex, RenderFormat
 	}
 	else
 	{
-		g_SrvUavDescriptors.Release(heapHandle);
-		g_UavDescriptorRemap.Free(uav);
-
 		return false;
 	}
 
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create();
+
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
+
+		g_UavDescriptorRemap.AllocCopy(uav, heapHandle);
+	}	
+
+	g_SrvUavHeap.HeapChanged();
 
 	return true;
 }
 
 bool CreateTextureRTVImpl(RenderTargetView_t rtv, Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	RTVDescriptor& descriptor = g_RtvDescriptors.Alloc(rtv);
+	RTVDescriptor descriptor = {};
 
 	descriptor.Resource = Dx12_GetTextureResource(tex);
 
@@ -493,19 +509,23 @@ bool CreateTextureRTVImpl(RenderTargetView_t rtv, Texture_t tex, RenderFormat fo
 	}
 	else
 	{
-		g_RtvDescriptors.Free(rtv);
-
 		return false;
 	}
 
-	g_RtvHeap.HeapChanged((uint32_t)g_RtvDescriptors.Size());
+	{
+		auto lock = std::unique_lock(g_RtvMutex);
+
+		g_RtvDescriptors.AllocCopy(rtv, descriptor);
+	}	
+
+	g_RtvHeap.HeapChanged();
 
 	return true;
 }
 
 bool CreateTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	DSVDescriptor& descriptor = g_DsvDescriptors.Alloc(dsv);
+	DSVDescriptor descriptor = {};
 
 	descriptor.Resource = Dx12_GetTextureResource(tex);
 
@@ -551,52 +571,72 @@ bool CreateTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex, RenderFormat fo
 	}
 	else
 	{
-		g_DsvDescriptors.Free(dsv);
-
 		return false;
 	}
 
-	g_DsvHeap.HeapChanged((uint32_t)g_DsvDescriptors.Size());
+	{
+		auto lock = std::unique_lock(g_DsvMutex);
+
+		g_DsvDescriptors.AllocCopy(dsv, descriptor);
+	}
+	
+
+	g_DsvHeap.HeapChanged();
 
 	return true;
 }
 
+void BindTextureSrvUavImpl(SRVUAV_t handle, Texture_t tex)
+{
+	{
+		auto lock = g_SrvUavDescriptors.ReadScopeLock();
+
+		SRVUAVDescriptor* descriptor = g_SrvUavDescriptors.Get(handle);
+
+		descriptor->Resource = Dx12_GetTextureResource(tex);
+	}
+
+	g_SrvUavHeap.HeapChanged();
+}
+
 void BindTextureSRVImpl(ShaderResourceView_t srv, Texture_t tex)
 {
-	SRVUAV_t handle = g_SrvDescriptorRemap[srv];
-	SRVUAVDescriptor& descriptor = g_SrvUavDescriptors[handle];
+	auto lock = std::shared_lock(g_SrvUavRemapMutex);
 
-	descriptor.Resource = Dx12_GetTextureResource(tex);
-
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+	BindTextureSrvUavImpl(g_SrvDescriptorRemap[srv], tex);
 }
 
 void BindTextureUAVImpl(UnorderedAccessView_t uav, Texture_t tex)
 {
-	SRVUAV_t handle = g_UavDescriptorRemap[uav];
-	SRVUAVDescriptor& descriptor = g_SrvUavDescriptors[handle];
+	auto lock = std::shared_lock(g_SrvUavRemapMutex);
 
-	descriptor.Resource = Dx12_GetTextureResource(tex);
-
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+	BindTextureSrvUavImpl(g_UavDescriptorRemap[uav], tex);
 }
 
 void BindTextureRTVImpl(RenderTargetView_t rtv, Texture_t tex)
 {
-	RTVDescriptor& descriptor = g_RtvDescriptors[rtv];
+	{
+		auto lock = std::shared_lock(g_RtvMutex);
 
-	descriptor.Resource = Dx12_GetTextureResource(tex);
+		RTVDescriptor& descriptor = g_RtvDescriptors[rtv];
 
-	g_RtvHeap.HeapChanged((uint32_t)g_RtvDescriptors.Size());
+		descriptor.Resource = Dx12_GetTextureResource(tex);
+	}
+
+	g_RtvHeap.HeapChanged();
 }
 
 void BindTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex)
 {
-	DSVDescriptor& descriptor = g_DsvDescriptors[dsv];
+	{
+		auto lock = std::shared_lock(g_DsvMutex);
 
-	descriptor.Resource = Dx12_GetTextureResource(tex);
+		DSVDescriptor& descriptor = g_DsvDescriptors[dsv];
 
-	g_DsvHeap.HeapChanged((uint32_t)g_DsvDescriptors.Size());
+		descriptor.Resource = Dx12_GetTextureResource(tex);
+	}
+
+	g_DsvHeap.HeapChanged();
 }
 
 bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements)
@@ -611,34 +651,50 @@ bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t
 
 void DestroySRV(ShaderResourceView_t srv)
 {
-	g_SrvUavDescriptors.Release(g_SrvDescriptorRemap[srv]);
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
 
-	g_SrvDescriptorRemap.Free(srv);
+		g_SrvUavDescriptors.Release(g_SrvDescriptorRemap[srv]);
 
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+		g_SrvDescriptorRemap.Free(srv);
+	}
+
+	g_SrvUavHeap.HeapChanged();
 }
 
 void DestroyUAV(UnorderedAccessView_t uav)
 {
-	g_SrvUavDescriptors.Release(g_UavDescriptorRemap[uav]);
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
 
-	g_UavDescriptorRemap.Free(uav);
+		g_SrvUavDescriptors.Release(g_UavDescriptorRemap[uav]);
 
-	g_SrvUavHeap.HeapChanged((uint32_t)g_SrvUavDescriptors.Size());
+		g_UavDescriptorRemap.Free(uav);
+	}
+
+	g_SrvUavHeap.HeapChanged();
 }
 
 void DestroyRTV(RenderTargetView_t rtv)
 {
-	g_RtvDescriptors.Free(rtv);
+	{
+		auto lock = std::unique_lock(g_RtvMutex);
 
-	g_RtvHeap.HeapChanged((uint32_t)g_RtvDescriptors.Size());
+		g_RtvDescriptors.Free(rtv);
+	}	
+
+	g_RtvHeap.HeapChanged();
 }
 
 void DestroyDSV(DepthStencilView_t dsv)
 {
-	g_DsvDescriptors.Free(dsv);
+	{
+		auto lock = std::unique_lock(g_DsvMutex);
 
-	g_DsvHeap.HeapChanged((uint32_t)g_DsvDescriptors.Size());
+		g_DsvDescriptors.Free(dsv);
+	}	
+
+	g_DsvHeap.HeapChanged();
 }
 
 void Dx12_DescriptorsBeginFrame()
@@ -704,35 +760,30 @@ D3D12_GPU_DESCRIPTOR_HANDLE Dx12_GetSrvUavTableHandle(ID3D12DescriptorHeap* heap
 
 void Dx12_SubmitSrvUavDescriptorHeap(Dx12DescriptorHeap&& heap, uint64_t graphicsFenceValue, uint64_t computeFenceValue)
 {
-	heap.DirectFenceValue = graphicsFenceValue;
-	heap.ComputeFenceValue = computeFenceValue;
-
-	g_SrvUavHeap.InFlightHeaps.emplace(std::move(heap));
+	g_SrvUavHeap.SubmitHeap(std::move(heap), graphicsFenceValue, computeFenceValue);
 }
 
 void Dx12_SubmitRtvDescriptorHeap(Dx12DescriptorHeap&& heap, uint64_t graphicsFenceValue, uint64_t computeFenceValue)
 {
-	heap.DirectFenceValue = graphicsFenceValue;
-	heap.ComputeFenceValue = computeFenceValue;
-
-	g_RtvHeap.InFlightHeaps.emplace(std::move(heap));
+	g_RtvHeap.SubmitHeap(std::move(heap), graphicsFenceValue, computeFenceValue);
 }
 
 void Dx12_SubmitDsvDescriptorHeap(Dx12DescriptorHeap&& heap, uint64_t graphicsFenceValue, uint64_t computeFenceValue)
 {
-	heap.DirectFenceValue = graphicsFenceValue;
-	heap.ComputeFenceValue = computeFenceValue;
-
-	g_DsvHeap.InFlightHeaps.emplace(std::move(heap));
+	g_DsvHeap.SubmitHeap(std::move(heap), graphicsFenceValue, computeFenceValue);
 }
 
 uint32_t GetDescriptorIndexImpl(ShaderResourceView_t srv)
 {
+	auto lock = std::shared_lock(g_SrvUavRemapMutex);
+
 	return static_cast<uint32_t>(g_SrvDescriptorRemap[srv]);
 }
 
 uint32_t GetDescriptorIndexImpl(UnorderedAccessView_t uav)
 {
+	auto lock = std::shared_lock(g_SrvUavRemapMutex);
+
 	return static_cast<uint32_t>(g_UavDescriptorRemap[uav]);
 }
 

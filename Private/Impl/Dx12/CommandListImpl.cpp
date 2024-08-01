@@ -353,19 +353,16 @@ void CommandList::SetPipelineState(GraphicsPipelineState_t pso)
 
 	LastPipeline = pso;
 
-	ID3D12PipelineState* dxPso = Dx12_GetPipelineState(pso);
+	Dx12GraphicsPipelineStateDesc* dxPso = Dx12_GetPipelineState(pso);
 
-	if (!dxPso)
+	if (!dxPso || !dxPso->PSO)
 	{
 		return;
 	}
 
-	if (const GraphicsPipelineStateDesc* desc = GetGraphicsPipelineStateDesc(pso))
-	{
-		impl->CL.DxCl->IASetPrimitiveTopology(Dx12_PrimitiveTopology(desc->PrimTopo));
-	}	
+	impl->CL.DxCl->IASetPrimitiveTopology(dxPso->PrimTopo);
 
-	impl->CL.DxCl->SetPipelineState(Dx12_GetPipelineState(pso));
+	impl->CL.DxCl->SetPipelineState(dxPso->PSO.Get());
 }
 
 void CommandList::SetPipelineState(ComputePipelineState_t pso)

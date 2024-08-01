@@ -1,5 +1,6 @@
 #pragma once
 
+#include <shared_mutex>
 #include <vector>
 
 template<typename ID, typename DataType>
@@ -13,108 +14,126 @@ struct IDArray
 
 	ID Create()
 	{
-		ID id = MakeID();
+		ID id = MakeID_Lock();
 		Data[(uint32_t)id] = {};
 		return id;
 	}
 
 	ID Create(const DataType& data)
 	{
-		ID id = MakeID();
+		ID id = MakeID_Lock();
 		Data[(uint32_t)id] = data;
 		return id;
 	}
 
 	ID Create(DataType&& data)
 	{
-		ID id = MakeID();
+		ID id = MakeID_Lock();
 		Data[(uint32_t)id] = std::move(data);
 		return id;
 	}
 
 	ID Create(DataType** outData)
 	{
-		ID id = MakeID();
+		ID id = MakeID_Lock();
 		*outData = &Data[(uint32_t)id];
 		return id;
 	}
 
 	void Update(ID id, DataType& data)
 	{
+		auto lock = ReadScopeLock();
+
 		assert((size_t)id < RefCounts.size());
 		Data[(uint32_t)id] = data;
 	}
 
 	void AddRef(ID id)
 	{
+		auto lock = ReadScopeLock();
+
 		assert((size_t)id < RefCounts.size());
 		RefCounts[(uint32_t)id]++;
 	}
 
-	uint32_t RefCount(ID id) const
+	uint32_t RefCount(ID id)
 	{
+		auto lock = ReadScopeLock();
+
 		assert((size_t)id < RefCounts.size());
 		return RefCounts[(size_t)id];
 	}
 
-	bool Reffed(ID id) const
+	bool Reffed(ID id)
 	{
 		return RefCount(id) > 0u;
 	}
 
-	bool Valid(ID id) const noexcept
+	bool Valid(ID id) noexcept
 	{
-		return id != ID::INVALID && (size_t)id < RefCounts.size() && RefCounts[(uint32_t)id] > 0;
+		auto lock = ReadScopeLock();
+
+		return Valid_AssumeLocked(id);
 	}
 
-	DataType* Release(ID id)
+	bool Release(ID id)
 	{
-		if (!Valid(id))
-			return nullptr;
+		auto lock = WriteScopeLock();
+
+		if (!Valid_AssumeLocked(id))
+			return false;
 
 		if (--RefCounts[(uint32_t)id] == 0)
 		{
 			FreeIDs.push_back(id);
-			return &Data[(uint32_t)id];
+			return true;
 		}
 
-		return nullptr;
+		return false;
 	}
 
-	DataType* GetUnchecked(ID id) noexcept
-	{
-		return (uint32_t)id <= Data.size() ? &Data[(uint32_t)id] : nullptr;
-	}
-
+	// Must ReadScopeLock before getting to ensure pointer remains valid
 	DataType* Get(ID id)
 	{
-		return (Valid(id) && Reffed(id)) ? &Data[(uint32_t)id] : nullptr;
+		return (Valid_AssumeLocked(id) && Reffed_AssumeLocked(id)) ? &Data[(uint32_t)id] : nullptr;
 	}
 
-	inline std::vector<DataType>& GetArray() noexcept { return Data; }
-	inline size_t Size() const noexcept { return Data.size(); }
-	inline size_t UsedSize() const noexcept { return Data.size() - FreeIDs.size(); }
-	auto begin() noexcept { return Data.begin(); }
-	auto end() noexcept { return Data.end(); }
+	inline std::shared_lock<std::shared_mutex> ReadScopeLock() noexcept { return std::shared_lock<std::shared_mutex>(Mutex); }
+	inline std::unique_lock<std::shared_mutex> WriteScopeLock() noexcept { return std::unique_lock<std::shared_mutex>(Mutex); }
 
-	DataType& operator[](ID id) { return Data[(size_t)id]; }
-	const DataType& operator[](ID id) const { return Data[(size_t)id]; }
+	inline size_t Size() noexcept 
+	{
+		auto lock = ReadScopeLock();
+
+		return Data.size(); 
+	}
+
+	inline size_t UsedSize() noexcept 
+	{
+		auto lock = ReadScopeLock();
+
+		return Data.size() - FreeIDs.size(); 
+	}
 
 	template<typename Func>
 	void ForEachNullIfValid(Func&& func)
 	{
+		auto lock = ReadScopeLock();
+
 		for (size_t i = 0; i < Data.size(); i++)
 		{
-			func(Valid((ID)i) ? &Data[i] : nullptr);
+			func(Valid_AssumeLocked((ID)i) ? &Data[i] : nullptr);
 		}
 	}
 
 	template<typename Func>
-	void ForEachValidConst(Func&& func) const
+	void ForEachValid(Func&& func)
 	{
+		auto lock = ReadScopeLock();
+
 		for (size_t i = 0; i < Data.size(); i++)
 		{
-			if (Valid((ID)i))
+			if (Valid_AssumeLocked((ID)i))
 			{
 				if (!func((ID)i, Data[i]))
 				{
@@ -129,6 +148,30 @@ private:
 	std::vector<ID>			FreeIDs;
 	std::vector<DataType>	Data;
 	std::vector<uint32_t>	RefCounts;
+	std::shared_mutex		Mutex;
+
+	uint32_t RefCount_AssumeLocked(ID id) const
+	{
+		assert((size_t)id < RefCounts.size());
+		return RefCounts[(size_t)id];
+	}
+
+	bool Reffed_AssumeLocked(ID id) const
+	{
+		return RefCount_AssumeLocked(id) > 0u;
+	}
+
+	bool Valid_AssumeLocked(ID id) const noexcept
+	{
+		return id != ID::INVALID && (size_t)id < RefCounts.size() && RefCounts[(uint32_t)id] > 0;
+	}
+
+	ID MakeID_Lock()
+	{
+		auto lock = WriteScopeLock();
+
+		return MakeID();
+	}
 
 	ID MakeID()
 	{

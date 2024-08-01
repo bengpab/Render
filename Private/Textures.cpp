@@ -11,7 +11,6 @@ namespace tpr
 struct TextureData
 {
     TextureCreateDescEx Desc;
-    std::string DebugName;
 };
 
 IDArray<Texture_t, TextureData> g_Textures;
@@ -58,8 +57,12 @@ Texture_t CreateTextureEx(const TextureCreateDescEx& desc)
         return Texture_t::INVALID;
     }
 
-    TextureData* data = g_Textures.Get(newTex);
-    data->Desc = desc;
+    {
+        auto lock = g_Textures.ReadScopeLock();
+
+        TextureData* data = g_Textures.Get(newTex);
+        data->Desc = desc;
+    }
 
     return newTex;
 }
@@ -75,14 +78,11 @@ Texture_t AllocTexture()
 
 void UpdateTexture(Texture_t tex, const void* const data, uint32_t width, uint32_t height, RenderFormat format)
 {
+    // TODO Multithread: This is an expensive lock, we should enqueue the update instead
+    auto lock = g_Textures.ReadScopeLock();
+
     if (TextureData* data = g_Textures.Get(tex))
         UpdateTextureImpl(tex, data, width, height, format);
-}
-
-void SetTextureName(Texture_t tex, const char* name)
-{
-    if (TextureData* data = g_Textures.Get(tex))
-        data->DebugName = name;
 }
 
 void RenderRef(Texture_t tex)
@@ -100,6 +100,8 @@ void RenderRelease(Texture_t tex)
 
 bool Textures_SupportsDescriptors(Texture_t tex, RenderResourceFlags flags)
 {
+    auto lock = g_Textures.ReadScopeLock();
+
     if (const TextureData* data = g_Textures.Get(tex))
     {
         return (data->Desc.Flags & flags) == flags;
@@ -110,6 +112,8 @@ bool Textures_SupportsDescriptors(Texture_t tex, RenderResourceFlags flags)
 
 void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h)
 {
+    auto lock = g_Textures.ReadScopeLock();
+
     if (TextureData* data = g_Textures.Get(tex))
     {
         *w = data->Desc.Width;

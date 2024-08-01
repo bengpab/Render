@@ -44,7 +44,9 @@ void Render_ShutDown();
 void Render_PushDebugWarningDisable(RenderDebugWarnings warning);
 void Render_PopDebugWarningDisable();
 
-bool Render_BindlessMode();
+bool Render_IsBindless();
+bool Render_IsThreadSafe();
+
 const char* Render_ApiId();
 
 }

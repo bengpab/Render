@@ -3,6 +3,8 @@
 #include "Impl/BindingImpl.h"
 #include "IDArray.h"
 
+#include <mutex>
+
 namespace tpr
 {
 
@@ -68,13 +70,74 @@ IDArray<UnorderedAccessView_t, ViewData> g_UAVs;
 IDArray<RenderTargetView_t, ViewData> g_RTVs;
 IDArray<DepthStencilView_t, ViewData> g_DSVs;
 
+std::mutex SrvMutex;
+std::mutex UavMutex;
+std::mutex RtvMutex;
+std::mutex DsvMutex;
+
+ShaderResourceView_t CreateSrv_Lock(ViewData&& viewData)
+{
+	std::scoped_lock lock(SrvMutex);
+
+	return g_SRVs.Create(viewData);
+}
+
+UnorderedAccessView_t CreateUav_Lock(ViewData&& viewData)
+{
+	std::scoped_lock lock(UavMutex);
+
+	return g_UAVs.Create(viewData);
+}
+
+RenderTargetView_t CreateRtv_Lock(ViewData&& viewData)
+{
+	std::scoped_lock lock(RtvMutex);
+
+	return g_RTVs.Create(viewData);
+}
+
+DepthStencilView_t CreateDsv_Lock(ViewData&& viewData)
+{
+	std::scoped_lock lock(DsvMutex);
+
+	return g_DSVs.Create(viewData);
+}
+
+void ReleaseSrv_Lock(ShaderResourceView_t srv)
+{
+	std::scoped_lock lock(SrvMutex);
+
+	g_SRVs.Release(srv);
+}
+
+void ReleaseUav_Lock(UnorderedAccessView_t uav)
+{
+	std::scoped_lock lock(UavMutex);
+
+	g_UAVs.Release(uav);
+}
+
+void ReleaseRtv_Lock(RenderTargetView_t rtv)
+{
+	std::scoped_lock lock(RtvMutex);
+
+	g_RTVs.Release(rtv);
+}
+
+void ReleaseDsv_Lock(DepthStencilView_t dsv)
+{
+	std::scoped_lock lock(DsvMutex);
+
+	g_DSVs.Release(dsv);
+}
+
 ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize)
 {
-	ShaderResourceView_t srv = g_SRVs.Create(ViewData(tex, format, depthOrArraySize));
+	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(tex, format, depthOrArraySize));
 
 	if (!CreateTextureSRVImpl(srv, tex, format, dim, mipLevels, depthOrArraySize))
 	{
-		g_SRVs.Release(srv);
+		ReleaseSrv_Lock(srv);
 		return ShaderResourceView_t::INVALID;
 	}
 
@@ -83,11 +146,11 @@ ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, Textur
 
 UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(tex, format, depthOrArraySize));
+	UnorderedAccessView_t uav = CreateUav_Lock(ViewData(tex, format, depthOrArraySize));
 
 	if (!CreateTextureUAVImpl(uav, tex, format, dim, depthOrArraySize))
 	{
-		g_UAVs.Release(uav);
+		ReleaseUav_Lock(uav);
 		return UnorderedAccessView_t::INVALID;
 	}
 
@@ -96,11 +159,11 @@ UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, Textu
 
 RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	RenderTargetView_t rtv = g_RTVs.Create(ViewData(tex, format, depthOrArraySize));
+	RenderTargetView_t rtv = CreateRtv_Lock(ViewData(tex, format, depthOrArraySize));
 
 	if (!CreateTextureRTVImpl(rtv, tex, format, dim, depthOrArraySize))
 	{
-		g_RTVs.Release(rtv);
+		ReleaseRtv_Lock(rtv);
 		return RenderTargetView_t::INVALID;
 	}
 
@@ -109,11 +172,11 @@ RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, TextureD
 
 DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	DepthStencilView_t dsv = g_DSVs.Create(ViewData(tex, format, depthOrArraySize));
+	DepthStencilView_t dsv = CreateDsv_Lock(ViewData(tex, format, depthOrArraySize));
 
 	if (!CreateTextureDSVImpl(dsv, tex, format, dim, depthOrArraySize))
 	{
-		g_DSVs.Release(dsv);
+		ReleaseDsv_Lock(dsv);
 		return DepthStencilView_t::INVALID;
 	}
 
@@ -122,11 +185,11 @@ DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureD
 
 ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
 {
-	ShaderResourceView_t srv = g_SRVs.Create(ViewData(buf, firstElem, numElems));
+	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(buf, firstElem, numElems));
 
 	if (!CreateStructuredBufferSRVImpl(srv, buf, firstElem, numElems))
 	{
-		g_SRVs.Release(srv);
+		ReleaseSrv_Lock(srv);
 		return ShaderResourceView_t::INVALID;
 	}
 
@@ -135,11 +198,11 @@ ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t 
 
 UnorderedAccessView_t CreateStructuredBufferUAV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
 {
-	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(buf, firstElem, numElems));
+	UnorderedAccessView_t uav = CreateUav_Lock(ViewData(buf, firstElem, numElems));
 
 	if (!CreateStructuredBufferUAVImpl(uav, buf, firstElem, numElems))
 	{
-		g_UAVs.Release(uav);
+		ReleaseUav_Lock(uav);
 		return UnorderedAccessView_t::INVALID;
 	}
 
@@ -154,26 +217,13 @@ static RenderFormat GetViewDataFormat(const ViewData* const data)
 	return RenderFormat::UNKNOWN;
 }
 
-RenderTargetView_t AllocTextureRTV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
-{
-	RenderTargetView_t rtv = g_RTVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
-
-	if (!CreateTextureRTVImpl(rtv, Texture_t::INVALID, format, dim, depthOrArraySize))
-	{
-		g_RTVs.Release(rtv);
-		return RenderTargetView_t::INVALID;
-	}
-
-	return rtv;
-}
-
 ShaderResourceView_t AllocSRV(RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize)
 {
-	ShaderResourceView_t srv = g_SRVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(Texture_t::INVALID, format, depthOrArraySize));
 
 	if (!CreateTextureSRVImpl(srv, Texture_t::INVALID, format, dim, depthOrArraySize, mipLevels))
 	{
-		g_SRVs.Release(srv);
+		ReleaseSrv_Lock(srv);
 		return ShaderResourceView_t::INVALID;
 	}
 
@@ -182,11 +232,11 @@ ShaderResourceView_t AllocSRV(RenderFormat format, TextureDimension dim, uint32_
 
 UnorderedAccessView_t AllocUAV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	UnorderedAccessView_t uav = g_UAVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+	UnorderedAccessView_t uav = CreateUav_Lock(ViewData(Texture_t::INVALID, format, depthOrArraySize));
 
 	if (!CreateTextureUAVImpl(uav, Texture_t::INVALID, format, dim, depthOrArraySize))
 	{
-		g_UAVs.Release(uav);
+		ReleaseUav_Lock(uav);
 		return UnorderedAccessView_t::INVALID;
 	}
 
@@ -195,11 +245,11 @@ UnorderedAccessView_t AllocUAV(RenderFormat format, TextureDimension dim, uint32
 
 RenderTargetView_t AllocRTV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	RenderTargetView_t rtv = g_RTVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+	RenderTargetView_t rtv = CreateRtv_Lock(ViewData(Texture_t::INVALID, format, depthOrArraySize));
 
 	if (!CreateTextureRTVImpl(rtv, Texture_t::INVALID, format, dim, depthOrArraySize))
 	{
-		g_RTVs.Release(rtv);
+		ReleaseRtv_Lock(rtv);
 		return RenderTargetView_t::INVALID;
 	}
 
@@ -208,11 +258,11 @@ RenderTargetView_t AllocRTV(RenderFormat format, TextureDimension dim, uint32_t 
 
 DepthStencilView_t AllocDSV(RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize)
 {
-	DepthStencilView_t dsv = g_DSVs.Create(ViewData(Texture_t::INVALID, format, depthOrArraySize));
+	DepthStencilView_t dsv = CreateDsv_Lock(ViewData(Texture_t::INVALID, format, depthOrArraySize));
 
 	if (!CreateTextureDSVImpl(dsv, Texture_t::INVALID, format, dim, depthOrArraySize))
 	{
-		g_DSVs.Release(dsv);
+		ReleaseDsv_Lock(dsv);
 		return DepthStencilView_t::INVALID;
 	}
 
@@ -246,21 +296,29 @@ void BindDSV(DepthStencilView_t dsv, Texture_t texture)
 
 RenderFormat GetSRVFormat(ShaderResourceView_t srv)
 {
+	auto lock = g_SRVs.ReadScopeLock();
+
 	return GetViewDataFormat(g_SRVs.Get(srv));
 }
 
 RenderFormat GetUAVFormat(UnorderedAccessView_t uav)
 {
+	auto lock = g_UAVs.ReadScopeLock();
+
 	return GetViewDataFormat(g_UAVs.Get(uav));
 }
 
 RenderFormat GetRTVFormat(RenderTargetView_t rtv)
 {
+	auto lock = g_RTVs.ReadScopeLock();
+
 	return GetViewDataFormat(g_RTVs.Get(rtv));
 }
 
 RenderFormat GetDSVFormat(DepthStencilView_t dsv)
 {
+	auto lock = g_DSVs.ReadScopeLock();
+
 	return GetViewDataFormat(g_DSVs.Get(dsv));
 }
 
@@ -330,7 +388,7 @@ size_t GetDepthStencilViewCount()
 
 uint32_t GetDescriptorIndex(ShaderResourceView_t srv)
 {
-	if (g_SRVs.Get(srv))
+	if (g_SRVs.Valid(srv))
 	{
 		return GetDescriptorIndexImpl(srv);
 	}
@@ -340,11 +398,12 @@ uint32_t GetDescriptorIndex(ShaderResourceView_t srv)
 
 uint32_t GetDescriptorIndex(UnorderedAccessView_t uav)
 {
-	if (g_UAVs.Get(uav))
+	if (g_UAVs.Valid(uav))
 	{
 		return GetDescriptorIndexImpl(uav);
 	}
 
 	return 0u;
 }
+
 }

@@ -3,6 +3,8 @@
 #include "RenderImpl.h"
 #include "SparseArray.h"
 
+#include <shared_mutex>
+
 namespace tpr
 {
 
@@ -14,10 +16,21 @@ struct Dx12Texture
 	uint64_t CopyFence = 0u;
 };
 
-SparseArray<Dx12Texture, Texture_t> g_DxTextures;
+// To simplify threading now I create a fence per upload object so we can spawn upload jobs from any thread
+struct Dx12UploadTexture
+{
+	ComPtr<ID3D12Resource> DxResource = {};
+	ComPtr<ID3D12Fence> DxFence = {};
+};
 
-std::vector<Dx12Texture> g_UploadResources;
+SparseArray<Dx12Texture, Texture_t> g_DxTextures;
+std::shared_mutex g_TexturesMutex;
+
+std::vector<Dx12UploadTexture> g_UploadResources;
+std::mutex g_UploadQueueMutex;
+
 std::vector<Dx12Texture> g_FreeQueue;
+std::mutex g_FreeQueueMutex;
 
 D3D12_RESOURCE_DIMENSION Dx12_ResourceDimension(TextureDimension td)
 {
@@ -39,14 +52,18 @@ D3D12_RESOURCE_DIMENSION Dx12_ResourceDimension(TextureDimension td)
 
 bool AllocTextureImpl(Texture_t tex)
 {
+	auto lock = std::unique_lock(g_TexturesMutex);
+
 	g_DxTextures.Alloc(tex);
 
 	return true;
 }
 
+std::mutex testMutex;
+
 bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 {
-	Dx12Texture& texture = g_DxTextures.Alloc(tex);	
+	Dx12Texture texture = {};
 
 	D3D12_RESOURCE_DESC resourceDesc = {};
 
@@ -77,18 +94,19 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 
 	D3D12_HEAP_PROPERTIES heapProps = Dx12_HeapProps(D3D12_HEAP_TYPE_DEFAULT);
 
-	//D3D12_RESOURCE_STATES initState = desc.data ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_COMMON;
 	D3D12_RESOURCE_STATES initState = desc.Data ? D3D12_RESOURCE_STATE_COMMON : Dx12_ResourceState(desc.InitialState);
 
-	if (FAILED(g_render.DxDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, initState, nullptr, IID_PPV_ARGS(&texture.DxResource))))
-	{
-		assert(0 && "CreateTextureImpl failed to create committed resource");
-		return false;
-	}
+	DXASSERT(g_render.DxDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, initState, nullptr, IID_PPV_ARGS(&texture.DxResource)));
 
 	if (!desc.DebugName.empty())
 	{
 		texture.DxResource->SetName(desc.DebugName.c_str());
+	}
+
+	{
+		auto lock = std::unique_lock(g_TexturesMutex);
+
+		g_DxTextures.AllocCopy(tex, std::move(texture));
 	}
 
 	if (desc.Data)
@@ -158,14 +176,9 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 
 		uploadResource->Unmap(0u, nullptr);
 
-		// Process pending deletes on upload because we dont want loads of texture upload requests
-		// to saturate upload memory
-		// When making threadsafe revisit this
-		Dx12_TexturesProcessPendingDeletes(false);
-
 		CommandListPtr uploadCl = CommandList::Create(CommandListType::COPY);
 
-		ID3D12GraphicsCommandList* dxcl = Dx12_GetCommandList(uploadCl.get());
+		ID3D12GraphicsCommandList* dxcl = Dx12_GetCommandList(uploadCl.get());		
 
 		for(uint32_t i = 0; i < desc.DepthOrArraySize * desc.MipCount; i++)
 		{
@@ -180,12 +193,20 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 			src.PlacedFootprint = layouts[i];
 
 			dxcl->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-		}	
+		}		
 
 		uploadCl->TransitionResource(tex, ResourceTransitionState::COPY_DEST, desc.InitialState);
 
-		g_UploadResources.emplace_back(uploadResource, Dx12_Signal(CommandListType::COPY));
+		ComPtr<ID3D12Fence> uploadFence = Dx12_CreateFence(0);
 
+		Dx12_SignalFence(uploadFence.Get(), CommandListType::COPY, 1u);
+
+		{
+			auto lock = std::scoped_lock(g_UploadQueueMutex);
+			
+			g_UploadResources.emplace_back(std::move(uploadResource), std::move(uploadFence));
+		}		
+		
 		CommandList::Execute(uploadCl);
 	}
 
@@ -199,11 +220,17 @@ bool UpdateTextureImpl(Texture_t tex, const void* const data, uint32_t width, ui
 
 void DestroyTexture(Texture_t tex)
 {
+	auto lock = std::unique_lock(g_TexturesMutex);
+
 	g_DxTextures[tex].CopyFence = g_render.CopyQueue.FenceValue;
 	g_DxTextures[tex].GraphicsFence = g_render.DirectQueue.FenceValue;
 	g_DxTextures[tex].ComputeFence = g_render.ComputeQueue.FenceValue;
 
-	g_FreeQueue.emplace_back(std::move(g_DxTextures[tex]));
+	{
+		auto lock = std::scoped_lock(g_FreeQueueMutex);
+
+		g_FreeQueue.emplace_back(std::move(g_DxTextures[tex]));
+	}	
 
 	g_DxTextures.Free(tex);
 }
@@ -226,6 +253,14 @@ void Dx12_TexturesBeginFrame()
 
 void Dx12_TexturesProcessPendingDeletes(bool flush)
 {
+	static std::mutex processDeletesMutex;
+
+	// Only need one thread processing these at any time just to ensure we dont build a back log of uploads.
+	if(!processDeletesMutex.try_lock())
+	{
+		return;
+	}
+
 	if (flush)
 	{
 		Dx12_FlushQueue(g_render.CopyQueue);
@@ -237,25 +272,37 @@ void Dx12_TexturesProcessPendingDeletes(bool flush)
 	const uint64_t DirectFrameFence = g_render.DirectQueue.DxFence->GetCompletedValue();
 	const uint64_t ComputeFrameFence = g_render.ComputeQueue.DxFence->GetCompletedValue();
 
-	for (int32_t i = (int32_t)g_FreeQueue.size() - 1; i >= 0; --i)
 	{
-		if (g_FreeQueue[i].CopyFence <= CopyFrameFence && g_FreeQueue[i].GraphicsFence <= DirectFrameFence && g_FreeQueue[i].ComputeFence <= ComputeFrameFence)
+		auto lock = std::scoped_lock(g_FreeQueueMutex);
+
+		for (int32_t i = (int32_t)g_FreeQueue.size() - 1; i >= 0; --i)
 		{
-			g_FreeQueue.erase(g_FreeQueue.begin() + i);
+			if (g_FreeQueue[i].CopyFence <= CopyFrameFence && g_FreeQueue[i].GraphicsFence <= DirectFrameFence && g_FreeQueue[i].ComputeFence <= ComputeFrameFence)
+			{
+				g_FreeQueue.erase(g_FreeQueue.begin() + i);
+			}
 		}
 	}
 
-	for (int32_t i = (int32_t)g_UploadResources.size() - 1; i >= 0; --i)
 	{
-		if (g_UploadResources[i].CopyFence <= CopyFrameFence)
+		auto lock = std::scoped_lock(g_UploadQueueMutex);
+
+		for (int32_t i = (int32_t)g_UploadResources.size() - 1; i >= 0; --i)
 		{
-			g_UploadResources.erase(g_UploadResources.begin() + i);
+			if (g_UploadResources[i].DxFence->GetCompletedValue() > 0)
+			{
+				g_UploadResources.erase(g_UploadResources.begin() + i);
+			}
 		}
 	}
+
+	processDeletesMutex.unlock();
 }
 
 ID3D12Resource* Dx12_GetTextureResource(Texture_t tex)
 {
+	auto lock = std::shared_lock(g_TexturesMutex);
+
 	if (g_DxTextures.Valid(tex))
 	{
 		return g_DxTextures[tex].DxResource.Get();
@@ -266,6 +313,8 @@ ID3D12Resource* Dx12_GetTextureResource(Texture_t tex)
 
 void Dx12_SetTextureResource(Texture_t tex, const ComPtr<ID3D12Resource>& resource)
 {
+	auto lock = std::shared_lock(g_TexturesMutex);
+
 	if (g_DxTextures.Valid(tex))
 	{
 		g_DxTextures[tex].DxResource = resource;
@@ -274,6 +323,8 @@ void Dx12_SetTextureResource(Texture_t tex, const ComPtr<ID3D12Resource>& resour
 
 void Dx12_TexturesMarkAsUsedByQueue(Texture_t tex, CommandListType type, uint64_t fenceValue)
 {
+	auto lock = std::shared_lock(g_TexturesMutex);
+
 	if (g_DxTextures.Valid(tex))
 	{
 		switch (type)

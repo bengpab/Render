@@ -97,6 +97,4 @@ RootSignature_t CreateRootSignature(const RootSignatureDesc& desc);
 void RenderRef(RootSignature_t rs);
 void RenderRelease(RootSignature_t rs);
 
-const RootSignatureDesc* RootSignature_GetDesc(RootSignature_t rs);
-
 }

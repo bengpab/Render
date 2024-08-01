@@ -35,9 +35,4 @@ void RenderRelease(RootSignature_t rs)
 	}
 }
 
-const RootSignatureDesc* RootSignature_GetDesc(RootSignature_t rs)
-{
-	return g_RootSignatures.Get(rs);
-}
-
 }

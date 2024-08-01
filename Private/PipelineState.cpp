@@ -39,18 +39,23 @@ GraphicsPipelineState_t CreateGraphicsPipelineState(const GraphicsPipelineStateD
         return GraphicsPipelineState_t::INVALID;
     }
 
-    GraphicsPipelineStateData* data = g_GraphicsPipelineStates.Get(pso);
+    // TODO Multithread: If we can accept the input elements as a slice or similar we can forward the args right into the Create() call, avoiding a second lock.
+    {
+        auto lock = g_GraphicsPipelineStates.ReadScopeLock();
 
-    data->Desc = desc;
-    data->Inputs.resize(inputCount);
-    memcpy(data->Inputs.data(), inputs, inputCount * sizeof(InputElementDesc));
+        GraphicsPipelineStateData* data = g_GraphicsPipelineStates.Get(pso);
+
+        data->Desc = desc;
+        data->Inputs.resize(inputCount);
+        memcpy(data->Inputs.data(), inputs, inputCount * sizeof(InputElementDesc));
+    }
     
     return pso;
 }
 
 ComputePipelineState_t CreateComputePipelineState(const ComputePipelineStateDesc& desc)
 {
-    ComputePipelineState_t pso = g_ComputePipelineStates.Create();
+    ComputePipelineState_t pso = g_ComputePipelineStates.Create({ desc });
 
     if (!CompileComputePipelineState(pso, desc))
     {
@@ -58,31 +63,7 @@ ComputePipelineState_t CreateComputePipelineState(const ComputePipelineStateDesc
         return ComputePipelineState_t::INVALID;
     }
 
-    ComputePipelineStateData* data = g_ComputePipelineStates.Get(pso);
-
-    data->Desc = desc;
-
     return pso;
-}
-
-const GraphicsPipelineStateDesc* GetGraphicsPipelineStateDesc(GraphicsPipelineState_t pso)
-{
-    if (const GraphicsPipelineStateData* data = g_GraphicsPipelineStates.Get(pso))
-    {
-        return &data->Desc;
-    }
-
-    return nullptr;
-}
-
-const ComputePipelineStateDesc* GetComputePipelineStateDesc(ComputePipelineState_t pso)
-{
-    if (const ComputePipelineStateData* data = g_ComputePipelineStates.Get(pso))
-    {
-        return &data->Desc;
-    }
-
-    return nullptr;
 }
 
 void RenderRef(GraphicsPipelineState_t pso)

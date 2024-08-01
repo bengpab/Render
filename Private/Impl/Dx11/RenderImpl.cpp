@@ -124,8 +124,14 @@ void Render_PopDebugWarningDisable()
 	}
 }
 
-bool Render_BindlessMode()
+bool Render_IsBindless()
 {
+	return false;
+}
+
+bool Render_IsThreadSafe()
+{
+	// TODO
 	return false;
 }
 

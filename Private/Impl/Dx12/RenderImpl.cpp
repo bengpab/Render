@@ -1,9 +1,12 @@
 #include "RenderImpl.h"
 
 #include "Render.h"
+#include "RenderDefines.h"
 #include "Buffers.h"
 
 #include <dxgi1_6.h>
+
+#include <mutex>
 
 namespace tpr
 {
@@ -102,25 +105,37 @@ ComPtr<ID3D12Device> CreateDevice(bool debug)
 	return device;
 }
 
-Dx12CommandQueue CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type)
+D3D12_COMMAND_QUEUE_DESC CreateCommandQueueDesc(D3D12_COMMAND_LIST_TYPE type)
 {
-	Dx12CommandQueue commandQueue;
-
 	D3D12_COMMAND_QUEUE_DESC desc = {};
 	desc.Type = type;
-	desc.NodeMask = 0;
+	desc.NodeMask = 1u;
 	desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 
-	if (!DXENSURE(g_render.DxDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&commandQueue.DxCommandQueue))))
+	return desc;
+}
+
+ComPtr<ID3D12CommandQueue> CreateDxCommandQueue(D3D12_COMMAND_LIST_TYPE type)
+{
+	D3D12_COMMAND_QUEUE_DESC desc = CreateCommandQueueDesc(type);
+
+	ComPtr<ID3D12CommandQueue> dxCommandQueue;
+
+	if (!DXENSURE(g_render.DxDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&dxCommandQueue))))
 		return {};
 
-	commandQueue.FenceValue = 0;
+	return dxCommandQueue;
+}
 
-	if (!DXENSURE(g_render.DxDevice->CreateFence(commandQueue.FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&commandQueue.DxFence))))
+ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue)
+{
+	ComPtr<ID3D12Fence> dxFence;
+
+	if (!DXENSURE(g_render.DxDevice->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence))))
 		return {};
 
-	return commandQueue;	
+	return dxFence;
 }
 
 bool Render_Init(const RenderInitParams& params)
@@ -132,9 +147,17 @@ bool Render_Init(const RenderInitParams& params)
 
 	g_render.RootSignature = CreateRootSignature(params.RootSigDesc);
 
-	g_render.DirectQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	g_render.ComputeQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	g_render.CopyQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	g_render.DirectQueue.DxCommandQueue = CreateDxCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	g_render.DirectQueue.DxFence = Dx12_CreateFence(0);
+	g_render.DirectQueue.FenceValue = 0;
+
+	g_render.ComputeQueue.DxCommandQueue = CreateDxCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	g_render.ComputeQueue.DxFence = Dx12_CreateFence(0);
+	g_render.ComputeQueue.FenceValue = 0;
+
+	g_render.CopyQueue.DxCommandQueue = CreateDxCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	g_render.CopyQueue.DxFence = Dx12_CreateFence(0);
+	g_render.CopyQueue.FenceValue = 0;
 
 	return true;
 }
@@ -175,9 +198,14 @@ void Render_PopDebugWarningDisable()
 {
 }
 
-bool Render_BindlessMode()
+bool Render_IsBindless()
 {
 	return true;
+}
+
+bool Render_IsThreadSafe()
+{
+	return RENDER_THREAD_SAFE;
 }
 
 const char* Render_ApiId()
@@ -215,9 +243,18 @@ uint64_t Dx12_Signal(CommandListType queue)
 {
 	Dx12CommandQueue* commandQueue = Dx12_GetCommandQueue(queue);
 
-	DXENSURE(commandQueue->DxCommandQueue->Signal(commandQueue->DxFence.Get(), ++commandQueue->FenceValue));
+	uint64_t value = commandQueue->FenceValue.fetch_add(1u);	
 
-	return commandQueue->FenceValue;
+	DXENSURE(commandQueue->DxCommandQueue->Signal(commandQueue->DxFence.Get(), value));
+
+	return value;
+}
+
+void Dx12_SignalFence(ID3D12Fence* dxFence, CommandListType queue, uint64_t value)
+{
+	Dx12CommandQueue* commandQueue = Dx12_GetCommandQueue(queue);
+
+	DXENSURE(commandQueue->DxCommandQueue->Signal(dxFence, value));
 }
 
 void Dx12_Wait(CommandListType queue, uint64_t value)

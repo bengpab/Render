@@ -13,7 +13,7 @@ namespace tpr
 
 struct
 {
-	SparseArray<ComPtr<ID3D12PipelineState>, GraphicsPipelineState_t> GraphicsPipelines;
+	SparseArray<Dx12GraphicsPipelineStateDesc, GraphicsPipelineState_t> GraphicsPipelines;
 	SparseArray<ComPtr<ID3D12PipelineState>, ComputePipelineState_t> ComputePipelines;
 } g_pipelines;
 
@@ -250,12 +250,14 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 
 	dxDesc.NodeMask = 1;
 
-	ComPtr<ID3D12PipelineState>& dxPso = g_pipelines.GraphicsPipelines.Alloc(handle);
+	Dx12GraphicsPipelineStateDesc& dxPso = g_pipelines.GraphicsPipelines.Alloc(handle);
 
-	if (DXENSURE(g_render.DxDevice->CreateGraphicsPipelineState(&dxDesc, IID_PPV_ARGS(&dxPso))))
+	if (DXENSURE(g_render.DxDevice->CreateGraphicsPipelineState(&dxDesc, IID_PPV_ARGS(&dxPso.PSO))))
 	{
 		if(!desc.DebugName.empty())
-			dxPso->SetName(desc.DebugName.c_str());
+			dxPso.PSO->SetName(desc.DebugName.c_str());
+
+		dxPso.PrimTopo = Dx12_PrimitiveTopology(desc.PrimTopo);
 
 		return true;
 	}	
@@ -311,11 +313,11 @@ void DestroyComputePipelineState(ComputePipelineState_t pso)
 	g_pipelines.ComputePipelines.Free(pso);
 }
 
-ID3D12PipelineState* Dx12_GetPipelineState(GraphicsPipelineState_t pso)
+Dx12GraphicsPipelineStateDesc* Dx12_GetPipelineState(GraphicsPipelineState_t pso)
 {
 	if (g_pipelines.GraphicsPipelines.Valid(pso))
 	{
-		return g_pipelines.GraphicsPipelines[pso].Get();
+		return &g_pipelines.GraphicsPipelines[pso];
 	}
 
 	return nullptr;

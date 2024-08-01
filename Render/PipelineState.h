@@ -204,9 +204,6 @@ struct ComputePipelineStateDesc
 GraphicsPipelineState_t CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc, const InputElementDesc* inputs = nullptr, size_t inputCount = 0);
 ComputePipelineState_t CreateComputePipelineState(const ComputePipelineStateDesc& desc);
 
-const GraphicsPipelineStateDesc* GetGraphicsPipelineStateDesc(GraphicsPipelineState_t pso);
-const ComputePipelineStateDesc* GetComputePipelineStateDesc(ComputePipelineState_t pso);
-
 void RenderRef(GraphicsPipelineState_t pso);
 void RenderRef(ComputePipelineState_t pso);
 
