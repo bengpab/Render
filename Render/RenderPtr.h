@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 namespace tpr
 {
 
@@ -18,7 +20,11 @@ struct RenderPtr
 	}
 
 	// move, do nothing
-	RenderPtr(RenderPtr&& other) = default;
+	RenderPtr(RenderPtr&& other)
+		: Handle(std::move(other.Handle))
+	{
+		other.Handle = RenderType_t::INVALID;
+	}
 
 	~RenderPtr()
 	{
