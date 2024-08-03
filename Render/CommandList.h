@@ -68,6 +68,8 @@ struct CommandList
 	void SetPipelineState(ComputePipelineState_t pso);
 	void SetVertexBuffers(uint32_t startSlot, uint32_t count, const VertexBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets);
 	void SetVertexBuffers(uint32_t startSlot, uint32_t count, const DynamicBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets);
+	void SetVertexBuffer(uint32_t slot, VertexBuffer_t vb, uint32_t stride, uint32_t offset);
+	void SetVertexBuffer(uint32_t slot, DynamicBuffer_t vb, uint32_t stride, uint32_t offset);
 	void SetIndexBuffer(IndexBuffer_t ib, RenderFormat format, uint32_t indexOffset);
 	void SetIndexBuffer(DynamicBuffer_t ib, RenderFormat format, uint32_t indexOffset);
 

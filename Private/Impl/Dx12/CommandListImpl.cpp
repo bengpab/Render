@@ -388,8 +388,7 @@ void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const Ver
 {
 	for (uint32_t i = 0; i < count; i++)
 	{
-		D3D12_VERTEX_BUFFER_VIEW vbv = Dx12_GetVertexBufferView(vbs[i], offsets[i], strides[i]);
-		impl->CL.DxCl->IASetVertexBuffers(i + startSlot, 1u, &vbv);
+		SetVertexBuffer(i + startSlot, vbs[i], strides[i], offsets[i]);
 	}
 }
 
@@ -397,9 +396,20 @@ void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const Dyn
 {
 	for (uint32_t i = 0; i < count; i++)
 	{
-		D3D12_VERTEX_BUFFER_VIEW vbv = Dx12_GetVertexBufferView(vbs[i], offsets[i], strides[i]);
-		impl->CL.DxCl->IASetVertexBuffers(i + startSlot, 1u, &vbv);
+		SetVertexBuffer(i + startSlot, vbs[i], strides[i], offsets[i]);
 	}
+}
+
+void CommandList::SetVertexBuffer(uint32_t slot, VertexBuffer_t vb, uint32_t stride, uint32_t offset)
+{
+	D3D12_VERTEX_BUFFER_VIEW vbv = Dx12_GetVertexBufferView(vb, offset, stride);
+	impl->CL.DxCl->IASetVertexBuffers(slot, 1u, &vbv);
+}
+
+void CommandList::SetVertexBuffer(uint32_t slot, DynamicBuffer_t vb, uint32_t stride, uint32_t offset)
+{
+	D3D12_VERTEX_BUFFER_VIEW vbv = Dx12_GetVertexBufferView(vb, offset, stride);
+	impl->CL.DxCl->IASetVertexBuffers(slot, 1u, &vbv);
 }
 
 void CommandList::SetIndexBuffer(IndexBuffer_t ib, RenderFormat format, uint32_t indexOffset)

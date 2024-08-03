@@ -170,8 +170,7 @@ void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const Ver
 	UINT slot = startSlot;
 	for (UINT i = 0; slot < endSlot; slot++, i++)
 	{
-		ID3D11Buffer* dxVb = Dx11_GetVertexBuffer(vbs[i]);
-		impl->context->IASetVertexBuffers(slot, 1, &dxVb, (const UINT*)(&strides[i]), (const UINT*)(&offsets[i]));
+		SetVertexBuffer(slot, vbs[i], strides[i], offsets[i]);
 	}
 }
 
@@ -181,9 +180,20 @@ void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t count, const Dyn
 	UINT slot = startSlot;
 	for (UINT i = 0; slot < endSlot; slot++, i++)
 	{
-		ID3D11Buffer* dxVb = Dx11_GetDynamicBuffer(vbs[i]);
-		impl->context->IASetVertexBuffers(slot, 1, &dxVb, (const UINT*)(&strides[i]), (const UINT*)(&offsets[i]));
+		SetVertexBuffer(slot, vbs[i], strides[i], offsets[i]);
 	}
+}
+
+void CommandList::SetVertexBuffer(uint32_t slot, VertexBuffer_t vb, uint32_t stride, uint32_t offset)
+{
+	ID3D11Buffer* dxVb = Dx11_GetVertexBuffer(vb);
+	impl->context->IASetVertexBuffers(slot, 1, &dxVb, (const UINT*)(&stride), (const UINT*)(&offset));
+}
+
+void CommandList::SetVertexBuffer(uint32_t slot, DynamicBuffer_t vb, uint32_t stride, uint32_t offset)
+{
+	ID3D11Buffer* dxVb = Dx11_GetDynamicBuffer(vb);
+	impl->context->IASetVertexBuffers(slot, 1, &dxVb, (const UINT*)(&stride), (const UINT*)(&offset));
 }
 
 void CommandList::SetIndexBuffer(IndexBuffer_t ib, RenderFormat format, uint32_t indexOffset)
