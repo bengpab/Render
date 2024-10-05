@@ -221,7 +221,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 
 		for (size_t i = 0; i < inputCount; i++)
 		{
-			dxLayout[i].AlignedByteOffset = (UINT)inputs[i].alinedByteOffset;
+			dxLayout[i].AlignedByteOffset = (UINT)inputs[i].alignedByteOffset;
 			dxLayout[i].Format = Dx11_Format(inputs[i].format);
 			dxLayout[i].InputSlot = (UINT)inputs[i].inputSlot;
 			dxLayout[i].InstanceDataStepRate = (UINT)inputs[i].instanceDataStepRate;
