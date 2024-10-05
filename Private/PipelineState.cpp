@@ -16,7 +16,7 @@ struct ComputePipelineStateData
     ComputePipelineStateDesc Desc;
 };
 
-GraphicsPipelineTargetDesc::GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> formats, std::initializer_list<BlendMode> blends)
+GraphicsPipelineTargetDesc::GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> formats, std::initializer_list<BlendMode> blends, RenderFormat depthFormat)
 {
     assert(formats.size() == blends.size() && "GraphicsPipelineTargetDesc ctor target desc and blend mismatch");
 
@@ -24,6 +24,35 @@ GraphicsPipelineTargetDesc::GraphicsPipelineTargetDesc(std::initializer_list<Ren
 
     memcpy(Formats, formats.begin(), NumRenderTargets * sizeof(RenderFormat));
     memcpy(Blends, blends.begin(), NumRenderTargets * sizeof(BlendMode));
+
+    DepthFormat = depthFormat;
+}
+
+template<typename T>
+inline void hash_combine(uint64_t& hash, const T& value)
+{
+    std::hash<T> h;
+    hash ^= h(value) + 0x9e3779b9 + (hash << 9) + (hash >> 2);
+}
+
+uint64_t GraphicsPipelineTargetDesc::Hash() const
+{
+    if (Hashed != 0)
+    {
+        return Hashed;
+    }
+
+    hash_combine(Hashed, NumRenderTargets);
+
+    for (uint32_t i = 0; i < NumRenderTargets; i++)
+    {
+        hash_combine(Hashed, (uint32_t)Formats[i]);
+        hash_combine(Hashed, Blends[i].Opaque);
+    }
+
+    hash_combine(Hashed, DepthFormat);
+
+    return Hashed;
 }
 
 IDArray<GraphicsPipelineState_t, GraphicsPipelineStateData> g_GraphicsPipelineStates;

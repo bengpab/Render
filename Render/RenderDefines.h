@@ -1,5 +1,8 @@
 #pragma once
 
+#define RENDER_MAJOR_VERSION 1
+#define RENDER_MINOR_VERSION 1
+
 #ifndef RENDER_PARALLEL_ENABLED
 #define RENDER_THREAD_SAFE 1
 #endif

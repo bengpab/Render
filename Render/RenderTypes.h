@@ -48,6 +48,11 @@ using ComputePipelineStatePtr = RenderPtr<ComputePipelineState_t>;
 using RootSignaturePtr = RenderPtr<RootSignature_t>;
 using TexturePtr = RenderPtr<Texture_t>;
 
+struct CommandList;
+struct GraphicsPipelineTargetDesc;
+struct ShaderMacro;
+using ShaderMacros = std::vector<ShaderMacro>;
+
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
@@ -192,6 +197,7 @@ enum class RenderFormat : uint32_t
     A8P8 = 114,
     B4G4R4A4_UNORM = 115,
     COUNT,
+    BIT_MASK = 0x7f,
 };
 
 enum class InputClassification : uint32_t
@@ -206,10 +212,32 @@ struct InputElementDesc
 	uint32_t semanticIndex;
 	RenderFormat format;
 	uint32_t inputSlot;
-	uint32_t alinedByteOffset;
+	uint32_t alignedByteOffset;
 	InputClassification inputSlotClass;
 	uint32_t instanceDataStepRate;
+
+    bool operator==(InputElementDesc& other) const
+    {
+        return strcmp(semanticName, other.semanticName) == 0 &&
+            semanticIndex == other.semanticIndex &&
+            format == other.format &&
+            inputSlot == other.inputSlot &&
+            alignedByteOffset == other.alignedByteOffset &&
+            inputSlotClass == other.inputSlotClass &&
+            instanceDataStepRate == other.instanceDataStepRate;
+    }
 };
+
+inline bool operator==(const InputElementDesc& a, const InputElementDesc& b)
+{
+    return strcmp(a.semanticName, b.semanticName) == 0 &&
+        a.semanticIndex == b.semanticIndex &&
+        a.format == b.format &&
+        a.inputSlot == b.inputSlot &&
+        a.alignedByteOffset == b.alignedByteOffset &&
+        a.inputSlotClass == b.inputSlotClass &&
+        a.instanceDataStepRate == b.instanceDataStepRate;
+}
 
 struct Viewport
 {

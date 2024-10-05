@@ -225,7 +225,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 		dxLayout[i].SemanticIndex = (UINT)inputs[i].semanticIndex;
 		dxLayout[i].Format = Dx12_Format(inputs[i].format);
 		dxLayout[i].InputSlot = (UINT)inputs[i].inputSlot;
-		dxLayout[i].AlignedByteOffset = (UINT)inputs[i].alinedByteOffset;
+		dxLayout[i].AlignedByteOffset = (UINT)inputs[i].alignedByteOffset;
 		dxLayout[i].InputSlotClass = GetInputClassification(inputs[i].inputSlotClass);
 		dxLayout[i].InstanceDataStepRate = (UINT)inputs[i].instanceDataStepRate;
 	}
@@ -243,7 +243,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 		dxDesc.RTVFormats[i] = Dx12_Format(desc.TargetDesc.Formats[i]);
 	}
 
-	dxDesc.DSVFormat = Dx12_Format(desc.DsvFormat);
+	dxDesc.DSVFormat = Dx12_Format(desc.TargetDesc.DepthFormat);
 
 	dxDesc.SampleDesc.Count = 1;
 	dxDesc.SampleDesc.Quality = 0;

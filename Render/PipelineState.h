@@ -124,9 +124,14 @@ struct GraphicsPipelineTargetDesc
 	RenderFormat Formats[MaxRenderTargets] = {};
 	BlendMode Blends[MaxRenderTargets] = {};
 	uint8_t NumRenderTargets = 0;
+	RenderFormat DepthFormat = RenderFormat::UNKNOWN;
 
 	GraphicsPipelineTargetDesc() = default;
-	GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends);
+	GraphicsPipelineTargetDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends, RenderFormat depthFormat);
+
+	uint64_t Hash() const;
+private:
+	mutable uint64_t Hashed = 0;
 };
 
 struct GraphicsPipelineStateDesc
@@ -142,8 +147,7 @@ struct GraphicsPipelineStateDesc
 	// Depth desc
 	bool DepthEnabled = false;
 	ComparisionFunc DepthCompare = ComparisionFunc::NEVER;
-	RenderFormat DsvFormat = RenderFormat::UNKNOWN;
-
+	
 	GraphicsPipelineTargetDesc TargetDesc = {};
 	
 	VertexShader_t Vs = VertexShader_t::INVALID;
@@ -165,17 +169,16 @@ struct GraphicsPipelineStateDesc
 		return *this; 
 	}
 
-	GraphicsPipelineStateDesc& DepthDesc(bool enabled, ComparisionFunc cf = ComparisionFunc::NEVER, RenderFormat dsvFormat = RenderFormat::UNKNOWN) 
+	GraphicsPipelineStateDesc& DepthDesc(bool enabled, ComparisionFunc cf = ComparisionFunc::NEVER) 
 	{
 		DepthEnabled = enabled; 
 		DepthCompare = cf;
-		DsvFormat = dsvFormat;
 		return *this; 
 	}
 
-	GraphicsPipelineStateDesc& TargetBlendDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends)
+	GraphicsPipelineStateDesc& TargetBlendDesc(std::initializer_list<RenderFormat> targetDescs, std::initializer_list<BlendMode> blends, RenderFormat depthFormat)
 	{
-		TargetDesc = GraphicsPipelineTargetDesc(targetDescs, blends);
+		TargetDesc = GraphicsPipelineTargetDesc(targetDescs, blends, depthFormat);
 
 		return *this;
 	}

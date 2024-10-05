@@ -29,7 +29,6 @@ struct ShaderMacro
 
 	ShaderMacro(const char* define, uint32_t value);
 };
-typedef std::vector<ShaderMacro> ShaderMacros;
 
 VertexShader_t		CreateVertexShader(const char* path, const ShaderMacros& macros = {});
 PixelShader_t		CreatePixelShader(const char* path, const ShaderMacros& macros = {});
