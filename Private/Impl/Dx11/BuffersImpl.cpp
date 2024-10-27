@@ -133,6 +133,19 @@ void UpdateConstantBufferImpl(ConstantBuffer_t handle, const void* const data, s
 	g_render.DeviceContext->Unmap(res, 0);
 }
 
+void UpdateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, size_t size)
+{
+	ID3D11Resource* res = g_DxStructuredBuffers[(uint32_t)sb].Get();
+
+	D3D11_MAPPED_SUBRESOURCE subRes;
+	if (FAILED(g_render.DeviceContext->Map(res, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes)))
+		assert(0 && "UpdateStructuredBufferImpl failed to map buffer");
+
+	memcpy(subRes.pData, data, size);
+
+	g_render.DeviceContext->Unmap(res, 0);
+}
+
 void DestroyVertexBuffer(VertexBuffer_t handle)
 {
 	g_DxVertexBuffers[(uint32_t)handle] = nullptr;

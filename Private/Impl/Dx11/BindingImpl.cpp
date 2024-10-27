@@ -333,7 +333,7 @@ void BindTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex)
 	}
 }
 
-bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements)
+bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStride)
 {
 	ID3D11Resource* res = Dx11_GetStructuredBuffer(buf);
 	if (!res)
@@ -352,7 +352,7 @@ bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t 
 	return SUCCEEDED(g_render.Device->CreateShaderResourceView(res, &desc, &dxSrv.DxSrv));
 }
 
-bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements)
+bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStrude)
 {
 	ID3D11Resource* res = Dx11_GetStructuredBuffer(buf);
 	if (!res)

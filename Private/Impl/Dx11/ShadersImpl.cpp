@@ -63,7 +63,7 @@ static ComPtr<ID3D11ComputeShader>& AllocCs(ComputeShader_t cs)
 	return g_computeShaders[(size_t)cs];
 }
 
-bool CompileShaderInternal(const char* target, const char* path, const char* directory, const ShaderMacros& macros, ComPtr<ID3DBlob>& shaderBlob)
+bool CompileShaderInternal(const char* target, const char* path, const ShaderMacros& macros, ComPtr<ID3DBlob>& shaderBlob)
 {
 	const size_t numMacros = macros.size();
 	std::vector<D3D_SHADER_MACRO> dxMacros;
