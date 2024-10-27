@@ -31,6 +31,8 @@ struct BufferAllocation
 	size_t Offset = 0u;
 	size_t Size = 0u;
 
+	ID3D12Resource* pResource;
+
 	bool SingleBuffer = false;
 };
 
@@ -166,7 +168,7 @@ public:
 		// Using size instead of aligned size is intentional so that the source alloc doesnt also need to be aligned.
 		memcpy((uint8_t*)pCpuMemory + alignedOffset, pData, size);
 
-		BufferAllocation alloc = { pGpuMemory, alignedOffset, alignedSize };
+		BufferAllocation alloc = { pGpuMemory, alignedOffset, alignedSize, pBuffer.Get()};
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 
@@ -248,8 +250,8 @@ public:
 	BufferAllocationSingleBuffer(size_t size, bool uav)
 		: Size(size)
 	{
-		pUploadBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_FLAG_NONE);
-		pBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_GENERIC_READ, uav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE);
+		pUploadBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_FLAG_NONE);
+		pBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, uav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE);
 
 		pUploadBuffer->Map(0, nullptr, &pCpuMemory);
 
@@ -274,11 +276,9 @@ public:
 
 		memcpy((uint8_t*)pCpuMemory, pData, size);
 
-		BufferAllocation alloc = { pGpuMemory, 0, size };
+		BufferAllocation alloc = { pGpuMemory, 0, size, pBuffer.Get(), true };
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
-
-		alloc.SingleBuffer = true;
 
 		return alloc;
 	}
@@ -287,7 +287,7 @@ public:
 	{
 		memcpy((uint8_t*)pCpuMemory, data, Size);
 
-		BufferAllocation alloc = { pGpuMemory, 0, Size };
+		BufferAllocation alloc = { pGpuMemory, 0, Size, pBuffer.Get(), true};
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 	}
@@ -335,7 +335,7 @@ struct BufferAllocationPool
 		return buffer.Alloc(size, pData);
 	}
 
-	BufferAllocation AllocRWBuffer(size_t size, const void* const pData)
+	BufferAllocation AllocRW(size_t size, const void* const pData)
 	{
 		assert(size > 0 && pData != nullptr);
 
@@ -458,7 +458,14 @@ bool CreateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, s
 {
 	g_DxStructuredBuffers.Alloc(sb);
 
-	g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT, data);
+	if (HasEnumFlags(flags, RenderResourceFlags::UAV))
+	{
+		g_DxStructuredBuffers[sb] = g_BufferAllocator.AllocRW(size, data);
+	}
+	else
+	{
+		g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT, data);
+	}
 
 	return g_DxStructuredBuffers[sb].pGPUMem != 0;
 }
@@ -485,6 +492,11 @@ void UpdateIndexBufferImpl(IndexBuffer_t ib, const void* const data, size_t size
 void UpdateConstantBufferImpl(ConstantBuffer_t cb, const void* const data, size_t size)
 {
 	g_BufferAllocator.Update(g_DxConstantBuffers[cb], data);
+}
+
+void UpdateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, size_t size)
+{
+	g_BufferAllocator.Update(g_DxStructuredBuffers[sb], data);
 }
 
 void DestroyVertexBuffer(VertexBuffer_t vb)
@@ -589,6 +601,30 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(ConstantBuffer_t cb)
 	const BufferAllocation& alloc = g_DxConstantBuffers[cb];
 
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
+}
+
+ID3D12Resource* Dx12_GetBufferResource(StructuredBuffer_t sb)
+{
+	if (!g_DxStructuredBuffers.Valid(sb))
+	{
+		return {};
+	}
+
+	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+
+	return alloc.pResource;
+}
+
+uint32_t Dx12_GetBufferOffset(StructuredBuffer_t sb)
+{
+	if (!g_DxStructuredBuffers.Valid(sb))
+	{
+		return {};
+	}
+
+	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+
+	return (uint32_t)alloc.Offset;
 }
 
 }

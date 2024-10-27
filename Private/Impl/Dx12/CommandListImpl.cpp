@@ -532,6 +532,17 @@ void CommandList::TransitionResource(Texture_t tex, ResourceTransitionState befo
 	impl->CL.DxCl->ResourceBarrier(1u, &barrier);
 }
 
+void CommandList::TransitionResource(StructuredBuffer_t buf, ResourceTransitionState before, ResourceTransitionState after)
+{
+	D3D12_RESOURCE_BARRIER barrier = Dx12_TransitionBarrier(
+		Dx12_GetBufferResource(buf),
+		Dx12_ResourceState(before),
+		Dx12_ResourceState(after)
+	);
+
+	impl->CL.DxCl->ResourceBarrier(1u, &barrier);
+}
+
 void CommandList::UAVBarrier(Texture_t tex)
 {
 	D3D12_RESOURCE_BARRIER barrier = Dx12_UavBarrier(Dx12_GetTextureResource(tex));

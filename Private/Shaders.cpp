@@ -7,6 +7,7 @@
 #include "Render.h"
 
 #include <algorithm>
+#include <windows.h>
 
 namespace tpr
 {
@@ -116,10 +117,34 @@ ShaderHandle CreateShader(const char* path, const ShaderMacros& macros, const ch
 			UpdateShader(data, path, fullMacros, shaderIdStr);
 		}
 
-		if (!CompileShader(handle, path, fullMacros))
+		// TODO: Move this directory stripping code to a shared place. Make less platform specific
+		std::string directory = {};
 		{
-			shaderArray.Release(handle);
-			return ShaderHandle::INVALID;
+			std::string pathStr = path;
+			size_t lastSlash = pathStr.find_last_of('/');
+			if (lastSlash != std::string::npos)
+			{
+				directory = pathStr.substr(0, lastSlash);
+				DWORD ftyp = GetFileAttributesA(directory.c_str());
+				if (ftyp == INVALID_FILE_ATTRIBUTES || (ftyp & FILE_ATTRIBUTE_DIRECTORY) == 0)
+				{
+					directory = {};
+				}
+			}
+		}
+
+		// TODO: Make dialog box less platform specific
+		while (!CompileShader(handle, path, directory.empty() ? nullptr : directory.c_str(), fullMacros))
+		{
+			std::string message = "Failed to compile " + std::string(path) + ", retry?";
+			int input = MessageBoxA(NULL, message.c_str(), "Shader compilation error", MB_RETRYCANCEL | MB_ICONERROR);
+
+			if (input != IDRETRY)
+			{
+				shaderArray.Release(handle);
+				return ShaderHandle::INVALID;
+				break;
+			}
 		}
 	}
 
@@ -173,7 +198,7 @@ void ReloadShaderType(IDArray<ShaderHandle, ShaderData>& shaderArray)
 	{
 		if (data.Compiled)
 		{
-			CompileShader(handle, data.Path.c_str(), data.Macros);
+			CompileShader(handle, data.Path.c_str(), nullptr, data.Macros);
 		}
 
 		return true;

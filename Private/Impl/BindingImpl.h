@@ -16,8 +16,8 @@ void BindTextureUAVImpl(UnorderedAccessView_t uav, Texture_t tex);
 void BindTextureRTVImpl(RenderTargetView_t rtv, Texture_t tex);
 void BindTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex);
 
-bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements);
-bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements);
+bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStride);
+bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStride);
 
 void DestroySRV(ShaderResourceView_t srv);
 void DestroyUAV(UnorderedAccessView_t uav);

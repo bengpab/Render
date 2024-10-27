@@ -138,6 +138,8 @@ void Dx12_Wait(CommandListType queue, uint64_t value);
 D3D12_HEAP_PROPERTIES Dx12_HeapProps(D3D12_HEAP_TYPE type);
 D3D12_RESOURCE_DESC Dx12_BufferDesc(size_t size, D3D12_RESOURCE_FLAGS flags);
 ComPtr<ID3D12Resource> Dx12_CreateBuffer(size_t size, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flags);
+ID3D12Resource* Dx12_GetBufferResource(StructuredBuffer_t buf);
+uint32_t Dx12_GetBufferOffset(StructuredBuffer_t buf);
 
 ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue);
 

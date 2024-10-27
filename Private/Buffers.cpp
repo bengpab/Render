@@ -96,6 +96,14 @@ void UpdateConstantBuffer(ConstantBuffer_t cb, const void* const data, size_t si
 	}
 }
 
+void UpdateStructuredBuffer(StructuredBuffer_t sb, const void* const data, size_t size)
+{
+	if (g_StructuredBuffers.Valid(sb))
+	{
+		UpdateStructuredBufferImpl(sb, data, size);
+	}
+}
+
 void RenderRelease(VertexBuffer_t vb)
 {
 	if (g_VertexBuffers.Release(vb))

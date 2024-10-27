@@ -68,7 +68,7 @@ static std::string LoadShaderCode(const std::string& filePath)
 	return ret;
 }
 
-ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, ShaderProfile profile, const ShaderMacros& macros)
+ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, const char* includeDirectory, ShaderProfile profile, const ShaderMacros& macros)
 {	
 	ComPtr<IDxcUtils> utils;
 	if (!DXENSURE(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils))))
@@ -95,6 +95,17 @@ ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, ShaderProfile pr
 	// Shader profile
 	arguments.push_back(L"-T");
 	arguments.push_back(ShaderProfileStr[(uint8_t)profile]);
+
+	wchar_t wPath[MAX_PATH];
+	size_t len;
+	if (includeDirectory && strlen(includeDirectory) < MAX_PATH)
+	{
+		mbstowcs_s(&len, wPath, includeDirectory, strlen(includeDirectory));
+
+		// Include directory
+		arguments.push_back(L"-I");
+		arguments.push_back(wPath);
+	}
 
 	arguments.push_back(DXC_ARG_WARNINGS_ARE_ERRORS); //-WX
 
@@ -131,13 +142,15 @@ ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, ShaderProfile pr
 		if (errors && errors->GetStringLength() > 0)
 		{
 			OutputDebugStringA((LPCSTR)errors->GetBufferPointer());
+
+			return nullptr;
 		}
 	}
 
 	return result;
 }
 
-ComPtr<IDxcResult> CompileShaderFromFile(const std::string& path, ShaderProfile profile, const ShaderMacros& macros)
+ComPtr<IDxcResult> CompileShaderFromFile(const std::string& path, const char* includeDirectory, ShaderProfile profile, const ShaderMacros& macros)
 {
 	std::string shaderCode = LoadShaderCode(path);
 	if (shaderCode.empty())
@@ -146,7 +159,7 @@ ComPtr<IDxcResult> CompileShaderFromFile(const std::string& path, ShaderProfile 
 		return nullptr;
 	}	
 
-	return CompileShader(shaderCode, profile, macros);
+	return CompileShader(shaderCode, includeDirectory, profile, macros);
 }
 
 }

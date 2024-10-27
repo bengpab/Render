@@ -23,6 +23,7 @@ DynamicBuffer_t CreateDynamicConstantBuffer(const void* const data, size_t size)
 void UpdateVertexBuffer(VertexBuffer_t vb, const void* const data, size_t size);
 void UpdateIndexBuffer(IndexBuffer_t ib, const void* const data, size_t size);
 void UpdateConstantBuffer(ConstantBuffer_t cb, const void* const data, size_t size);
+void UpdateStructuredBuffer(StructuredBuffer_t sb, const void* const data, size_t size);
 
 void RenderRelease(VertexBuffer_t vb);
 void RenderRelease(IndexBuffer_t ib);

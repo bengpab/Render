@@ -13,6 +13,7 @@ bool CreateConstantBufferImpl(ConstantBuffer_t handle, const void* const data, s
 void UpdateVertexBufferImpl(VertexBuffer_t vb, const void* const data, size_t size);
 void UpdateIndexBufferImpl(IndexBuffer_t ib, const void* const data, size_t size);
 void UpdateConstantBufferImpl(ConstantBuffer_t cb, const void* const data, size_t size);
+void UpdateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, size_t size);
 
 void DestroyVertexBuffer(VertexBuffer_t handle);
 void DestroyIndexBuffer(IndexBuffer_t handle);

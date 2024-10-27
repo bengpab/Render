@@ -34,10 +34,12 @@ struct BufferViewData
 	StructuredBuffer_t Handle;
 	uint32_t FirstElem;
 	uint32_t NumElems;
-	BufferViewData(StructuredBuffer_t inBuffer, uint32_t inFirstElem, uint32_t inNumElems)
+	uint32_t Stride;
+	BufferViewData(StructuredBuffer_t inBuffer, uint32_t inFirstElem, uint32_t inNumElems, uint32_t stride)
 		: Handle(inBuffer)
 		, FirstElem(inFirstElem)
 		, NumElems(inNumElems)
+		, Stride(stride)
 	{}
 };
 
@@ -59,8 +61,8 @@ struct ViewData
 		, Type(ViewResourceType::Texture)
 	{}
 
-	ViewData(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
-		: Buffer(buf, firstElem, numElems)
+	ViewData(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride)
+		: Buffer(buf, firstElem, numElems, stride)
 		, Type(ViewResourceType::StructuredBuffer)
 	{}
 };
@@ -183,11 +185,11 @@ DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureD
 	return dsv;
 }
 
-ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
+ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride)
 {
-	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(buf, firstElem, numElems));
+	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(buf, firstElem, numElems, stride));
 
-	if (!CreateStructuredBufferSRVImpl(srv, buf, firstElem, numElems))
+	if (!CreateStructuredBufferSRVImpl(srv, buf, firstElem, numElems, stride))
 	{
 		ReleaseSrv_Lock(srv);
 		return ShaderResourceView_t::INVALID;
@@ -196,11 +198,11 @@ ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t 
 	return srv;
 }
 
-UnorderedAccessView_t CreateStructuredBufferUAV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems)
+UnorderedAccessView_t CreateStructuredBufferUAV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride)
 {
-	UnorderedAccessView_t uav = CreateUav_Lock(ViewData(buf, firstElem, numElems));
+	UnorderedAccessView_t uav = CreateUav_Lock(ViewData(buf, firstElem, numElems, stride));
 
-	if (!CreateStructuredBufferUAVImpl(uav, buf, firstElem, numElems))
+	if (!CreateStructuredBufferUAVImpl(uav, buf, firstElem, numElems, stride))
 	{
 		ReleaseUav_Lock(uav);
 		return UnorderedAccessView_t::INVALID;

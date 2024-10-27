@@ -437,7 +437,7 @@ bool CreateTextureUAVImpl(UnorderedAccessView_t uav, Texture_t tex, RenderFormat
 		return false;
 	}
 
-	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create();
+	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create(descriptor);
 
 	{
 		auto lock = std::unique_lock(g_SrvUavRemapMutex);
@@ -639,14 +639,64 @@ void BindTextureDSVImpl(DepthStencilView_t dsv, Texture_t tex)
 	g_DsvHeap.HeapChanged();
 }
 
-bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements)
+bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStride)
 {
-	return false;
+	SRVUAVDescriptor descriptor = {};
+
+	uint32_t bufferOffset = Dx12_GetBufferOffset(buf);
+	uint32_t sharedBufferFirstElem = bufferOffset / structureByteStride;
+
+	descriptor.Type = DescriptorType::SRV;
+	descriptor.Resource = Dx12_GetBufferResource(buf);
+	descriptor.SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	descriptor.SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	descriptor.SrvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	descriptor.SrvDesc.Buffer.FirstElement = sharedBufferFirstElem + firstElement;
+	descriptor.SrvDesc.Buffer.NumElements = numElements;
+	descriptor.SrvDesc.Buffer.StructureByteStride = structureByteStride;
+	descriptor.SrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create(descriptor);
+
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
+
+		g_SrvDescriptorRemap.AllocCopy(srv, heapHandle);
+	}
+
+	g_SrvUavHeap.HeapChanged();
+
+	return true;
 }
 
-bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements)
+bool CreateStructuredBufferUAVImpl(UnorderedAccessView_t uav, StructuredBuffer_t buf, uint32_t firstElement, uint32_t numElements, uint32_t structureByteStride)
 {
-	return false;
+	SRVUAVDescriptor descriptor = {};
+
+	uint32_t bufferOffset = Dx12_GetBufferOffset(buf);
+	assert(bufferOffset == 0); // Cannot share UAV buffers due to transitioning limitations
+
+	descriptor.Type = DescriptorType::UAV;
+	descriptor.Resource = Dx12_GetBufferResource(buf);
+	descriptor.UavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	descriptor.UavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	descriptor.UavDesc.Buffer.FirstElement = firstElement;
+	descriptor.UavDesc.Buffer.NumElements = numElements;
+	descriptor.UavDesc.Buffer.StructureByteStride = structureByteStride;
+	descriptor.UavDesc.Buffer.CounterOffsetInBytes = 0;
+	descriptor.UavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+	SRVUAV_t heapHandle = g_SrvUavDescriptors.Create(descriptor);
+
+	{
+		auto lock = std::unique_lock(g_SrvUavRemapMutex);
+
+		g_UavDescriptorRemap.AllocCopy(uav, heapHandle);
+	}
+
+	g_SrvUavHeap.HeapChanged();
+
+	return true;
 }
 
 void DestroySRV(ShaderResourceView_t srv)
