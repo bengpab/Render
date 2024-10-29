@@ -378,6 +378,7 @@ void CommandList::SetGraphicsRootDescriptorTable(uint32_t slot) { assert(0); }
 void CommandList::SetComputeRootDescriptorTable(uint32_t slot) { assert(0); }
 
 void CommandList::TransitionResource(Texture_t tex, ResourceTransitionState before, ResourceTransitionState after) {}
+void CommandList::TransitionResource(StructuredBuffer_t buf, ResourceTransitionState before, ResourceTransitionState after) {}
 void CommandList::UAVBarrier(Texture_t tex) {}
 
 CommandListPtr CommandList::Create()
