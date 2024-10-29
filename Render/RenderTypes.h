@@ -283,19 +283,24 @@ enum class ResourceUsage : uint8_t
     STAGING,
 };
 
-enum class ResourceTransitionState : uint8_t
+enum class ResourceTransitionState : uint16_t
 {
-    COMMON,
-    RENDER_TARGET,
-    UNORDERED_ACCESS,
-    DEPTH_WRITE,
-    DEPTH_READ,
-    NON_PIXEL_SHADER_RESOURCE,
-    PIXEL_SHADER_RESOURCE,
-    READ,
-    PRESENT,
-    COPY_DEST,
-    COPY_SRC,
+    COMMON = (0u),
+    VERTEX_CONSTANT_BUFFER = (1u << 0u),
+    INDEX_BUFFER = (1u << 1u),
+    RENDER_TARGET = (1u << 2u),
+    UNORDERED_ACCESS = (1u << 3u),
+    DEPTH_WRITE = (1u << 4u),
+    DEPTH_READ = (1u << 5u),
+    NON_PIXEL_SHADER_RESOURCE = (1u << 6u),
+    PIXEL_SHADER_RESOURCE = (1u << 7u),
+    INDIRECT_ARGUMENT = (1u << 9u),
+    COPY_DEST = (1u << 10u),
+    COPY_SRC = (1u << 11u),
+    READ = (VERTEX_CONSTANT_BUFFER | INDEX_BUFFER | NON_PIXEL_SHADER_RESOURCE | PIXEL_SHADER_RESOURCE| INDIRECT_ARGUMENT | COPY_SRC),
+    ALL_SHADER_RESOURCE  = (NON_PIXEL_SHADER_RESOURCE | PIXEL_SHADER_RESOURCE),
+    PRESENT = 0,    
 };
+IMPLEMENT_FLAGS(ResourceTransitionState, uint16_t)
 
 }

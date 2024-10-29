@@ -268,17 +268,22 @@ D3D12_RESOURCE_STATES Dx12_ResourceState(ResourceTransitionState state)
 {
 	switch (state)
 	{
+	// present and common are synonymous in d3d12
 	case ResourceTransitionState::COMMON: return D3D12_RESOURCE_STATE_COMMON;
+	//case ResourceTransitionState::PRESENT: return D3D12_RESOURCE_STATE_PRESENT;
+	case ResourceTransitionState::VERTEX_CONSTANT_BUFFER: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	case ResourceTransitionState::INDEX_BUFFER: return D3D12_RESOURCE_STATE_INDEX_BUFFER;
 	case ResourceTransitionState::RENDER_TARGET: return D3D12_RESOURCE_STATE_RENDER_TARGET;
 	case ResourceTransitionState::UNORDERED_ACCESS: return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	case ResourceTransitionState::DEPTH_WRITE: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	case ResourceTransitionState::DEPTH_READ: return D3D12_RESOURCE_STATE_DEPTH_READ;
 	case ResourceTransitionState::NON_PIXEL_SHADER_RESOURCE: return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	case ResourceTransitionState::PIXEL_SHADER_RESOURCE: return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	case ResourceTransitionState::READ: return D3D12_RESOURCE_STATE_GENERIC_READ;
-	case ResourceTransitionState::PRESENT: return D3D12_RESOURCE_STATE_PRESENT;
+	case ResourceTransitionState::INDIRECT_ARGUMENT: return D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 	case ResourceTransitionState::COPY_DEST: return D3D12_RESOURCE_STATE_COPY_DEST;
 	case ResourceTransitionState::COPY_SRC: return D3D12_RESOURCE_STATE_COPY_SOURCE;
+	case ResourceTransitionState::READ: return D3D12_RESOURCE_STATE_GENERIC_READ;	
+	case ResourceTransitionState::ALL_SHADER_RESOURCE: return D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;	
 	}
 
 	assert(0 && "Dx12_ResourceState unsupported state");
