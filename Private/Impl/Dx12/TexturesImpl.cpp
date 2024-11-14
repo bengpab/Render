@@ -76,7 +76,7 @@ bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 	resourceDesc.Format = Dx12_Format(desc.ResourceFormat);
 	resourceDesc.SampleDesc.Count = 1u;
 	resourceDesc.SampleDesc.Quality = 0u;
-	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 

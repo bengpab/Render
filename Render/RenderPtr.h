@@ -82,4 +82,15 @@ private:
 	RenderType_t Handle = RenderType_t::INVALID;
 };
 
+// Prevent automatic type conversion allowing legal calls to RenderRelease for managed objects
+template<typename T>
+struct assert_false : std::false_type
+{ };
+
+template<typename RenderType_t>
+void RenderRelease(RenderPtr<RenderType_t> p)
+{
+	static_assert(assert_false<RenderPtr<RenderType_t>>::value, "Never call RenderRelease on managed RenderPtr objects");
+}
+
 }
