@@ -14,10 +14,16 @@ namespace tpr
 static const size_t AllocationPageSize = 2u * 1024u * 1024u;
 
 template<typename T>
-static constexpr T AlignUp(T size, T alignment)
+static constexpr T AlignUpPowerOfTwo(T size, T alignment)
 {
 	const T mask = alignment - 1;
 	return (size + mask) & ~mask;
+}
+
+static constexpr size_t AlignUp(size_t size, size_t alignment)
+{
+	const size_t remainder = size % alignment;
+	return remainder ? size + (alignment - remainder) : size;
 }
 
 struct BufferAllocationBlock;
@@ -109,27 +115,28 @@ public:
 	{
 		size_t alignedSize = AlignUp(size, alignment);
 
-		//if (alignedSize > FreeSize)
-		//{
-		//	return {};
-		//}
-
 		FreeBlocksBySizeMap::const_iterator smallestBlockBySizeIt = FreeBlocksBySize.lower_bound(alignedSize);
 		FreeBlocksByOffsetMap::const_iterator smallestBlockIt = FreeBlocksByOffset.cend();
 
 		size_t alignedOffset = 0;
 		size_t offsetDiff = 0;
 
+		size_t blockOffset = 0;
+		size_t blockSize = 0;
+
 		while (smallestBlockBySizeIt != FreeBlocksBySize.cend())
 		{
 			smallestBlockIt = smallestBlockBySizeIt->second;
 
-			alignedOffset = AlignUp(smallestBlockIt->first, alignment);
+			blockSize = smallestBlockBySizeIt->first;
+			blockOffset = smallestBlockIt->first;
+
+			alignedOffset = AlignUp(blockOffset, alignment);
 
 			// Calculate the change in alignment, may leave a small initial block.
-			offsetDiff = alignedOffset - smallestBlockIt->first;
+			offsetDiff = alignedOffset - blockOffset;
 
-			if ((offsetDiff + alignedSize) <= smallestBlockBySizeIt->first)
+			if ((offsetDiff + alignedSize) <= blockSize)
 			{
 				break;
 			}
@@ -147,18 +154,16 @@ public:
 			__debugbreak();
 		}
 
-		if (offsetDiff > 0)
-		{
-			FreeBlocksByOffsetMap::const_iterator smallestBlockIt = smallestBlockBySizeIt->second;
-
-			AddFreeBlock(smallestBlockIt->first, offsetDiff);
-		}
-
-		size_t newOffset = alignedOffset + alignedSize;
-		size_t newSize = smallestBlockBySizeIt->first - alignedSize;
-
 		FreeBlocksBySize.erase(smallestBlockBySizeIt);
 		FreeBlocksByOffset.erase(smallestBlockIt);
+
+		const size_t newOffset = alignedOffset + alignedSize;
+		const size_t newSize = blockSize - alignedSize;
+
+		if (offsetDiff > 0)
+		{
+			AddFreeBlock(blockOffset, offsetDiff);
+		}
 
 		if (newSize > 0)
 		{
@@ -464,7 +469,9 @@ bool CreateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, s
 	}
 	else
 	{
-		g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT, data);
+		size_t alignment = stride < D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT ? D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT : stride;
+
+		g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, alignment, data);
 	}
 
 	return g_DxStructuredBuffers[sb].pGPUMem != 0;
