@@ -25,6 +25,21 @@ void UpdateIndexBuffer(IndexBuffer_t ib, const void* const data, size_t size);
 void UpdateConstantBuffer(ConstantBuffer_t cb, const void* const data, size_t size);
 void UpdateStructuredBuffer(StructuredBuffer_t sb, const void* const data, size_t size);
 
+template<typename T> inline VertexBuffer_t CreateVertexBufferFromArray(const T* const data, size_t count) { return CreateVertexBuffer(data, sizeof(T) * count); }
+template<typename T> inline IndexBuffer_t CreateIndexBufferFromArray(const T* const data, size_t count) { return CreateIndexBuffer(data, sizeof(T) * count); }
+template<typename T> inline StructuredBuffer_t CreateStructuredBuffer(const T* const data, size_t count) { return CreateStructuredBuffer(data, sizeof(T) * count, sizeof(T), RenderResourceFlags::SRV); }
+template<typename T> inline StructuredBuffer_t CreateRWStructuredBuffer(const T* const data, size_t count) { return CreateStructuredBuffer(data, sizeof(T) * count, sizeof(T), RenderResourceFlags::UAV); }
+template<typename T> inline ConstantBuffer_t CreateConstantBuffer(const T* const data) { return CreateConstantBuffer(data, sizeof(T)); }
+
+template<typename T> inline DynamicBuffer_t CreateDynamicVertexBufferFromArray(const T* const data, size_t count) { return CreateDynamicVertexBuffer(data, sizeof(T) * count); }
+template<typename T> inline DynamicBuffer_t CreateDynamicIndexBufferFromArray(const T* const data, size_t count) { return CreateDynamicIndexBuffer(data, sizeof(T) * count); }
+template<typename T> inline DynamicBuffer_t CreateDynamicConstantBuffer(const T* const data) { return CreateDynamicConstantBuffer(data, sizeof(T)); }
+
+template<typename T> inline void UpdateVertexBufferFromArray(VertexBuffer_t vb, const T* const data, size_t count) { UpdateVertexBuffer(vb, data, sizeof(T) * count); }
+template<typename T> inline void UpdateIndexBufferFromArray(IndexBuffer_t ib, const T* const data, size_t count) { UpdateIndexBuffer(ib, data, sizeof(T) * count); }
+template<typename T> inline void UpdateConstantBuffer(ConstantBuffer_t cb, const T* const data) { UpdateConstantBuffer(cb, sizeof(T)); }
+template<typename T> inline void UpdateStructuredBufferFromArray(StructuredBuffer_t sb, const T* const data, size_t count) { UpdateStructuredBuffer(sb, data, sizeof(T) * count); }
+
 void RenderRelease(VertexBuffer_t vb);
 void RenderRelease(IndexBuffer_t ib);
 void RenderRelease(StructuredBuffer_t sb);
