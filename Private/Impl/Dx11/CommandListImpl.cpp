@@ -1,5 +1,6 @@
 #include "CommandList.h"
 
+#include "IndirectCommands.h"
 #include "RenderImpl.h"
 
 namespace tpr
@@ -226,9 +227,22 @@ void CommandList::DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32
 	impl->context->DrawInstanced((UINT)numVerts, (UINT)numInstances, (UINT)startVertex, (UINT)startInstance);
 }
 
-void CommandList::IndirectDraw()
+void CommandList::ExecuteIndirect(IndirectCommand_t ic, StructuredBuffer_t argBuf, uint64_t argBufferOffset)
 {
-	assert(0, "Not implemented");
+	IndirectCommandType commandType = GetIndirectCommandType(ic);
+	ID3D11Buffer* dxRes = Dx11_GetStructuredBuffer(argBuf);
+	switch (commandType)
+	{
+	case IndirectCommandType::INDIRECT_DRAW:
+		impl->context->DrawInstancedIndirect(dxRes, (UINT)argBufferOffset);
+		break;
+	case IndirectCommandType::INDIRECT_DRAW_INDEXED:
+		impl->context->DrawIndexedInstancedIndirect(dxRes, (UINT)argBufferOffset);
+		break;
+	case IndirectCommandType::INDIRECT_DISPATCH:
+		impl->context->DispatchIndirect(dxRes, (UINT)argBufferOffset);
+		break;
+	}
 }
 
 void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)

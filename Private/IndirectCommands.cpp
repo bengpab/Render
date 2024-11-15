@@ -59,4 +59,14 @@ size_t IndirectCommandLayoutSize(IndirectCommandType type)
 	return 0;
 }
 
+IndirectCommandType GetIndirectCommandType(IndirectCommand_t ic)
+{
+	if (const IndirectCommandDesc* desc = g_IndirectCommands.Get(ic))
+	{
+		return desc->type;
+	}
+
+	return IndirectCommandType(0);
+}
+
 }

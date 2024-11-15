@@ -47,4 +47,5 @@ void RenderRef(IndirectCommand_t ic);
 void RenderRelease(IndirectCommand_t ic);
 
 size_t IndirectCommandLayoutSize(IndirectCommandType type);
+IndirectCommandType GetIndirectCommandType(IndirectCommand_t ic);
 }
