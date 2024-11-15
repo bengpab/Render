@@ -98,8 +98,8 @@ struct IDArray
 		return (Valid_AssumeLocked(id) && Reffed_AssumeLocked(id)) ? &Data[(uint32_t)id] : nullptr;
 	}
 
-	inline std::shared_lock<std::shared_mutex> ReadScopeLock() noexcept { return std::shared_lock<std::shared_mutex>(Mutex); }
-	inline std::unique_lock<std::shared_mutex> WriteScopeLock() noexcept { return std::unique_lock<std::shared_mutex>(Mutex); }
+	inline std::shared_lock<std::shared_mutex> ReadScopeLock() const noexcept { return std::shared_lock<std::shared_mutex>(Mutex); }
+	inline std::unique_lock<std::shared_mutex> WriteScopeLock() const noexcept { return std::unique_lock<std::shared_mutex>(Mutex); }
 
 	inline size_t Size() noexcept 
 	{
@@ -127,7 +127,7 @@ struct IDArray
 	}
 
 	template<typename Func>
-	void ForEachValid(Func&& func)
+	void ForEachValid(Func&& func) const
 	{
 		auto lock = ReadScopeLock();
 
@@ -145,10 +145,10 @@ struct IDArray
 	}
 
 private:
-	std::vector<ID>			FreeIDs;
-	std::vector<DataType>	Data;
-	std::vector<uint32_t>	RefCounts;
-	std::shared_mutex		Mutex;
+	std::vector<ID>				FreeIDs;
+	std::vector<DataType>		Data;
+	std::vector<uint32_t>		RefCounts;
+	mutable std::shared_mutex	Mutex;
 
 	uint32_t RefCount_AssumeLocked(ID id) const
 	{

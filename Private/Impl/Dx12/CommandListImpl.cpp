@@ -442,6 +442,13 @@ void CommandList::DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32
 	impl->CL.DxCl->DrawInstanced((UINT)numVerts, (UINT)numInstances, (UINT)startVertex, (UINT)startInstance);
 }
 
+void CommandList::ExecuteIndirect(IndirectCommand_t ic, StructuredBuffer_t argBuf, uint64_t argBufferOffset)
+{
+	ID3D12CommandSignature* dxCommandSig = Dx12_GetCommandSignature(ic);
+	ID3D12Resource* dxArgRes = Dx12_GetBufferResource(argBuf);
+	impl->CL.DxCl->ExecuteIndirect(dxCommandSig, 1u, dxArgRes, (UINT64)argBufferOffset, nullptr, 0u);
+}
+
 void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
 	impl->CL.DxCl->Dispatch((UINT)x, (UINT)y, (UINT)z);

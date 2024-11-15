@@ -9,16 +9,6 @@
 namespace tpr
 {
 
-FWD_RENDER_TYPE(ShaderResourceView_t);
-FWD_RENDER_TYPE(RenderTargetView_t);
-FWD_RENDER_TYPE(DepthStencilView_t);
-FWD_RENDER_TYPE(UnorderedAccessView_t);
-FWD_RENDER_TYPE(ConstantBuffer_t);
-FWD_RENDER_TYPE(IndexBuffer_t);
-FWD_RENDER_TYPE(VertexBuffer_t);
-FWD_RENDER_TYPE(DynamicBuffer_t);
-FWD_RENDER_TYPE(Texture_t);
-
 enum class CommandListType : uint8_t
 {
 	GRAPHICS,
@@ -77,6 +67,8 @@ struct CommandList
 
 	void DrawIndexedInstanced(uint32_t numIndices, uint32_t numInstances, uint32_t startIndex, uint32_t startVertex, uint32_t startInstance);
 	void DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32_t startVertex, uint32_t startInstance);
+
+	void ExecuteIndirect(IndirectCommand_t ic, StructuredBuffer_t argBuffer, uint64_t argBufferOffset = 0u);
 
 	void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 

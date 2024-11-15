@@ -34,6 +34,7 @@ FWD_RENDER_TYPE(PixelShader_t);
 FWD_RENDER_TYPE(GeometryShader_t);
 FWD_RENDER_TYPE(ComputeShader_t);
 FWD_RENDER_TYPE(Texture_t);
+FWD_RENDER_TYPE(IndirectCommand_t);
 
 using ShaderResourceViewPtr = RenderPtr<ShaderResourceView_t>;
 using UnorderedAccessViewPtr = RenderPtr<UnorderedAccessView_t>;

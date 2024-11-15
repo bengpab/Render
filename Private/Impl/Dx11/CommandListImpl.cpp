@@ -226,6 +226,11 @@ void CommandList::DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32
 	impl->context->DrawInstanced((UINT)numVerts, (UINT)numInstances, (UINT)startVertex, (UINT)startInstance);
 }
 
+void CommandList::IndirectDraw()
+{
+	assert(0, "Not implemented");
+}
+
 void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
 	impl->context->Dispatch(x, y, z);

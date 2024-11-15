@@ -144,5 +144,6 @@ uint32_t Dx12_GetBufferOffset(StructuredBuffer_t buf);
 ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue);
 
 ID3D12RootSignature* Dx12_GetRootSignature(RootSignature_t rs);
+ID3D12CommandSignature* Dx12_GetCommandSignature(IndirectCommand_t ic);
 
 }
