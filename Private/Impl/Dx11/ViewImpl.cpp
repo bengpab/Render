@@ -23,7 +23,7 @@ struct RenderViewImpl
 	ComPtr<IDXGISwapChain1> DxSwapChain;
 	Texture_t Textures[RenderView::NumBackBuffers];
 	RenderTargetView_t Rtv[RenderView::NumBackBuffers];
-	uint32_t FrameId = 0;
+	uint64_t FrameId = 0;
 };
 
 RenderView::RenderView()
@@ -66,8 +66,7 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 
 	Impl->DxSwapChain->ResizeBuffers(0, (UINT)Width, (UINT)Height, DXGI_FORMAT_UNKNOWN, 0);
 
-	//for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
-	for (uint32_t i = 0; i < 1; i++)
+	for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
 	{
 		ComPtr<ID3D11Resource> backBuffer = nullptr;
 
@@ -156,14 +155,17 @@ void RenderView::ClearCurrentBackBufferTarget(CommandList* cl, const float clear
 
 Texture_t RenderView::GetCurrentBackBufferTexture() const
 {
-	//return Impl->Textures[Impl->FrameId % RenderView::NumBackBuffers];
 	return Impl->Textures[0];
 }
 
 RenderTargetView_t RenderView::GetCurrentBackBufferRTV() const
 {
-	//return Impl->Rtv[Impl->FrameId % RenderView::NumBackBuffers];
 	return Impl->Rtv[0];
+}
+
+uint64_t RenderView::GetFrameID() const
+{
+	return Impl->FrameId;
 }
 
 }

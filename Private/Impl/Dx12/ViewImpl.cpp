@@ -23,7 +23,7 @@ struct RenderViewImpl
 	Texture_t Textures[RenderView::NumBackBuffers];
 	RenderTargetView_t Rtv[RenderView::NumBackBuffers];
 	uint64_t FrameFenceValue[RenderView::NumBackBuffers];
-	uint32_t FrameId = 0;
+	uint64_t FrameId = 0;
 
 	ComPtr<ID3D12Fence> DxFrameFence;
 };
@@ -186,6 +186,11 @@ Texture_t RenderView::GetCurrentBackBufferTexture() const
 RenderTargetView_t RenderView::GetCurrentBackBufferRTV() const
 {
 	return Impl->Rtv[Impl->FrameId % RenderView::NumBackBuffers];
+}
+
+uint64_t RenderView::GetFrameID() const
+{
+	return Impl->FrameId;
 }
 
 }

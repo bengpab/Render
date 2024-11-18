@@ -33,6 +33,8 @@ struct RenderView
 	Texture_t GetCurrentBackBufferTexture() const;
 	RenderTargetView_t GetCurrentBackBufferRTV() const;
 
+	uint64_t GetFrameID() const;
+
 	intptr_t Hwnd;
 	std::unique_ptr<RenderViewImpl> Impl;
 	uint32_t Width = 0;

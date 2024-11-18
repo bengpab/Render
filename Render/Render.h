@@ -5,6 +5,7 @@
 #include "Binding.h"
 #include "Buffers.h"
 #include "CommandList.h"
+#include "IndirectCommands.h"
 #include "PipelineState.h"
 #include "RenderTypes.h"
 #include "RootSignature.h"

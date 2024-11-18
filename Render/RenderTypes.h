@@ -50,8 +50,12 @@ using RootSignaturePtr = RenderPtr<RootSignature_t>;
 using TexturePtr = RenderPtr<Texture_t>;
 
 struct CommandList;
+struct CommandListSubmissionGroup;
 struct GraphicsPipelineTargetDesc;
 struct ShaderMacro;
+struct RenderView;
+struct RenderInitParams;
+
 using ShaderMacros = std::vector<ShaderMacro>;
 
 template<typename T>
