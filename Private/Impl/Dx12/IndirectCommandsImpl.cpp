@@ -22,12 +22,25 @@ D3D12_INDIRECT_ARGUMENT_TYPE Dx12_IndirectArgumentType(IndirectCommandType type)
 	return (D3D12_INDIRECT_ARGUMENT_TYPE)0;
 }
 
+bool RequiresRootSignature(IndirectCommandType type)
+{
+	return	type != IndirectCommandType::INDIRECT_DRAW &&
+			type != IndirectCommandType::INDIRECT_DRAW_INDEXED &&
+			type != IndirectCommandType::INDIRECT_DISPATCH;
+}
+
 bool CreateIndirectCommandImpl(IndirectCommand_t ic, const IndirectCommandDesc& desc)
 {
-	ID3D12RootSignature* dxRootSig = Dx12_GetRootSignature(desc.rootSig);
-	if (!dxRootSig)
+	ID3D12RootSignature* dxRootSig = nullptr;
+	
+	if (RequiresRootSignature(desc.type))
 	{
-		return false;
+		Dx12_GetRootSignature(desc.rootSig != RootSignature_t::INVALID ? desc.rootSig : g_render.RootSignature);
+
+		if (!dxRootSig)
+		{
+			return false;
+		}
 	}
 
 	D3D12_INDIRECT_ARGUMENT_DESC dxArg = {};

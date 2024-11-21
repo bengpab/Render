@@ -37,11 +37,11 @@ enum class IndirectCommandType : uint32_t
 
 RENDER_TYPE(IndirectCommand_t);
 
-IndirectCommand_t CreateIndirectCommand(IndirectCommandType type, RootSignature_t rootSig);
+IndirectCommand_t CreateIndirectCommand(IndirectCommandType type, RootSignature_t rootSig = {});
 
-inline IndirectCommand_t CreateIndirectDrawCommand(RootSignature_t rootSig) { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DRAW, rootSig); }
-inline IndirectCommand_t CreateIndirectDrawIndexedCommand(RootSignature_t rootSig) { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DRAW_INDEXED, rootSig); }
-inline IndirectCommand_t CreateIndirectDispatchCommand(RootSignature_t rootSig) { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DISPATCH, rootSig); }
+inline IndirectCommand_t CreateIndirectDrawCommand() { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DRAW, {}); }
+inline IndirectCommand_t CreateIndirectDrawIndexedCommand() { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DRAW_INDEXED, {}); }
+inline IndirectCommand_t CreateIndirectDispatchCommand() { return CreateIndirectCommand(IndirectCommandType::INDIRECT_DISPATCH, {}); }
 
 void RenderRef(IndirectCommand_t ic);
 void RenderRelease(IndirectCommand_t ic);

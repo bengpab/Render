@@ -12,11 +12,6 @@ IDArray<IndirectCommand_t, IndirectCommandDesc> g_IndirectCommands;
 
 IndirectCommand_t CreateIndirectCommand(IndirectCommandType type, RootSignature_t rootSig)
 {
-	if (rootSig == RootSignature_t::INVALID)
-	{
-		return IndirectCommand_t::INVALID;
-	}
-
 	IndirectCommandDesc desc;
 	desc.type = type;
 	desc.rootSig = rootSig;
