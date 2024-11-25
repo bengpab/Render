@@ -110,6 +110,7 @@ struct CommandList
 	void TransitionResource(Texture_t tex, ResourceTransitionState before, ResourceTransitionState after);
 	void TransitionResource(StructuredBuffer_t buf, ResourceTransitionState before, ResourceTransitionState after);
 	void UAVBarrier(Texture_t tex);
+	void UAVBarrier(StructuredBuffer_t buf);
 
 	GraphicsPipelineState_t GetPreviousPSO() const noexcept { return LastPipeline; }
 	ComputePipelineState_t GetPreviousComputePSO() const noexcept { return LastComputePipeline; }

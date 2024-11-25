@@ -557,6 +557,13 @@ void CommandList::UAVBarrier(Texture_t tex)
 	impl->CL.DxCl->ResourceBarrier(1u, &barrier);
 }
 
+void CommandList::UAVBarrier(StructuredBuffer_t buf)
+{
+	D3D12_RESOURCE_BARRIER barrier = Dx12_UavBarrier(Dx12_GetBufferResource(buf));
+
+	impl->CL.DxCl->ResourceBarrier(1u, &barrier);
+}
+
 CommandListPtr CommandList::Create()
 {
 	return Create(CommandListType::GRAPHICS);
