@@ -66,7 +66,7 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 
 	Impl->DxSwapChain->ResizeBuffers(0, (UINT)Width, (UINT)Height, DXGI_FORMAT_UNKNOWN, 0);
 
-	for (uint32_t i = 0; i < RenderView::NumBackBuffers; i++)
+	for (uint32_t i = 0; i < 1u/*RenderView::NumBackBuffers*/; i++)
 	{
 		ComPtr<ID3D11Resource> backBuffer = nullptr;
 
