@@ -85,6 +85,8 @@ void RenderView::Resize(uint32_t x, uint32_t y)
 
 		Impl->DxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
 
+		backBuffer->SetName(L"BackbufferTexture");
+
 		Impl->Textures[i] = AllocTexture();
 
 		Dx12_SetTextureResource(Impl->Textures[i], backBuffer);		
