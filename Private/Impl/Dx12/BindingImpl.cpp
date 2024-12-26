@@ -160,7 +160,7 @@ struct SrvUavDescriptorHeaps : public DescriptorHeaps
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.NumDescriptors = (UINT)g_SrvUavDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		desc.NodeMask = 1u;
+		desc.NodeMask = 0;
 
 		if (!DXENSURE(g_render.DxDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap.DxHeap))))
 		{
@@ -217,7 +217,7 @@ struct RtvDescriptorHeap : public DescriptorHeaps
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		desc.NumDescriptors = (UINT)g_RtvDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		desc.NodeMask = 1u;
+		desc.NodeMask = 0;
 
 		if (!DXENSURE(g_render.DxDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap.DxHeap))))
 		{
@@ -255,7 +255,7 @@ struct DsvDescriptorHeap : public DescriptorHeaps
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 		desc.NumDescriptors = (UINT)g_DsvDescriptors.Size();
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		desc.NodeMask = 1u;
+		desc.NodeMask = 0;
 
 		if (!DXENSURE(g_render.DxDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap.DxHeap))))
 		{

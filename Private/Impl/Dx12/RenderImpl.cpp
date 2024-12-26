@@ -298,8 +298,8 @@ D3D12_HEAP_PROPERTIES Dx12_HeapProps(D3D12_HEAP_TYPE type)
 	props.Type = type;
 	props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	props.CreationNodeMask = 1;
-	props.VisibleNodeMask = 1;
+	props.CreationNodeMask = 0;
+	props.VisibleNodeMask = 0;
 
 	return props;
 }

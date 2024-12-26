@@ -255,8 +255,8 @@ public:
 	BufferAllocationSingleBuffer(size_t size, bool uav)
 		: Size(size)
 	{
-		pUploadBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_FLAG_NONE);
-		pBuffer = Dx12_CreateBuffer(AllocationPageSize, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, uav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE);
+		pUploadBuffer = Dx12_CreateBuffer(size, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_FLAG_NONE);
+		pBuffer = Dx12_CreateBuffer(size, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, uav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE);
 
 		pUploadBuffer->Map(0, nullptr, &pCpuMemory);
 
@@ -359,7 +359,8 @@ struct BufferAllocationPool
 		}
 		else
 		{
-			return AllocLargeBuffer(size, pData);
+			size_t alignedSize = AlignUp(size, alignment);
+			return AllocLargeBuffer(alignedSize, pData);
 		}
 	}
 

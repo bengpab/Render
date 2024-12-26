@@ -248,7 +248,7 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	dxDesc.SampleDesc.Count = 1;
 	dxDesc.SampleDesc.Quality = 0;
 
-	dxDesc.NodeMask = 1;
+	dxDesc.NodeMask = 0;
 
 	Dx12GraphicsPipelineStateDesc& dxPso = g_pipelines.GraphicsPipelines.Alloc(handle);
 
@@ -288,7 +288,7 @@ bool CompileComputePipelineState(ComputePipelineState_t handle, const ComputePip
 	dxDesc.CS.pShaderBytecode = csBlob->GetBufferPointer();
 	dxDesc.CS.BytecodeLength = csBlob->GetBufferSize();
 
-	dxDesc.NodeMask = 1;
+	dxDesc.NodeMask = 0;
 
 	ComPtr<ID3D12PipelineState>& dxPso = g_pipelines.ComputePipelines.Alloc(handle);
 
