@@ -158,7 +158,7 @@ public:
 		FreeBlocksByOffset.erase(smallestBlockIt);
 
 		const size_t newOffset = alignedOffset + alignedSize;
-		const size_t newSize = blockSize - alignedSize;
+		const size_t newSize = blockSize - alignedSize - offsetDiff;
 
 		if (offsetDiff > 0)
 		{
