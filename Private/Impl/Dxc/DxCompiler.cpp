@@ -28,6 +28,8 @@ LPCWSTR ShaderProfileStr[(uint8_t)ShaderProfile::COUNT] =
 	L"ps_6_0",
 	L"vs_6_0",
 	L"gs_6_0",
+	L"ms_6_0",
+	L"as_6_0",
 };
 
 static std::wstring ToWideStr(const std::string& str)
@@ -137,7 +139,8 @@ ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, const char* incl
 		return nullptr;
 
 	ComPtr<IDxcBlobUtf8> errors;
-	if (DXENSURE(result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr)))
+	ComPtr<IDxcBlobUtf16> outputName;
+	if (DXENSURE(result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), &outputName)))
 	{
 		if (errors && errors->GetStringLength() > 0)
 		{

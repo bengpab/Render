@@ -12,10 +12,12 @@ namespace tpr
 
 struct
 {
-	SparseArray<ComPtr<IDxcBlob>, VertexShader_t> CompiledVertexBlobs;
-	SparseArray<ComPtr<IDxcBlob>, PixelShader_t> CompiledPixelBlobs;
-	SparseArray<ComPtr<IDxcBlob>, GeometryShader_t> CompiledGeometryBlobs;
-	SparseArray<ComPtr<IDxcBlob>, ComputeShader_t> CompiledComputeBlobs;
+	SparseArray<ComPtr<IDxcBlob>, VertexShader_t>			CompiledVertexBlobs;
+	SparseArray<ComPtr<IDxcBlob>, PixelShader_t>			CompiledPixelBlobs;
+	SparseArray<ComPtr<IDxcBlob>, GeometryShader_t>			CompiledGeometryBlobs;
+	SparseArray<ComPtr<IDxcBlob>, MeshShader_t>				CompiledMeshBlobs;
+	SparseArray<ComPtr<IDxcBlob>, AmplificationShader_t>	CompiledAmplificationBlobs;
+	SparseArray<ComPtr<IDxcBlob>, ComputeShader_t>			CompiledComputeBlobs;
 } g_shaders;
 
 bool CompileShaderInternal(ShaderProfile target, const char* path, const char* includeDirectory, const ShaderMacros& macros, ComPtr<IDxcBlob>& shaderBlob)
@@ -34,7 +36,8 @@ bool CompileShaderInternal(ShaderProfile target, const char* path, const char* i
 		return false;
 	}		
 
-	if (!DXENSURE(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr)))
+	ComPtr<IDxcBlobUtf16> outputName;
+	if (!DXENSURE(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), &outputName)))
 		return false;
 
 	return true;
@@ -53,6 +56,16 @@ bool CompileShader(PixelShader_t handle, const char* path, const char* includeDi
 bool CompileShader(GeometryShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
 {
 	return CompileShaderInternal(ShaderProfile::GS_6_0, path, includeDirectory, macros, g_shaders.CompiledGeometryBlobs.Alloc(handle));
+}
+
+bool CompileShader(MeshShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::MS_6_0, path, includeDirectory, macros, g_shaders.CompiledMeshBlobs.Alloc(handle));
+}
+
+bool CompileShader(AmplificationShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::AS_6_0, path, includeDirectory, macros, g_shaders.CompiledAmplificationBlobs.Alloc(handle));
 }
 
 bool CompileShader(ComputeShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)

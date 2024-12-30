@@ -152,6 +152,18 @@ bool CompileShader(GeometryShader_t handle, const char* path, const char* direct
 	return SUCCEEDED(g_render.Device->CreateGeometryShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &dxGs));
 }
 
+bool CompileShader(MeshShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
+bool CompileShader(AmplificationShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
 bool CompileShader(ComputeShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
 {
 	ComPtr<ID3DBlob> shaderBlob;
