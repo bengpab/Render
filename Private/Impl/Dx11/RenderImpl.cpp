@@ -135,6 +135,11 @@ bool Render_IsThreadSafe()
 	return false;
 }
 
+bool Render_SupportsMeshShaders()
+{
+	return false;
+}
+
 const char* Render_ApiId()
 {
 	return "RAPI_DX11";

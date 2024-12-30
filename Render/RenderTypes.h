@@ -32,6 +32,8 @@ FWD_RENDER_TYPE(RootSignature_t);
 FWD_RENDER_TYPE(VertexShader_t);
 FWD_RENDER_TYPE(PixelShader_t);
 FWD_RENDER_TYPE(GeometryShader_t);
+FWD_RENDER_TYPE(MeshShader_t);
+FWD_RENDER_TYPE(AmplificationShader_t);
 FWD_RENDER_TYPE(ComputeShader_t);
 FWD_RENDER_TYPE(Texture_t);
 FWD_RENDER_TYPE(IndirectCommand_t);

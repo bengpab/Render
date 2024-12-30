@@ -203,6 +203,11 @@ bool Render_IsBindless()
 	return true;
 }
 
+bool Render_SupportsMeshShaders()
+{
+	return true;
+}
+
 bool Render_IsThreadSafe()
 {
 	return RENDER_THREAD_SAFE;

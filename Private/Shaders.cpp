@@ -27,10 +27,12 @@ struct ShaderData
 	std::string ShaderIDStr;
 };
 
-IDArray<VertexShader_t,		ShaderData>	g_VertexShaders;
-IDArray<PixelShader_t,		ShaderData>	g_PixelShaders;
-IDArray<GeometryShader_t,	ShaderData>	g_GeometryShaders;
-IDArray<ComputeShader_t,	ShaderData>	g_ComputeShaders;
+IDArray<VertexShader_t,			ShaderData>	g_VertexShaders;
+IDArray<PixelShader_t,			ShaderData>	g_PixelShaders;
+IDArray<GeometryShader_t,		ShaderData>	g_GeometryShaders;
+IDArray<MeshShader_t,			ShaderData>	g_MeshShaders;
+IDArray<AmplificationShader_t,	ShaderData>	g_AmplificationShaders;
+IDArray<ComputeShader_t,		ShaderData>	g_ComputeShaders;
 
 std::string CreateShaderIDStr(const char* path, const ShaderMacros& macros)
 {
@@ -166,27 +168,53 @@ GeometryShader_t CreateGeometryShader(const char* path, const ShaderMacros& macr
 	return CreateShader(path, macros, "_GS", g_GeometryShaders);
 }
 
+MeshShader_t CreateMeshShader(const char* path, const ShaderMacros& macros)
+{
+	if (!Render_SupportsMeshShaders())
+		return {};
+
+	return CreateShader(path, macros, "_MS", g_MeshShaders);
+}
+
+AmplificationShader_t CreateAmplificationShader(const char* path, const ShaderMacros& macros)
+{
+	if (!Render_SupportsMeshShaders())
+		return {};
+
+	return CreateShader(path, macros, "_AS", g_AmplificationShaders);
+}
+
 ComputeShader_t CreateComputeShader(const char* path, const ShaderMacros& macros)
 {
 	return CreateShader(path, macros, "_CS", g_ComputeShaders);
 }
 
-size_t Shaders_GetVertexShaderCount()
+size_t GetVertexShaderCount()
 {
 	return g_VertexShaders.UsedSize();
 }
 
-size_t Shaders_GetPixelShaderCount()
+size_t GetPixelShaderCount()
 {
 	return g_PixelShaders.UsedSize();
 }
 
-size_t Shaders_GetGeometryShaderCount()
+size_t GetGeometryShaderCount()
 {
 	return g_GeometryShaders.UsedSize();
 }
 
-size_t Shaders_GetComputeShaderCount()
+size_t GetMeshShaderCount()
+{
+	return g_MeshShaders.UsedSize();
+}
+
+size_t GetAmplificationShaderCount()
+{
+	return g_AmplificationShaders.UsedSize();
+}
+
+size_t GetComputeShaderCount()
 {
 	return g_ComputeShaders.UsedSize();
 }
@@ -209,8 +237,10 @@ void ReloadShaders()
 {
 	ReloadShaderType(g_VertexShaders);
 	ReloadShaderType(g_PixelShaders);
-	ReloadShaderType(g_ComputeShaders);
 	ReloadShaderType(g_GeometryShaders);
+	ReloadShaderType(g_MeshShaders);
+	ReloadShaderType(g_AmplificationShaders);
+	ReloadShaderType(g_ComputeShaders);
 }
 
 // Don't bother ref counting or releasing shaders, we always keep them in memory as they are expensive to re-initialize
@@ -223,6 +253,14 @@ void RenderRef(PixelShader_t ps)
 }
 
 void RenderRef(GeometryShader_t gs)
+{
+}
+
+void RenderRef(MeshShader_t ms)
+{
+}
+
+void RenderRef(AmplificationShader_t as)
 {
 }
 

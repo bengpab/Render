@@ -46,6 +46,7 @@ void Render_PopDebugWarningDisable();
 
 bool Render_IsBindless();
 bool Render_IsThreadSafe();
+bool Render_SupportsMeshShaders();
 
 const char* Render_ApiId();
 
