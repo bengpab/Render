@@ -250,6 +250,8 @@ void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 	impl->context->Dispatch(x, y, z);
 }
 
+void CommandList::DispatchMesh(uint32_t x, uint32_t y, uint32_t z) { assert(0); }
+
 // Dx11 Style Bind Commands
 void CommandList::BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs)
 {

@@ -145,6 +145,37 @@ bool Render_Init(const RenderInitParams& params)
 
 	g_render.DxDevice = CreateDevice(params.DebugEnabled);
 
+	if (!g_render.DxDevice)
+	{
+		return false;
+	}
+
+	// Query feature support
+
+	// Mesh shaders
+	{
+		D3D12_FEATURE_DATA_SHADER_MODEL ShaderModel = { D3D_SHADER_MODEL_6_5 };
+		if (SUCCEEDED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &ShaderModel, sizeof(ShaderModel)))
+			|| (ShaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
+		{
+			D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features = {};
+			if (SUCCEEDED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features, sizeof(Features)))
+				|| (Features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+			{
+				g_render.SupportsMeshShaders = true;
+			}
+			else
+			{
+				OutputDebugStringA("Mesh shaders: Feature unsupported by hardware\n");
+			}
+		}
+		else
+		{
+			OutputDebugStringA("Mesh shaders: Shader Model 6.5 is not supported\n");
+		}
+	}
+
+
 	g_render.RootSignature = CreateRootSignature(params.RootSigDesc);
 
 	g_render.DirectQueue.DxCommandQueue = CreateDxCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -205,7 +236,7 @@ bool Render_IsBindless()
 
 bool Render_SupportsMeshShaders()
 {
-	return true;
+	return g_render.SupportsMeshShaders;
 }
 
 bool Render_IsThreadSafe()

@@ -47,7 +47,7 @@ struct Dx12CommandList
 {
 	D3D12_COMMAND_LIST_TYPE DxType = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	Dx12CommandAllocator Allocator;
-	ComPtr<ID3D12GraphicsCommandList> DxCl;
+	ComPtr<ID3D12GraphicsCommandList6> DxCl;
 };
 
 struct Dx12DescriptorHeap
@@ -74,6 +74,7 @@ struct Dx12RenderGlobals
 	RootSignature_t RootSignature = RootSignature_t::INVALID;
 
 	bool Debug = false;
+	bool SupportsMeshShaders = false;
 };
 
 extern Dx12RenderGlobals g_render;

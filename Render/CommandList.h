@@ -72,6 +72,8 @@ struct CommandList
 
 	void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
+	void DispatchMesh(uint32_t x, uint32_t y, uint32_t z);
+
 	// Dx11 Style Bind Commands
 	void BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs);
 	void BindVertexCBVs(uint32_t startSlot, uint32_t count, const ConstantBuffer_t* const cbvs);

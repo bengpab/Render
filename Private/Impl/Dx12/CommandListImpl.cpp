@@ -11,7 +11,7 @@ struct Dx12CommandListPool
 {
 	std::mutex Mutex;
 	std::vector<Dx12CommandAllocator> AvailableAllocators;
-	std::vector<ComPtr<ID3D12GraphicsCommandList>> AvailableCommandLists;
+	std::vector<ComPtr<ID3D12GraphicsCommandList6>> AvailableCommandLists;
 };
 
 struct Dx12CommandLists
@@ -452,6 +452,11 @@ void CommandList::ExecuteIndirect(IndirectCommand_t ic, StructuredBuffer_t argBu
 void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 {
 	impl->CL.DxCl->Dispatch((UINT)x, (UINT)y, (UINT)z);
+}
+
+void CommandList::DispatchMesh(uint32_t x, uint32_t y, uint32_t z) 
+{ 
+	impl->CL.DxCl->DispatchMesh((UINT)x, (UINT)y, (UINT)z);
 }
 
 // Dx11 Style Bind Commands, Dx12 uses bindless
