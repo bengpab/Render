@@ -2,6 +2,13 @@
 
 #include "RenderTypes.h"
 
+// TODO:
+// Add support for byte buffers
+//	I think the best approach for byte buffers would be to create a GenericBuffer_t type with BufferUsage flags passed to it telling it what kind of buffer
+//	it can be. Currently we can't have a struct buf and a vertex buf mapped to the same memory, even though this is possible in our APIs.
+//	As well as having explicitly typed buffers having one that we can reinterpret in different ways would be a lot more flexible.
+//	The explicit buffer creation code could then just create a generic buffer with fixed flags, then perhaps the returned explicit buffers are just casted from the generic buffer ID.
+
 namespace tpr
 {
 
