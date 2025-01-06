@@ -150,9 +150,11 @@ struct GraphicsPipelineStateDesc
 	
 	GraphicsPipelineTargetDesc TargetDesc = {};
 	
-	VertexShader_t Vs = VertexShader_t::INVALID;
-	GeometryShader_t Gs = GeometryShader_t::INVALID;
-	PixelShader_t Ps = PixelShader_t::INVALID;
+	VertexShader_t VS = VertexShader_t::INVALID;
+	GeometryShader_t GS = GeometryShader_t::INVALID;
+	MeshShader_t MS = MeshShader_t::INVALID;
+	AmplificationShader_t AS = AmplificationShader_t::INVALID;
+	PixelShader_t PS = PixelShader_t::INVALID;
 
 	RootSignature_t RootSignatureOverride = RootSignature_t::INVALID;
 
@@ -190,9 +192,11 @@ struct GraphicsPipelineStateDesc
 		return *this;
 	}
 
-	GraphicsPipelineStateDesc& VertexShader(VertexShader_t vs) { Vs = vs; return *this; }
-	GraphicsPipelineStateDesc& GeomstryShader(GeometryShader_t gs) { Gs = gs; return *this; }
-	GraphicsPipelineStateDesc& PixelShader(PixelShader_t ps) { Ps = ps; return *this; }
+	GraphicsPipelineStateDesc& VertexShader(VertexShader_t vs) { VS = vs; return *this; }
+	GraphicsPipelineStateDesc& GeometryShader(GeometryShader_t gs) { GS = gs; return *this; }
+	GraphicsPipelineStateDesc& MeshShader(MeshShader_t ms) { MS = ms; return *this; }
+	GraphicsPipelineStateDesc& AmplificationShader(AmplificationShader_t as) { AS = as; return *this; }
+	GraphicsPipelineStateDesc& PixelShader(PixelShader_t ps) { PS = ps; return *this; }
 	GraphicsPipelineStateDesc& RootSignature(RootSignature_t rs) { RootSignatureOverride = rs; return *this; }
 };
 

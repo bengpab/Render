@@ -65,7 +65,7 @@ struct Dx12GraphicsPipelineStateDesc
 
 struct Dx12RenderGlobals
 {
-	ComPtr<ID3D12Device> DxDevice;
+	ComPtr<ID3D12Device2> DxDevice;
 
 	Dx12CommandQueue DirectQueue;
 	Dx12CommandQueue ComputeQueue;
@@ -84,6 +84,8 @@ uint64_t Dx12_FlushQueue(Dx12CommandQueue& queue);
 IDxcBlob* Dx12_GetVertexShaderBlob(VertexShader_t vs);
 IDxcBlob* Dx12_GetPixelShaderBlob(PixelShader_t ps);
 IDxcBlob* Dx12_GetGeometryShaderBlob(GeometryShader_t gs);
+IDxcBlob* Dx12_GetMeshShaderBlob(MeshShader_t ms);
+IDxcBlob* Dx12_GetAmplificationShaderBlob(AmplificationShader_t as);
 IDxcBlob* Dx12_GetComputeShaderBlob(ComputeShader_t cs);
 
 Dx12CommandList Dx12_AccquireCommandList(CommandListType type);

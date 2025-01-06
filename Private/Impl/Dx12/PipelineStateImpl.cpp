@@ -1,7 +1,7 @@
 #include "Impl/PipelineStateImpl.h"
 
+#include "Impl/Dx/d3dx12.h"
 #include "RenderImpl.h"
-
 #include "SparseArray.h"
 
 #include <dxcapi.h>
@@ -131,128 +131,187 @@ D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimTopoType(PrimitiveTopologyType pt)
 
 bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const GraphicsPipelineStateDesc& desc, const InputElementDesc* inputs, size_t inputCount)
 {
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC dxDesc = {};
-	
-	RootSignature_t rootSigToUse = desc.RootSignatureOverride;
-
-	if (rootSigToUse == RootSignature_t::INVALID)
-		rootSigToUse = g_render.RootSignature;
-
-	dxDesc.pRootSignature = Dx12_GetRootSignature(rootSigToUse);
-	
-	if(desc.Vs == VertexShader_t::INVALID)
+	struct Dx12PipelineStateStream
 	{
-		assert(0 && "CompileGraphicsPipelineState needs a valid vertex shader");
+		Dx12PipelineStateStream() = default;
+		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE RootSignature;
+		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+		CD3DX12_PIPELINE_STATE_STREAM_GS GS;
+		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+		CD3DX12_PIPELINE_STATE_STREAM_MS MS;
+		CD3DX12_PIPELINE_STATE_STREAM_AS AS;
+		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC BlendState;
+		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
+		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL1 DepthStencilState;
+		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
+		CD3DX12_PIPELINE_STATE_STREAM_IB_STRIP_CUT_VALUE IBStripCutValue;
+		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RenderTargetFormats;
+		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DepthStencilFormat;
+
+	} StateStream;
+	
+	{
+		RootSignature_t rootSigToUse = desc.RootSignatureOverride;
+
+		if (rootSigToUse == RootSignature_t::INVALID)
+			rootSigToUse = g_render.RootSignature;
+
+		StateStream.RootSignature = Dx12_GetRootSignature(rootSigToUse);
+	}
+
+	if(desc.VS == VertexShader_t::INVALID && desc.MS == MeshShader_t::INVALID)
+	{
+		assert(0 && "CompileGraphicsPipelineState needs a valid vertex or mesh shader");
 		return false;
 	}
-	else
+
+	if (desc.VS != VertexShader_t::INVALID && desc.MS != MeshShader_t::INVALID)
 	{
-		ComPtr<IDxcBlob> vsBlob = Dx12_GetVertexShaderBlob(desc.Vs);
+		assert(0 && "CompileGraphicsPipelineState needs either a valid vertex or a mesh shader, not both");
+		return false;
+	}
+
+	if(desc.VS != VertexShader_t::INVALID)
+	{
+		ComPtr<IDxcBlob> vsBlob = Dx12_GetVertexShaderBlob(desc.VS);
 		assert(vsBlob && "CompileGraphicsPipelineState null vsBlob");
 
-		dxDesc.VS.pShaderBytecode = vsBlob->GetBufferPointer();
-		dxDesc.VS.BytecodeLength = vsBlob->GetBufferSize();
+		StateStream.VS = { vsBlob->GetBufferPointer(),  vsBlob->GetBufferSize() };
+	}
+	else if (desc.MS != MeshShader_t::INVALID)
+	{
+		ComPtr<IDxcBlob> msBlob = Dx12_GetMeshShaderBlob(desc.MS);
+		assert(msBlob && "CompileGraphicsPipelineState null msBlob");
+		StateStream.MS = { msBlob->GetBufferPointer(),  msBlob->GetBufferSize() };
 	}
 
-	if (desc.Ps != PixelShader_t::INVALID)
+	if (desc.AS != AmplificationShader_t::INVALID)
 	{
-		ComPtr<IDxcBlob> psBlob = Dx12_GetPixelShaderBlob(desc.Ps);
+		assert(desc.MS != MeshShader_t::INVALID && "Amp shader requires a valid mesh shader");
+		ComPtr<IDxcBlob> asBlob = Dx12_GetAmplificationShaderBlob(desc.AS);
+		assert(asBlob && "CompileGraphicsPipelineState null asBlob");
+		StateStream.AS = { asBlob->GetBufferPointer(),  asBlob->GetBufferSize() };
+	}
+
+	if (desc.PS != PixelShader_t::INVALID)
+	{
+		ComPtr<IDxcBlob> psBlob = Dx12_GetPixelShaderBlob(desc.PS);
 		assert(psBlob && "CompileGraphicsPipelineState null psBlob");
-
-		dxDesc.PS.pShaderBytecode = psBlob->GetBufferPointer();
-		dxDesc.PS.BytecodeLength = psBlob->GetBufferSize();
+		StateStream.PS = { psBlob->GetBufferPointer(),  psBlob->GetBufferSize() };
 	}
 
-	if (desc.Gs != GeometryShader_t::INVALID)
+	if (desc.GS != GeometryShader_t::INVALID)
 	{
-		ComPtr<IDxcBlob> gsBlob = Dx12_GetGeometryShaderBlob(desc.Gs);
+		ComPtr<IDxcBlob> gsBlob = Dx12_GetGeometryShaderBlob(desc.GS);
 		assert(gsBlob && "CompileGraphicsPipelineState null gsBlob");
-
-		dxDesc.GS.pShaderBytecode = gsBlob->GetBufferPointer();
-		dxDesc.GS.BytecodeLength = gsBlob->GetBufferSize();
+		StateStream.GS = { gsBlob->GetBufferPointer(),  gsBlob->GetBufferSize() };
 	}
 
-	dxDesc.BlendState.AlphaToCoverageEnable = FALSE;
-
-	for (uint8_t i = 1; i < desc.TargetDesc.NumRenderTargets; i++)
 	{
-		if (desc.TargetDesc.Blends[i].Opaque != desc.TargetDesc.Blends[0].Opaque)
+		CD3DX12_BLEND_DESC& dxBlendDesc = StateStream.BlendState;
+
+		dxBlendDesc.AlphaToCoverageEnable = FALSE;
+
+		for (uint8_t i = 1; i < desc.TargetDesc.NumRenderTargets; i++)
 		{
-			dxDesc.BlendState.IndependentBlendEnable = true;
-			break;
+			if (desc.TargetDesc.Blends[i].Opaque != desc.TargetDesc.Blends[0].Opaque)
+			{
+				dxBlendDesc.IndependentBlendEnable = true;
+				break;
+			}
+		}
+
+		for (uint8_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
+		{
+			dxBlendDesc.RenderTarget[i].BlendEnable = desc.TargetDesc.Blends[i].BlendEnabled;
+			dxBlendDesc.RenderTarget[i].SrcBlend = GetBlend(desc.TargetDesc.Blends[i].SrcBlend);
+			dxBlendDesc.RenderTarget[i].DestBlend = GetBlend(desc.TargetDesc.Blends[i].DstBlend);
+			dxBlendDesc.RenderTarget[i].BlendOp = GetBlendOp(desc.TargetDesc.Blends[i].Op);
+			dxBlendDesc.RenderTarget[i].SrcBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].SrcBlendAlpha);
+			dxBlendDesc.RenderTarget[i].DestBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].DstBlendAlpha);
+			dxBlendDesc.RenderTarget[i].BlendOpAlpha = GetBlendOp(desc.TargetDesc.Blends[i].OpAlpha);
+			dxBlendDesc.RenderTarget[i].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 		}
 	}
 
-	for (uint8_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
 	{
-		dxDesc.BlendState.RenderTarget[i].BlendEnable = desc.TargetDesc.Blends[i].BlendEnabled;
-		dxDesc.BlendState.RenderTarget[i].SrcBlend = GetBlend(desc.TargetDesc.Blends[i].SrcBlend);
-		dxDesc.BlendState.RenderTarget[i].DestBlend = GetBlend(desc.TargetDesc.Blends[i].DstBlend);
-		dxDesc.BlendState.RenderTarget[i].BlendOp = GetBlendOp(desc.TargetDesc.Blends[i].Op);
-		dxDesc.BlendState.RenderTarget[i].SrcBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].SrcBlendAlpha);
-		dxDesc.BlendState.RenderTarget[i].DestBlendAlpha = GetBlend(desc.TargetDesc.Blends[i].DstBlendAlpha);
-		dxDesc.BlendState.RenderTarget[i].BlendOpAlpha = GetBlendOp(desc.TargetDesc.Blends[i].OpAlpha);
-		dxDesc.BlendState.RenderTarget[i].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		CD3DX12_RASTERIZER_DESC& dxRasterizerDesc = StateStream.RasterizerState;
+
+		dxRasterizerDesc.FillMode = GetFillMode(desc.Fill);
+		dxRasterizerDesc.CullMode = GetCullMode(desc.Cull);
+		dxRasterizerDesc.FrontCounterClockwise = FALSE;
+		dxRasterizerDesc.DepthBias = desc.DepthBias;
+		dxRasterizerDesc.DepthBiasClamp = desc.DepthBiasClamp;
+		dxRasterizerDesc.SlopeScaledDepthBias = desc.SlopeScaleDepthBias;
+		dxRasterizerDesc.DepthClipEnable = TRUE;
+		dxRasterizerDesc.MultisampleEnable = FALSE;
+		dxRasterizerDesc.AntialiasedLineEnable = FALSE;
+		dxRasterizerDesc.ForcedSampleCount = 0;
+		dxRasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	}
 
-	dxDesc.SampleMask = UINT_MAX;
-
-	dxDesc.RasterizerState.FillMode = GetFillMode(desc.Fill);
-	dxDesc.RasterizerState.CullMode = GetCullMode(desc.Cull);
-	dxDesc.RasterizerState.FrontCounterClockwise = FALSE;
-	dxDesc.RasterizerState.DepthBias = desc.DepthBias;
-	dxDesc.RasterizerState.DepthBiasClamp = desc.DepthBiasClamp;
-	dxDesc.RasterizerState.SlopeScaledDepthBias = desc.SlopeScaleDepthBias;
-	dxDesc.RasterizerState.DepthClipEnable = TRUE;
-	dxDesc.RasterizerState.MultisampleEnable = FALSE;
-	dxDesc.RasterizerState.AntialiasedLineEnable = FALSE;
-	dxDesc.RasterizerState.ForcedSampleCount = 0;
-	dxDesc.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-	dxDesc.DepthStencilState.DepthEnable = desc.DepthEnabled;
-	dxDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	dxDesc.DepthStencilState.DepthFunc = GetComparisonFunc(desc.DepthCompare);
-	dxDesc.DepthStencilState.StencilEnable = FALSE;
-	dxDesc.DepthStencilState.StencilReadMask = 0;
-	dxDesc.DepthStencilState.StencilWriteMask = 0;
-
-	std::vector<D3D12_INPUT_ELEMENT_DESC> dxLayout;
-	dxLayout.resize(inputCount);
-
-	for (size_t i = 0; i < inputCount; i++)
 	{
-		dxLayout[i].SemanticName = (LPCSTR)inputs[i].semanticName;
-		dxLayout[i].SemanticIndex = (UINT)inputs[i].semanticIndex;
-		dxLayout[i].Format = Dx12_Format(inputs[i].format);
-		dxLayout[i].InputSlot = (UINT)inputs[i].inputSlot;
-		dxLayout[i].AlignedByteOffset = (UINT)inputs[i].alignedByteOffset;
-		dxLayout[i].InputSlotClass = GetInputClassification(inputs[i].inputSlotClass);
-		dxLayout[i].InstanceDataStepRate = (UINT)inputs[i].instanceDataStepRate;
+		CD3DX12_DEPTH_STENCIL_DESC1& dxDepthStencilDesc = StateStream.DepthStencilState;
+
+		dxDepthStencilDesc.DepthEnable = desc.DepthEnabled;
+		dxDepthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		dxDepthStencilDesc.DepthFunc = GetComparisonFunc(desc.DepthCompare);
+		dxDepthStencilDesc.StencilEnable = FALSE;
+		dxDepthStencilDesc.StencilReadMask = 0;
+		dxDepthStencilDesc.StencilWriteMask = 0;
 	}
 
-	dxDesc.InputLayout.NumElements = (UINT)inputCount;
-	dxDesc.InputLayout.pInputElementDescs = dxLayout.data();
-
-	dxDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
-	dxDesc.PrimitiveTopologyType = GetPrimTopoType(desc.PrimTopo);
-
-	dxDesc.NumRenderTargets = desc.TargetDesc.NumRenderTargets;
-	
-	for (uint32_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
+	std::vector<D3D12_INPUT_ELEMENT_DESC> dxElements;
 	{
-		dxDesc.RTVFormats[i] = Dx12_Format(desc.TargetDesc.Formats[i]);
+		D3D12_INPUT_LAYOUT_DESC& dxLayout = StateStream.InputLayout;		
+		dxElements.resize(inputCount);
+
+		for (size_t i = 0; i < inputCount; i++)
+		{
+			dxElements[i].SemanticName = (LPCSTR)inputs[i].semanticName;
+			dxElements[i].SemanticIndex = (UINT)inputs[i].semanticIndex;
+			dxElements[i].Format = Dx12_Format(inputs[i].format);
+			dxElements[i].InputSlot = (UINT)inputs[i].inputSlot;
+			dxElements[i].AlignedByteOffset = (UINT)inputs[i].alignedByteOffset;
+			dxElements[i].InputSlotClass = GetInputClassification(inputs[i].inputSlotClass);
+			dxElements[i].InstanceDataStepRate = (UINT)inputs[i].instanceDataStepRate;
+		}
+
+		dxLayout.NumElements = (UINT)inputCount;
+		dxLayout.pInputElementDescs = dxElements.data();
 	}
 
-	dxDesc.DSVFormat = Dx12_Format(desc.TargetDesc.DepthFormat);
+	{
+		StateStream.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+	}
 
-	dxDesc.SampleDesc.Count = 1;
-	dxDesc.SampleDesc.Quality = 0;
+	{
+		StateStream.PrimitiveTopologyType = GetPrimTopoType(desc.PrimTopo);
+	}
 
-	dxDesc.NodeMask = 0;
+	{
+		D3D12_RT_FORMAT_ARRAY& dxTargets = StateStream.RenderTargetFormats;
+
+		dxTargets.NumRenderTargets = desc.TargetDesc.NumRenderTargets;
+
+		for (uint32_t i = 0; i < desc.TargetDesc.NumRenderTargets; i++)
+		{
+			dxTargets.RTFormats[i] = Dx12_Format(desc.TargetDesc.Formats[i]);
+		}
+	}
+
+	{
+		StateStream.DepthStencilFormat = Dx12_Format(desc.TargetDesc.DepthFormat);
+	}
 
 	Dx12GraphicsPipelineStateDesc& dxPso = g_pipelines.GraphicsPipelines.Alloc(handle);
 
-	if (DXENSURE(g_render.DxDevice->CreateGraphicsPipelineState(&dxDesc, IID_PPV_ARGS(&dxPso.PSO))))
+	D3D12_PIPELINE_STATE_STREAM_DESC dxStreamDesc = {};
+	dxStreamDesc.pPipelineStateSubobjectStream = &StateStream;
+	dxStreamDesc.SizeInBytes = sizeof(StateStream);
+
+	if (DXENSURE(g_render.DxDevice->CreatePipelineState(&dxStreamDesc, IID_PPV_ARGS(&dxPso.PSO))))
 	{
 		if(!desc.DebugName.empty())
 			dxPso.PSO->SetName(desc.DebugName.c_str());

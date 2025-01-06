@@ -84,6 +84,7 @@ target_sources(RenderDx12 PRIVATE
 )
 
 target_sources(RenderDx11 PRIVATE
+                "Private/Impl/Dx/d3dx12.h"
                 "Private/Impl/Dx/DxErrorHandling.cpp"
                 "Private/Impl/Dx/DxErrorHandling.h"
                 "Private/Impl/Dx11/BindingImpl.cpp"
@@ -102,6 +103,7 @@ target_sources(RenderDx11 PRIVATE
 )
 
 target_sources(RenderDx12 PRIVATE
+                "Private/Impl/Dx/d3dx12.h"
                 "Private/Impl/Dx/DxErrorHandling.cpp"
                 "Private/Impl/Dx/DxErrorHandling.h"
                 "Private/Impl/Dx12/BindingImpl.cpp"

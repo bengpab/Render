@@ -37,7 +37,7 @@ ComPtr<IDXGIAdapter> EnumerateAdapters(bool debug)
 	return dxgiAdapter;
 }
 
-ComPtr<ID3D12Device> CreateDevice(bool debug)
+ComPtr<ID3D12Device2> CreateDevice(bool debug)
 {
 	g_render.Debug = debug;
 
@@ -53,7 +53,7 @@ ComPtr<ID3D12Device> CreateDevice(bool debug)
 
 	ComPtr<IDXGIAdapter> adapter = EnumerateAdapters(debug);
 
-	ComPtr<ID3D12Device> device;
+	ComPtr<ID3D12Device2> device;
 	if (!DXENSURE(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&device))))
 		return nullptr;
 

@@ -88,6 +88,16 @@ IDxcBlob* Dx12_GetGeometryShaderBlob(GeometryShader_t gs)
 	return g_shaders.CompiledGeometryBlobs[gs].Get();
 }
 
+IDxcBlob* Dx12_GetMeshShaderBlob(MeshShader_t ms)
+{
+	return g_shaders.CompiledMeshBlobs[ms].Get();
+}
+
+IDxcBlob* Dx12_GetAmplificationShaderBlob(AmplificationShader_t as)
+{
+	return g_shaders.CompiledAmplificationBlobs[as].Get();
+}
+
 IDxcBlob* Dx12_GetComputeShaderBlob(ComputeShader_t cs)
 {
 	return g_shaders.CompiledComputeBlobs[cs].Get();
