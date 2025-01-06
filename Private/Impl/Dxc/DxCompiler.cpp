@@ -28,8 +28,8 @@ LPCWSTR ShaderProfileStr[(uint8_t)ShaderProfile::COUNT] =
 	L"ps_6_0",
 	L"vs_6_0",
 	L"gs_6_0",
-	L"ms_6_0",
-	L"as_6_0",
+	L"ms_6_5",
+	L"as_6_5",
 };
 
 static std::wstring ToWideStr(const std::string& str)
