@@ -113,6 +113,7 @@ ComPtr<IDxcResult> CompileShader(const std::string& shaderCode, const char* incl
 
 #if DXC_DEBUG_SHADERS
 	arguments.push_back(DXC_ARG_DEBUG); //-Zi
+	arguments.push_back(DXC_ARG_SKIP_OPTIMIZATIONS); //-Od
 #else
 	// Strip out debug and reflection data
 	arguments.push_back(L"-Qstrip_debug");
