@@ -473,14 +473,14 @@ void CommandList::BindComputeUAVs(uint32_t startSlot, uint32_t count, const Unor
 void CommandList::BindComputeCBVs(uint32_t startSlot, uint32_t count, const ConstantBuffer_t* const cbvs) { assert("Dx12 uses bindless mode"); }
 void CommandList::BindComputeCBVs(uint32_t startSlot, uint32_t count, const DynamicBuffer_t* const cbvs) { assert("Dx12 uses bindless mode"); }
 
-void CommandList::SetGraphicsRootValue(uint32_t slot, uint32_t value)
+void CommandList::SetGraphicsRootValue(uint32_t slot, uint32_t offset, uint32_t value)
 {
-	impl->CL.DxCl->SetGraphicsRoot32BitConstant(slot, value, 0);
+	impl->CL.DxCl->SetGraphicsRoot32BitConstant(slot, value, offset);
 }
 
-void CommandList::SetComputeRootValue(uint32_t slot, uint32_t value)
+void CommandList::SetComputeRootValue(uint32_t slot, uint32_t offset, uint32_t value)
 {
-	impl->CL.DxCl->SetComputeRoot32BitConstant(slot, value, 0u);
+	impl->CL.DxCl->SetComputeRoot32BitConstant(slot, value, offset);
 }
 
 void CommandList::SetGraphicsRootCBV(uint32_t slot, ConstantBuffer_t cb)

@@ -92,8 +92,8 @@ struct CommandList
 	void BindComputeCBVs(uint32_t startSlot, uint32_t count, const DynamicBuffer_t* const cbvs);
 
 	// Bindless Command
-	void SetGraphicsRootValue(uint32_t slot, uint32_t value);
-	void SetComputeRootValue(uint32_t slot, uint32_t value);
+	void SetGraphicsRootValue(uint32_t slot, uint32_t offset, uint32_t value);
+	void SetComputeRootValue(uint32_t slot, uint32_t offset, uint32_t value);
 
 	void SetGraphicsRootCBV(uint32_t slot, ConstantBuffer_t cb);
 	void SetComputeRootCBV(uint32_t slot, ConstantBuffer_t cb);

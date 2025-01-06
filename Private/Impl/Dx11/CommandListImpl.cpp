@@ -385,8 +385,8 @@ void CommandList::BindComputeCBVs(uint32_t startSlot, uint32_t count, const Dyna
 	}
 }
 
-void CommandList::SetGraphicsRootValue(uint32_t slot, uint32_t value) { assert(0); }
-void CommandList::SetComputeRootValue(uint32_t slot, uint32_t value) { assert(0); }
+void CommandList::SetGraphicsRootValue(uint32_t slot, uint32_t offset, uint32_t value) { assert(0); }
+void CommandList::SetComputeRootValue(uint32_t slot, uint32_t offset, uint32_t value) { assert(0); }
 void CommandList::SetGraphicsRootCBV(uint32_t slot, ConstantBuffer_t cb) { assert(0); }
 void CommandList::SetComputeRootCBV(uint32_t slot, ConstantBuffer_t cb) { assert(0); }
 void CommandList::SetGraphicsRootCBV(uint32_t slot, DynamicBuffer_t cb) { assert(0); }
