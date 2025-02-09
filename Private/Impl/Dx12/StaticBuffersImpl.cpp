@@ -472,7 +472,7 @@ bool CreateStructuredBufferImpl(StructuredBuffer_t sb, const void* const data, s
 	{
 		size_t alignment = stride < D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT ? D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT : stride;
 
-		g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, alignment, data);
+		g_DxStructuredBuffers[sb] = g_BufferAllocator.Alloc(size, stride, data);
 	}
 
 	return g_DxStructuredBuffers[sb].pGPUMem != 0;

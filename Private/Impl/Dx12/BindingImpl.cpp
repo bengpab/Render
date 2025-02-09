@@ -644,6 +644,7 @@ bool CreateStructuredBufferSRVImpl(ShaderResourceView_t srv, StructuredBuffer_t 
 	SRVUAVDescriptor descriptor = {};
 
 	uint32_t bufferOffset = Dx12_GetBufferOffset(buf);
+	assert(bufferOffset % structureByteStride == 0);
 	uint32_t sharedBufferFirstElem = bufferOffset / structureByteStride;
 
 	descriptor.Type = DescriptorType::SRV;
