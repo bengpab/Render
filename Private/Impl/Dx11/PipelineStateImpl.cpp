@@ -177,9 +177,9 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 	Dx11GraphicsPipelineState* pso = AllocGraphicsPipeline(handle);
 
 	{
-		pso->vs = desc.Vs;
-		pso->gs = desc.Gs;
-		pso->ps = desc.Ps;
+		pso->vs = desc.VS;
+		pso->gs = desc.GS;
+		pso->ps = desc.PS;
 
 		pso->pt = GetPrimTopo(desc.PrimTopo);
 	}
@@ -211,9 +211,9 @@ bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const Graphics
 		}			
 	}
 
-	if (inputs != nullptr && inputCount && desc.Vs != VertexShader_t::INVALID)
+	if (inputs != nullptr && inputCount && desc.VS != VertexShader_t::INVALID)
 	{
-		ID3DBlob* blob = Dx11_GetVertexShaderBlob(desc.Vs);
+		ID3DBlob* blob = Dx11_GetVertexShaderBlob(desc.VS);
 		assert(blob != nullptr && "Failed creating input layout, vertex blob is null");
 
 		std::vector<D3D11_INPUT_ELEMENT_DESC> dxLayout;
