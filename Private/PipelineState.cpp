@@ -127,4 +127,17 @@ size_t GetComputePipelineStateCount()
     return g_ComputePipelineStates.UsedSize();
 }
 
+void ReloadPipelines()
+{
+    g_GraphicsPipelineStates.ForEachValid([](GraphicsPipelineState_t Handle, const GraphicsPipelineStateData& Data)
+    {
+         return CompileGraphicsPipelineState(Handle, Data.Desc, Data.Inputs.data(), Data.Inputs.size());
+    });
+
+    g_ComputePipelineStates.ForEachValid([](ComputePipelineState_t Handle, const ComputePipelineStateData& Data)
+    {
+        return CompileComputePipelineState(Handle, Data.Desc);
+    });
+}
+
 }

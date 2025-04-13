@@ -15,9 +15,9 @@ Dx12RenderGlobals g_render;
 
 void InitDebugLayer()
 {
-	ComPtr<ID3D12Debug> debug;
-	if(DXENSURE(D3D12GetDebugInterface(IID_PPV_ARGS(&debug))))
-		debug->EnableDebugLayer();	
+	//ComPtr<ID3D12Debug> debug;
+	//if(DXENSURE(D3D12GetDebugInterface(IID_PPV_ARGS(&debug))))
+	//	debug->EnableDebugLayer();	
 }
 
 ComPtr<IDXGIAdapter> EnumerateAdapters(bool debug)
@@ -69,12 +69,14 @@ ComPtr<ID3D12Device2> CreateDevice(bool debug)
 			pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
 
 			// Suppress whole categories of messages
-			//D3D12_MESSAGE_CATEGORY Categories[] = {};
+			//D3D12_MESSAGE_CATEGORY Categories[] = 
+			//{ 
+			//};
 
 			// Suppress messages based on their severity level
 			D3D12_MESSAGE_SEVERITY Severities[] =
 			{
-				D3D12_MESSAGE_SEVERITY_INFO
+				D3D12_MESSAGE_SEVERITY_INFO,
 			};
 
 			// Suppress individual messages by their ID

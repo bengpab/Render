@@ -220,4 +220,6 @@ void RenderRelease(ComputePipelineState_t pso);
 size_t GetGraphicsPipelineStateCount();
 size_t GetComputePipelineStateCount();
 
+void ReloadPipelines();
+
 }
