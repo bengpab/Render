@@ -63,6 +63,9 @@ struct TextureCreateDescEx
 	RenderFormat ResourceFormat				= RenderFormat::UNKNOWN;
 
 	std::wstring DebugName;
+
+	TextureCreateDescEx() = default;
+	TextureCreateDescEx(const TextureCreateDesc& Desc);
 };
 
 Texture_t CreateTexture(const void* const data, RenderFormat format, uint32_t width, uint32_t height);
@@ -70,6 +73,8 @@ Texture_t CreateTexture(const TextureCreateDesc& desc);
 Texture_t CreateTextureEx(const TextureCreateDescEx& desc);
 
 Texture_t AllocTexture();
+
+const TextureCreateDescEx* GetTextureDesc(Texture_t tex);
 
 // The params here are for validation to ensure we are copying the intended data.
 void UpdateTexture(Texture_t tex, const void* const data, uint32_t width, uint32_t height, RenderFormat format);

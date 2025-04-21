@@ -185,6 +185,62 @@ DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureD
 	return dsv;
 }
 
+ShaderResourceView_t CreateTextureSRV(Texture_t tex)
+{
+	if (const TextureCreateDescEx* TexDesc = GetTextureDesc(tex))
+	{
+		if (!HasEnumFlags(TexDesc->Flags, RenderResourceFlags::SRV))
+		{
+			return ShaderResourceView_t::INVALID;
+		}
+
+		return CreateTextureSRV(tex, TexDesc->ResourceFormat, TexDesc->Dimension, TexDesc->MipCount, TexDesc->DepthOrArraySize);
+	}
+	return ShaderResourceView_t::INVALID;
+}
+
+UnorderedAccessView_t CreateTextureUAV(Texture_t tex)
+{
+	if (const TextureCreateDescEx* TexDesc = GetTextureDesc(tex))
+	{
+		if (!HasEnumFlags(TexDesc->Flags, RenderResourceFlags::UAV))
+		{
+			return UnorderedAccessView_t::INVALID;
+		}
+
+		return CreateTextureUAV(tex, TexDesc->ResourceFormat, TexDesc->Dimension, TexDesc->DepthOrArraySize);
+	}
+	return UnorderedAccessView_t::INVALID;
+}
+
+RenderTargetView_t CreateTextureRTV(Texture_t tex)
+{
+	if (const TextureCreateDescEx* TexDesc = GetTextureDesc(tex))
+	{
+		if (!HasEnumFlags(TexDesc->Flags, RenderResourceFlags::RTV))
+		{
+			return RenderTargetView_t::INVALID;
+		}
+
+		return CreateTextureRTV(tex, TexDesc->ResourceFormat, TexDesc->Dimension, TexDesc->DepthOrArraySize);
+	}
+	return RenderTargetView_t::INVALID;
+}
+
+DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat depthFormat)
+{
+	if (const TextureCreateDescEx* TexDesc = GetTextureDesc(tex))
+	{
+		if (!HasEnumFlags(TexDesc->Flags, RenderResourceFlags::DSV))
+		{
+			return DepthStencilView_t::INVALID;
+		}
+
+		return CreateTextureDSV(tex, depthFormat, TexDesc->Dimension, TexDesc->DepthOrArraySize);
+	}
+	return DepthStencilView_t::INVALID;
+}
+
 ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride)
 {
 	ShaderResourceView_t srv = CreateSrv_Lock(ViewData(buf, firstElem, numElems, stride));

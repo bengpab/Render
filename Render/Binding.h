@@ -14,10 +14,19 @@ FWD_RENDER_TYPE(StructuredBuffer_t);
 
 enum class TextureDimension : uint8_t;
 
+struct TextureCreateDescEx;
+
 ShaderResourceView_t CreateTextureSRV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t mipLevels, uint32_t depthOrArraySize);
 UnorderedAccessView_t CreateTextureUAV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize);
 RenderTargetView_t CreateTextureRTV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize);
 DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat format, TextureDimension dim, uint32_t depthOrArraySize);
+
+// Determine view parameters using the texture descriptors. Since DSVs always use a special format you need to provide a format.
+// Otherwise, if you want to specify a custom format, use the verbose create function.
+ShaderResourceView_t CreateTextureSRV(Texture_t tex);
+UnorderedAccessView_t CreateTextureUAV(Texture_t tex);
+RenderTargetView_t CreateTextureRTV(Texture_t tex);
+DepthStencilView_t CreateTextureDSV(Texture_t tex, RenderFormat depthFormat);
 
 ShaderResourceView_t CreateStructuredBufferSRV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride);
 UnorderedAccessView_t CreateStructuredBufferUAV(StructuredBuffer_t buf, uint32_t firstElem, uint32_t numElems, uint32_t stride);

@@ -16,6 +16,20 @@ struct TextureData
 
 IDArray<Texture_t, TextureData> g_Textures;
 
+TextureCreateDescEx::TextureCreateDescEx(const TextureCreateDesc& Desc)
+{
+    Width = Desc.Width;
+    Height = Desc.Height;
+    Flags = Desc.Flags;
+    DepthOrArraySize = 1;
+    Data = Desc.Data;
+    Dimension = TextureDimension::TEX2D;
+    ResourceFormat = Desc.Format;
+    Usage = ResourceUsage::DEFAULT;
+    CpuAccess = TextureCPUAccess::NONE;
+    InitialState = ResourceTransitionState::COMMON;
+}
+
 Texture_t CreateTexture(const void* const data, RenderFormat format, uint32_t width, uint32_t height)
 {
     TextureCreateDesc desc = {};
@@ -75,6 +89,18 @@ Texture_t AllocTexture()
     AllocTextureImpl(newTex);
 
     return newTex;
+}
+
+const TextureCreateDescEx* GetTextureDesc(Texture_t tex)
+{
+    auto lock = g_Textures.ReadScopeLock();
+
+    if (const TextureData* data = g_Textures.Get(tex))
+    {
+        return &data->Desc;
+    }
+
+    return nullptr;
 }
 
 void UpdateTexture(Texture_t tex, const void* const data, uint32_t width, uint32_t height, RenderFormat format)
