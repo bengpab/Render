@@ -140,6 +140,11 @@ bool Render_SupportsMeshShaders()
 	return false;
 }
 
+bool Render_SupportsRaytracing()
+{
+	return false;
+}
+
 const char* Render_ApiId()
 {
 	return "RAPI_DX11";

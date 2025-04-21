@@ -75,6 +75,7 @@ struct Dx12RenderGlobals
 
 	bool Debug = false;
 	bool SupportsMeshShaders = false;
+	bool SupportsRaytracing = false;
 };
 
 extern Dx12RenderGlobals g_render;
