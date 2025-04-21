@@ -69,10 +69,10 @@ struct SamplerDesc
 
 	SamplerComparisonFunc Comparison = SamplerComparisonFunc::NONE;
 	float MinLOD = 0.0f;
-	float MaxLOD = 0.0f;
+	float MaxLOD = FLT_MAX;
 	float MipLODBias = 0.0f;
 	SamplerBorderColor BorderColor = SamplerBorderColor::TRANSPARENT_BLACK;
-	uint32_t MaxAnisotropy = 0;
+	uint32_t MaxAnisotropy = 16;
 
 	inline SamplerDesc& AddressModeUVW(SamplerAddressMode am)
 	{
