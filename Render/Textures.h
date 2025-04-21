@@ -79,10 +79,6 @@ void RenderRelease(Texture_t tex);
 
 void GetTextureDims(Texture_t tex, uint32_t* w, uint32_t* h);
 
-size_t BitsPerPixel(RenderFormat format);
-void CalculateTexturePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch);
-void GetTextureSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes, size_t* outRowBytes = nullptr, size_t* outNumRows = nullptr);
-
 enum class TextureResourceAccessMethod : uint32_t
 {
 	Read,

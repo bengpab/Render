@@ -12,6 +12,7 @@ add_library(RenderDx11
             "Render/Samplers.h"
             "Render/Shaders.h"
             "Render/Textures.h"
+            "Render/TextureInfo.h"
             "Render/View.h"
 )
 
@@ -29,6 +30,7 @@ add_library(RenderDx12
             "Render/Samplers.h"
             "Render/Shaders.h"
             "Render/Textures.h"
+            "Render/TextureInfo.h"
             "Render/View.h"
 )
 
