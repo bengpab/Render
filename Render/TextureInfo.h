@@ -4,7 +4,7 @@
 namespace tpr
 {
 
-size_t BitsPerPixel(RenderFormat format)
+inline size_t BitsPerPixel(RenderFormat format)
 {
     switch (format)
     {
@@ -148,7 +148,7 @@ size_t BitsPerPixel(RenderFormat format)
     }
 }
 
-void CalculateTexturePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch)
+inline void CalculateTexturePitch(RenderFormat format, uint32_t width, uint32_t height, size_t* rowPitch, size_t* slicePitch)
 {
     uint64_t pitch = 0;
     uint64_t slice = 0;
@@ -225,7 +225,7 @@ void CalculateTexturePitch(RenderFormat format, uint32_t width, uint32_t height,
     *slicePitch = static_cast<size_t>(slice);
 }
 
-void GetTextureSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes, size_t* outRowBytes, size_t* outNumRows)
+inline void GetTextureSurfaceInfo(uint32_t width, uint32_t height, RenderFormat format, size_t* outNumBytes = nullptr, size_t* outRowBytes = nullptr, size_t* outNumRows = nullptr)
 {
     uint64_t numBytes = 0;
     uint64_t rowBytes = 0;
