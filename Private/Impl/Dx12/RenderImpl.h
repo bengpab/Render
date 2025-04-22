@@ -65,7 +65,7 @@ struct Dx12GraphicsPipelineStateDesc
 
 struct Dx12RenderGlobals
 {
-	ComPtr<ID3D12Device2> DxDevice;
+	ComPtr<ID3D12Device5> DxDevice;
 
 	Dx12CommandQueue DirectQueue;
 	Dx12CommandQueue ComputeQueue;
@@ -119,10 +119,14 @@ D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(DynamicBuffer_t db, uint32_t o
 D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(IndexBuffer_t ib, RenderFormat format, uint32_t offset);
 D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(DynamicBuffer_t db, RenderFormat format, uint32_t offset);
 
+
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(ConstantBuffer_t cb);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(DynamicBuffer_t db);
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetVbAddress(VertexBuffer_t vb);
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetIbAddress(IndexBuffer_t ib);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetSrvAddress(ID3D12DescriptorHeap* heap, ShaderResourceView_t srv);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetUavAddress(ID3D12DescriptorHeap* heap, UnorderedAccessView_t uav);
+
 D3D12_GPU_DESCRIPTOR_HANDLE Dx12_GetSrvUavTableHandle(ID3D12DescriptorHeap* heap);
 
 D3D12_RESOURCE_STATES Dx12_ResourceState(ResourceTransitionState state);

@@ -59,8 +59,6 @@ bool AllocTextureImpl(Texture_t tex)
 	return true;
 }
 
-std::mutex testMutex;
-
 bool CreateTextureImpl(Texture_t tex, const TextureCreateDescEx& desc)
 {
 	Dx12Texture texture = {};

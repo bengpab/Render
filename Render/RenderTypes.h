@@ -37,6 +37,9 @@ FWD_RENDER_TYPE(AmplificationShader_t);
 FWD_RENDER_TYPE(ComputeShader_t);
 FWD_RENDER_TYPE(Texture_t);
 FWD_RENDER_TYPE(IndirectCommand_t);
+FWD_RENDER_TYPE(RaytracingGeometry_t);
+FWD_RENDER_TYPE(RaytracingScene_t);
+
 
 using ShaderResourceViewPtr = RenderPtr<ShaderResourceView_t>;
 using UnorderedAccessViewPtr = RenderPtr<UnorderedAccessView_t>;
@@ -50,6 +53,8 @@ using GraphicsPipelineStatePtr = RenderPtr<GraphicsPipelineState_t>;
 using ComputePipelineStatePtr = RenderPtr<ComputePipelineState_t>;
 using RootSignaturePtr = RenderPtr<RootSignature_t>;
 using TexturePtr = RenderPtr<Texture_t>;
+using RaytracingGeometryPtr = RenderPtr<RaytracingGeometry_t>;
+using RaytracingScenePtr = RenderPtr<RaytracingScene_t>;
 
 struct CommandList;
 struct CommandListSubmissionGroup;

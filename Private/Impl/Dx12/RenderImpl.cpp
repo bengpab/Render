@@ -13,13 +13,6 @@ namespace tpr
 
 Dx12RenderGlobals g_render;
 
-void InitDebugLayer()
-{
-	//ComPtr<ID3D12Debug> debug;
-	//if(DXENSURE(D3D12GetDebugInterface(IID_PPV_ARGS(&debug))))
-	//	debug->EnableDebugLayer();	
-}
-
 ComPtr<IDXGIAdapter> EnumerateAdapters(bool debug)
 {
 	ComPtr<IDXGIFactory6> dxgiFactory;
@@ -37,7 +30,7 @@ ComPtr<IDXGIAdapter> EnumerateAdapters(bool debug)
 	return dxgiAdapter;
 }
 
-ComPtr<ID3D12Device2> CreateDevice(bool debug)
+ComPtr<ID3D12Device5> CreateDevice(bool debug)
 {
 	g_render.Debug = debug;
 
@@ -53,7 +46,7 @@ ComPtr<ID3D12Device2> CreateDevice(bool debug)
 
 	ComPtr<IDXGIAdapter> adapter = EnumerateAdapters(debug);
 
-	ComPtr<ID3D12Device2> device;
+	ComPtr<ID3D12Device5> device;
 	if (!DXENSURE(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&device))))
 		return nullptr;
 
@@ -142,9 +135,6 @@ ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue)
 
 bool Render_Init(const RenderInitParams& params)
 {
-	if (params.DebugEnabled)
-		InitDebugLayer();
-
 	g_render.DxDevice = CreateDevice(params.DebugEnabled);
 
 	if (!g_render.DxDevice)
@@ -365,10 +355,12 @@ D3D12_RESOURCE_DESC Dx12_BufferDesc(size_t size, D3D12_RESOURCE_FLAGS flags)
 {
 	D3D12_RESOURCE_DESC desc = {};
 	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	desc.Alignment = 0;
 	desc.Width = (UINT)size;
 	desc.Height = 1u;
 	desc.DepthOrArraySize = 1u;
 	desc.MipLevels = 1u;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
 	desc.SampleDesc.Count = 1u;
 	desc.SampleDesc.Quality = 0u;
 	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
