@@ -2,7 +2,7 @@
 
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 
 enum class SamplerAddressMode : uint8_t

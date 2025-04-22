@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 
 inline size_t BitsPerPixel(RenderFormat format)

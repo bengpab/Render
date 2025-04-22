@@ -4,7 +4,7 @@
 
 #undef min
 
-namespace tpr
+namespace rl
 {
 
 D3D12_FILTER_TYPE Dx12_FilterType(SamplerFilterMode fm)

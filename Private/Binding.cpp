@@ -5,7 +5,7 @@
 
 #include <mutex>
 
-namespace tpr
+namespace rl
 {
 
 enum class ViewResourceType : uint8_t

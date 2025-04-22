@@ -14,7 +14,7 @@
 #define RENDER_TYPE(t) enum class t : uint32_t {INVALID}
 #define FWD_RENDER_TYPE(t) enum class t : uint32_t
 
-namespace tpr
+namespace rl
 {
 
 FWD_RENDER_TYPE(ShaderResourceView_t);

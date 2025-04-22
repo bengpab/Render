@@ -3,7 +3,7 @@
 #include "RenderImpl.h"
 #include "SparseArray.h"
 
-namespace tpr
+namespace rl
 {
 
 SparseArray<ComPtr<ID3D12CommandSignature>, IndirectCommand_t> g_DxCommandSignatures;

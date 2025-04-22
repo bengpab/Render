@@ -9,7 +9,7 @@
 //	As well as having explicitly typed buffers having one that we can reinterpret in different ways would be a lot more flexible.
 //	The explicit buffer creation code could then just create a generic buffer with fixed flags, then perhaps the returned explicit buffers are just casted from the generic buffer ID.
 
-namespace tpr
+namespace rl
 {
 
 RENDER_TYPE(VertexBuffer_t);

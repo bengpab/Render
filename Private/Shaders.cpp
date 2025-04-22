@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <windows.h>
 
-namespace tpr
+namespace rl
 {
 
 ShaderMacro::ShaderMacro(const char* define, uint32_t value)

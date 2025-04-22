@@ -11,7 +11,7 @@
 
 #define DXC_DEBUG_SHADERS 1
 
-namespace tpr
+namespace rl
 {
 
 LPCWSTR ShaderProfileStr[(uint8_t)ShaderProfile::COUNT] =

@@ -2,7 +2,7 @@
 
 #include "RenderImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 // TODO: DX12 treats PSOs as unique objects, but in DX11 it is possible to hash and cache each of these state objects

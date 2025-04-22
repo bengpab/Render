@@ -7,7 +7,7 @@
 
 #include <d3d12.h>
 
-namespace tpr
+namespace rl
 {
 
 DXGI_FORMAT Dx12_Format(RenderFormat format);

@@ -6,7 +6,7 @@
 
 struct IDxcBlob;
 
-namespace tpr
+namespace rl
 {
 
 FWD_RENDER_TYPE(VertexShader_t);

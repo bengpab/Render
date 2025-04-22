@@ -5,7 +5,7 @@
 
 #include "Impl/IndirectCommandsImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 IDArray<IndirectCommand_t, IndirectCommandDesc> g_IndirectCommands;

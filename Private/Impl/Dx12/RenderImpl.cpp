@@ -8,7 +8,7 @@
 
 #include <mutex>
 
-namespace tpr
+namespace rl
 {
 
 Dx12RenderGlobals g_render;

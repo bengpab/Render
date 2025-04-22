@@ -2,7 +2,7 @@
 #include "Impl/PipelineStateImpl.h"
 #include "IDArray.h"
 
-namespace tpr
+namespace rl
 {
 
 struct GraphicsPipelineStateData

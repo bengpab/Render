@@ -6,7 +6,7 @@
 #include "Shaders.h"
 #include "Dx11Types.h"
 
-namespace tpr
+namespace rl
 {
 
 FWD_RENDER_TYPE(VertexShader_t);

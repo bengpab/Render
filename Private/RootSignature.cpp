@@ -4,7 +4,7 @@
 
 #include "Impl/RootSignatureImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 IDArray<RootSignature_t, RootSignatureDesc> g_RootSignatures;

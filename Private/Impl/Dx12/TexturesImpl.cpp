@@ -5,7 +5,7 @@
 
 #include <shared_mutex>
 
-namespace tpr
+namespace rl
 {
 
 struct Dx12Texture

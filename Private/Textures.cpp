@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-namespace tpr
+namespace rl
 {
 
 struct TextureData

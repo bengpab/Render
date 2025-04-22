@@ -1,6 +1,6 @@
 #include "RenderImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 static const DXGI_FORMAT kFormatConversion[(uint32_t)RenderFormat::COUNT] =

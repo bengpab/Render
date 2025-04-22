@@ -2,7 +2,7 @@
 #include "Render.h"
 #include "Buffers.h"
 
-namespace tpr
+namespace rl
 {
 
 Dx11RenderGlobals g_render;

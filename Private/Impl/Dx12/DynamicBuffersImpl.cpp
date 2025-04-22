@@ -4,7 +4,7 @@
 
 #include <deque>
 
-namespace tpr
+namespace rl
 {
 
 static const size_t AllocationPageSize = 2u * 1024u * 1024u;

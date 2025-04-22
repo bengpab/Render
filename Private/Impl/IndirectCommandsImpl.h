@@ -3,7 +3,7 @@
 #include "IndirectCommands.h"
 #include "RootSignature.h"
 
-namespace tpr
+namespace rl
 {
 struct IndirectCommandDesc
 {

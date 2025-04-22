@@ -4,7 +4,7 @@
 #include "IDArray.h"
 #include "Impl/RaytracingImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 struct RaytracingGeometryData

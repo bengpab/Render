@@ -2,7 +2,7 @@
 
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 RENDER_TYPE(ShaderResourceView_t);
 RENDER_TYPE(UnorderedAccessView_t);

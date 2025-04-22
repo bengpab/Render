@@ -12,7 +12,7 @@
 #pragma comment(lib, "dxgi.lib")
 #endif
 
-namespace tpr
+namespace rl
 {
 
 std::map<intptr_t, RenderView*> g_views;

@@ -8,7 +8,7 @@
 
 struct IDxcBlob;
 
-namespace tpr
+namespace rl
 {
 
 struct

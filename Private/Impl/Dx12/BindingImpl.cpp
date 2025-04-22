@@ -10,7 +10,7 @@
 #include <queue>
 #include <vector>
 
-namespace tpr
+namespace rl
 {
 
 RENDER_TYPE(SRVUAV_t);

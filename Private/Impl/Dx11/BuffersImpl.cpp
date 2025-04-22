@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace tpr
+namespace rl
 {
 
 std::vector<ComPtr<ID3D11Buffer>> g_DxVertexBuffers;

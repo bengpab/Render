@@ -3,7 +3,7 @@
 
 #include "Impl/BuffersImpl.h"
 
-namespace tpr
+namespace rl
 {
 
 struct BufferData

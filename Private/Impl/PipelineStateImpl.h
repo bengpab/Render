@@ -2,7 +2,7 @@
 
 #include "PipelineState.h"
 
-namespace tpr
+namespace rl
 {
 
 bool CompileGraphicsPipelineState(GraphicsPipelineState_t handle, const GraphicsPipelineStateDesc& desc, const InputElementDesc* inputs, size_t inputCount);

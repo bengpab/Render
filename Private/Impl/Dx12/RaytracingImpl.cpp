@@ -3,7 +3,7 @@
 #include "RenderImpl.h"
 #include "SparseArray.h"
 
-namespace tpr
+namespace rl
 {
 
 SparseArray<ComPtr<ID3D12Resource>, RaytracingGeometry_t> g_DxRaytracingGeometry;

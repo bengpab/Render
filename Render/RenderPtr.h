@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace tpr
+namespace rl
 {
 
 template<typename RenderType_t>

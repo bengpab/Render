@@ -2,7 +2,7 @@
 
 #include "Buffers.h"
 
-namespace tpr
+namespace rl
 {
 
 bool CreateVertexBufferImpl(VertexBuffer_t handle, const void* const data, size_t size);

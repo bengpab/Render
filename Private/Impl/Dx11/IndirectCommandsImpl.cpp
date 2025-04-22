@@ -3,7 +3,7 @@
 #include "RenderImpl.h"
 #include "SparseArray.h"
 
-namespace tpr
+namespace rl
 {
 	bool CreateIndirectCommandImpl(IndirectCommand_t ic, const IndirectCommandDesc& desc)
 	{

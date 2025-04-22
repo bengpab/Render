@@ -4,7 +4,7 @@
 #include "RenderImpl.h"
 #include "Textures.h"
 
-namespace tpr
+namespace rl
 {
 
 struct SrvDesc

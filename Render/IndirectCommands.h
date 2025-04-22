@@ -2,7 +2,7 @@
 
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 struct IndirectDrawLayout
 {

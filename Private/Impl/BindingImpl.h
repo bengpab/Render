@@ -2,7 +2,7 @@
 
 #include "Binding.h"
 
-namespace tpr
+namespace rl
 {
 enum class TextureDimension : uint8_t;
 

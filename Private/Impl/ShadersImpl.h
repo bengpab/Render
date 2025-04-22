@@ -2,7 +2,7 @@
 
 #include "Shaders.h"
 
-namespace tpr
+namespace rl
 {
 
 bool CompileShader(VertexShader_t handle, const char* path, const char* directory, const ShaderMacros& macros);

@@ -5,7 +5,7 @@
 
 struct IDxcResult;
 
-namespace tpr
+namespace rl
 {
 
 enum class ShaderProfile : uint8_t

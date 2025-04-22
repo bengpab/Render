@@ -2,7 +2,7 @@
 
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 RENDER_TYPE(RaytracingGeometry_t);
 RENDER_TYPE(RaytracingScene_t);

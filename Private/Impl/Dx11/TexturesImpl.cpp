@@ -3,7 +3,7 @@
 #include "RenderImpl.h"
 #include "SparseArray.h"
 
-namespace tpr
+namespace rl
 {
 
 SparseArray<ComPtr<ID3D11Resource>, Texture_t> g_DxTextures;

@@ -7,7 +7,7 @@
 
 #include <dxcapi.h>
 
-namespace tpr
+namespace rl
 {
 
 struct

@@ -3,7 +3,7 @@
 #include "RenderTypes.h"
 #include "Samplers.h"
 
-namespace tpr
+namespace rl
 {
 
 enum class RootSignatureFlags : uint32_t

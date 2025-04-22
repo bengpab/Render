@@ -2,7 +2,7 @@
 
 #include "Textures.h"
 
-namespace tpr
+namespace rl
 {
 
 bool AllocTextureImpl(Texture_t tex);

@@ -5,7 +5,7 @@
 #include "RenderTypes.h"
 #include "RootSignature.h"
 
-namespace tpr
+namespace rl
 {
 
 RENDER_TYPE(GraphicsPipelineState_t);

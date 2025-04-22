@@ -4,7 +4,7 @@
 #include "RootSignature.h"
 #include <mutex>
 
-namespace tpr
+namespace rl
 {
 
 struct Dx12CommandListPool

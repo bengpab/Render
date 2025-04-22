@@ -14,7 +14,7 @@
 #define VS_PROFILE "vs_5_0"
 #define GS_PROFILE "gs_5_0"
 
-namespace tpr
+namespace rl
 {
 
 std::vector<ComPtr<ID3DBlob>>				g_vertexShaderBlobs; // Hold these for input layout creation;

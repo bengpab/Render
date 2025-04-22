@@ -2,7 +2,7 @@
 
 #include "Render.h"
 
-namespace tpr
+namespace rl
 {
 
 bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& desc);

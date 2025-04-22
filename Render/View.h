@@ -2,7 +2,7 @@
 
 #include "RenderTypes.h"
 
-namespace tpr
+namespace rl
 {
 
 FWD_RENDER_TYPE(Texture_t);

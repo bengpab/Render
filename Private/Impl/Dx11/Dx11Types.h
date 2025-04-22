@@ -7,7 +7,7 @@
 #pragma comment(lib, "d3d11.lib")
 #endif
 
-namespace tpr
+namespace rl
 {
 
 DXGI_FORMAT Dx11_Format(RenderFormat format);

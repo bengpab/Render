@@ -16,7 +16,7 @@
 
 #include "RenderPtr.h"
 
-namespace tpr
+namespace rl
 {
 
 struct RenderInitParams
