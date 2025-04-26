@@ -21,6 +21,7 @@ struct DynamicAllocation
 	void* pCpuMem = nullptr;
 	D3D12_GPU_VIRTUAL_ADDRESS pGpuMem = (D3D12_GPU_VIRTUAL_ADDRESS)0;
 	uint32_t Size = 0u;
+	ID3D12Resource* DxResource = nullptr;
 };
 
 struct DynamicUploadBuffer
@@ -103,6 +104,7 @@ private:
 			alloc.pCpuMem = static_cast<uint8_t*>(pCpuMem) + Offset;
 			alloc.pGpuMem = pGpuMem + Offset;
 			alloc.Size = (uint32_t)alignedSize;
+			alloc.DxResource = DxRes.Get();
 
 			Offset += alignedSize;
 
@@ -185,6 +187,11 @@ DynamicBuffer_t CreateDynamicIndexBuffer(const void* const data, size_t size)
 DynamicBuffer_t CreateDynamicConstantBuffer(const void* const data, size_t size)
 {
 	return CreateDynamicBuffer(data, size, true);
+}
+
+DynamicBuffer_t CreateDynamicByteBuffer(const void* const data, size_t size)
+{
+	return CreateDynamicBuffer(data, size, false);
 }
 
 void DynamicBuffers_NewFrame()
@@ -270,6 +277,20 @@ D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(DynamicBuffer_t db, RenderFormat
 	view.Format = Dx12_Format(format);
 
 	return view;
+}
+
+ID3D12Resource* Dx12_GetDynamicBufferResource(DynamicBuffer_t db, size_t* outOffset)
+{
+	assert((size_t)db < g_dynamicBuffers.size() && "Dx12_GetDynamicBufferResource invalid db");
+
+	const DynamicAllocation& alloc = g_dynamicBuffers[(size_t)db];
+
+	if (outOffset && alloc.DxResource)
+	{
+		*outOffset = alloc.pGpuMem - alloc.DxResource->GetGPUVirtualAddress();
+	}
+
+	return alloc.DxResource;
 }
 
 }

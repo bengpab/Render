@@ -12,6 +12,9 @@ RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, Rende
 
 RaytracingScene_t CreateRaytracingScene();
 
+void AddRaytracingGeometryToScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
+void RemoveRaytracingGeometryFromScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
+
 void RenderRef(RaytracingGeometry_t geometry);
 void RenderRef(RaytracingScene_t scene);
 

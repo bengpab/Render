@@ -252,6 +252,8 @@ void CommandList::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 
 void CommandList::DispatchMesh(uint32_t x, uint32_t y, uint32_t z) { assert(0); }
 
+void CommandList::BuildRaytracingScene(RaytracingScene_t scene) { assert(0); }
+
 // Dx11 Style Bind Commands
 void CommandList::BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs)
 {

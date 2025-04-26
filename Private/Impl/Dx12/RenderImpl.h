@@ -118,7 +118,7 @@ D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(VertexBuffer_t vb, uint32_t of
 D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(DynamicBuffer_t db, uint32_t offset, uint32_t stride);
 D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(IndexBuffer_t ib, RenderFormat format, uint32_t offset);
 D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(DynamicBuffer_t db, RenderFormat format, uint32_t offset);
-
+ID3D12Resource* Dx12_GetDynamicBufferResource(DynamicBuffer_t db, size_t* outOffset);
 
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(ConstantBuffer_t cb);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(DynamicBuffer_t db);
@@ -153,5 +153,7 @@ ComPtr<ID3D12Fence> Dx12_CreateFence(uint64_t fenceValue);
 
 ID3D12RootSignature* Dx12_GetRootSignature(RootSignature_t rs);
 ID3D12CommandSignature* Dx12_GetCommandSignature(IndirectCommand_t ic);
+
+void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene);
 
 }

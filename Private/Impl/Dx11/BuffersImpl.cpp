@@ -219,6 +219,15 @@ DynamicBuffer_t CreateDynamicConstantBuffer(const void* const data, size_t size)
 	return CreateDynamicBuffer(data, size, D3D11_BIND_CONSTANT_BUFFER);
 }
 
+DynamicBuffer_t CreateDynamicByteBuffer(const void* const data, size_t size)
+{
+	(void)data;
+	(void)size;
+
+	assert(0); // Unsupported
+	return DynamicBuffer_t::INVALID;
+}
+
 void DynamicBuffers_NewFrame()
 {
 	g_DxDynamicBuffers.resize(1);

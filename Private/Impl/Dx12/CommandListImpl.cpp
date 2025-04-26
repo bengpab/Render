@@ -459,6 +459,11 @@ void CommandList::DispatchMesh(uint32_t x, uint32_t y, uint32_t z)
 	impl->CL.DxCl->DispatchMesh((UINT)x, (UINT)y, (UINT)z);
 }
 
+void CommandList::BuildRaytracingScene(RaytracingScene_t scene)
+{
+
+}
+
 // Dx11 Style Bind Commands, Dx12 uses bindless
 void CommandList::BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs) { assert("Dx12 uses bindless mode"); }
 void CommandList::BindVertexCBVs(uint32_t startSlot, uint32_t count, const ConstantBuffer_t* const cbvs) { assert("Dx12 uses bindless mode"); }

@@ -50,10 +50,12 @@ struct CommandList
 	void ClearRenderTarget(RenderTargetView_t rtv, const float col[4]);
 	void ClearDepth(DepthStencilView_t dsv, float depth);
 
+	// Render pass set up
 	void SetRenderTargets(const RenderTargetView_t* const rtvs, size_t num, DepthStencilView_t dsv);
 	void SetViewports(const Viewport* const vp, size_t num);
 	void SetDefaultScissor();
 	void SetScissors(const ScissorRect* const scissors, size_t num);
+
 	void SetPipelineState(GraphicsPipelineState_t pso);
 	void SetPipelineState(ComputePipelineState_t pso);
 	void SetVertexBuffers(uint32_t startSlot, uint32_t count, const VertexBuffer_t* const vbs, const uint32_t* const strides, const uint32_t* const offsets);
@@ -65,14 +67,21 @@ struct CommandList
 
 	void CopyTexture(Texture_t dst, Texture_t src);
 
+	// Drawing
 	void DrawIndexedInstanced(uint32_t numIndices, uint32_t numInstances, uint32_t startIndex, uint32_t startVertex, uint32_t startInstance);
 	void DrawInstanced(uint32_t numVerts, uint32_t numInstances, uint32_t startVertex, uint32_t startInstance);
 
+	// Indirect commands
 	void ExecuteIndirect(IndirectCommand_t ic, StructuredBuffer_t argBuffer, uint64_t argBufferOffset = 0u);
 
+	// Compute commands
 	void Dispatch(uint32_t x, uint32_t y, uint32_t z);
 
+	// Mesh Shaders
 	void DispatchMesh(uint32_t x, uint32_t y, uint32_t z);
+
+	// Raytracing
+	void BuildRaytracingScene(RaytracingScene_t scene);
 
 	// Dx11 Style Bind Commands
 	void BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs);

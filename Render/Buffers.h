@@ -26,6 +26,7 @@ ConstantBuffer_t CreateConstantBuffer(const void* const data, size_t size);
 DynamicBuffer_t CreateDynamicVertexBuffer(const void* const data, size_t size);
 DynamicBuffer_t CreateDynamicIndexBuffer(const void* const data, size_t size);
 DynamicBuffer_t CreateDynamicConstantBuffer(const void* const data, size_t size);
+DynamicBuffer_t CreateDynamicByteBuffer(const void* const data, size_t size);
 
 void UpdateVertexBuffer(VertexBuffer_t vb, const void* const data, size_t size);
 void UpdateIndexBuffer(IndexBuffer_t ib, const void* const data, size_t size);
@@ -41,6 +42,7 @@ template<typename T> inline ConstantBuffer_t CreateConstantBuffer(const T* const
 template<typename T> inline DynamicBuffer_t CreateDynamicVertexBufferFromArray(const T* const data, size_t count) { return CreateDynamicVertexBuffer(data, sizeof(T) * count); }
 template<typename T> inline DynamicBuffer_t CreateDynamicIndexBufferFromArray(const T* const data, size_t count) { return CreateDynamicIndexBuffer(data, sizeof(T) * count); }
 template<typename T> inline DynamicBuffer_t CreateDynamicConstantBuffer(const T* const data) { return CreateDynamicConstantBuffer(data, sizeof(T)); }
+template<typename T> inline DynamicBuffer_t CreateDynamicByteBufferFromArray(const T* const data, size_t count) { return CreateDynamicByteBuffer(data, sizeof(T) * count); }
 
 template<typename T> inline void UpdateVertexBufferFromArray(VertexBuffer_t vb, const T* const data, size_t count) { UpdateVertexBuffer(vb, data, sizeof(T) * count); }
 template<typename T> inline void UpdateIndexBufferFromArray(IndexBuffer_t ib, const T* const data, size_t count) { UpdateIndexBuffer(ib, data, sizeof(T) * count); }
