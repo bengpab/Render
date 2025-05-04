@@ -43,36 +43,45 @@ SparseArray<TLAS, RaytracingScene_t> g_TLAS;
 
 SparseArray<ComPtr<ID3D12StateObject>, RaytracingPipelineState_t> g_RTPSOs;
 
-bool CreateRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry, VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount, uint32_t IndexOffset)
+bool CreateRaytracingGeometryImpl(RaytracingGeometry_t Handle, const RaytracingGeometryDesc& Desc)
 {
     return true;
 
-    D3D12_GPU_VIRTUAL_ADDRESS VertexBufferGpuAddress = Dx12_GetVbAddress(VertexBuffer);
+    D3D12_GPU_VIRTUAL_ADDRESS VertexBufferGpuAddress = Dx12_GetVbAddress(Desc.VertexBuffer);
     if (VertexBufferGpuAddress == 0)
     {
-        return false;
+        VertexBufferGpuAddress = Dx12_GetSbAddress(Desc.StructuredVertexBuffer);
+        if (VertexBufferGpuAddress == 0)
+        {
+            return false;
+        }
     }
 
-    BLAS& Desc = g_BLAS.Alloc(RtGeometry);
+    BLAS& GeomDesc = g_BLAS.Alloc(Handle);
 
-    D3D12_GPU_VIRTUAL_ADDRESS IndexBufferGpuAddress = Dx12_GetIbAddress(IndexBuffer);
-    if (IndexOffset > 0)
+    D3D12_GPU_VIRTUAL_ADDRESS IndexBufferGpuAddress = Dx12_GetIbAddress(Desc.IndexBuffer);
+    if (IndexBufferGpuAddress == 0)
     {
-        IndexBufferGpuAddress += IndexOffset * (IndexFormat == RenderFormat::R32_UINT ? 4 : 2);
+        IndexBufferGpuAddress = Dx12_GetSbAddress(Desc.StructuredIndexBuffer);
     }
 
-    Desc.VertexBuffer = VertexBuffer;
-    Desc.IndexBuffer = IndexBuffer;
-    Desc.DxDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    Desc.DxDesc.Triangles.VertexBuffer.StartAddress = VertexBufferGpuAddress;
-    Desc.DxDesc.Triangles.VertexBuffer.StrideInBytes = VertexStride;
-    Desc.DxDesc.Triangles.VertexCount = VertexCount;
-    Desc.DxDesc.Triangles.VertexFormat = Dx12_Format(VertexFormat);
-    Desc.DxDesc.Triangles.IndexBuffer = IndexBufferGpuAddress;
-    Desc.DxDesc.Triangles.IndexFormat = Dx12_Format(IndexFormat);
-    Desc.DxDesc.Triangles.IndexCount = IndexCount;
-    Desc.DxDesc.Triangles.Transform3x4 = 0;
-    Desc.DxDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE; // TODO: support transparent objects
+    if (Desc.IndexOffset > 0)
+    {
+        IndexBufferGpuAddress += Desc.IndexOffset * (Desc.IndexFormat == RenderFormat::R32_UINT ? 4 : 2);
+    }
+
+    GeomDesc.VertexBuffer = Desc.VertexBuffer;
+    GeomDesc.IndexBuffer = Desc.IndexBuffer;
+    GeomDesc.DxDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    GeomDesc.DxDesc.Triangles.VertexBuffer.StartAddress = VertexBufferGpuAddress;
+    GeomDesc.DxDesc.Triangles.VertexBuffer.StrideInBytes = Desc.VertexStride;
+    GeomDesc.DxDesc.Triangles.VertexCount = Desc.VertexCount;
+    GeomDesc.DxDesc.Triangles.VertexFormat = Dx12_Format(Desc.VertexFormat);
+    GeomDesc.DxDesc.Triangles.IndexBuffer = IndexBufferGpuAddress;
+    GeomDesc.DxDesc.Triangles.IndexFormat = Dx12_Format(Desc.IndexFormat);
+    GeomDesc.DxDesc.Triangles.IndexCount = Desc.IndexCount;
+    GeomDesc.DxDesc.Triangles.Transform3x4 = 0;
+    GeomDesc.DxDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE; // TODO: support transparent objects
 
     return true;
 }
@@ -123,6 +132,38 @@ bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const Ra
     return false;
 }
 
+void AddRaytracingGeometryToSceneImpl(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
+{
+    if (TLAS* DxScene = g_TLAS.Get(Scene))
+    {
+        if (std::find(DxScene->Meshes.begin(), DxScene->Meshes.end(), Geometry) == DxScene->Meshes.end())
+        {
+            DxScene->Meshes.push_back(Geometry);
+        }
+        else
+        {
+            OutputDebugStringA("Duplicated meshes or instancing not supported");
+        }
+    }
+}
+
+void RemoveRaytracingGeometryFromSceneImpl(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
+{
+    if (TLAS* DxScene = g_TLAS.Get(Scene))
+    {
+        auto FoundIt = std::find(DxScene->Meshes.begin(), DxScene->Meshes.end(), Geometry);
+
+        if (FoundIt == DxScene->Meshes.end())
+        {
+            OutputDebugStringA("Can't remove geometry, not present in scene");
+        }
+        else
+        {
+            DxScene->Meshes.erase(FoundIt);
+        }
+    }
+}
+
 void DestroyRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry)
 {
     g_BLAS.Free(RtGeometry);
@@ -131,6 +172,11 @@ void DestroyRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry)
 void DestroyRaytracingSceneImpl(RaytracingScene_t RtScene)
 {
     g_TLAS.Free(RtScene);
+}
+
+void DestroyRaytracingPipelineStateImpl(RaytracingPipelineState_t RTPipelineState)
+{
+    g_RTPSOs.Free(RTPipelineState);
 }
 
 void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene)

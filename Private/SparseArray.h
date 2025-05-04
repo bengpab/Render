@@ -31,7 +31,7 @@ struct SparseArray
 		Array[static_cast<size_t>(handle)] = std::move(type);
 	}
 
-	void Free(Handle handle)
+	void Free(Handle handle) noexcept
 	{
 		if (static_cast<size_t>(handle) < Array.size())
 		{
@@ -39,12 +39,17 @@ struct SparseArray
 		}
 	}
 
-	bool Valid(Handle handle) const
+	bool Valid(Handle handle) const noexcept
 	{
 		return static_cast<size_t>(handle) < Array.size();
 	}
 
-	size_t Size() const
+	Type* Get(Handle handle) noexcept
+	{
+		return Valid(handle) ? &Array[static_cast<size_t>(handle)] : nullptr;
+	}
+
+	size_t Size() const noexcept
 	{
 		return Array.size();
 	}

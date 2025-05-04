@@ -633,6 +633,17 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetIbAddress(IndexBuffer_t ib)
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetSbAddress(StructuredBuffer_t sb)
+{
+	if (!g_DxStructuredBuffers.Valid(sb))
+	{
+		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
+	}
+
+	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
+}
+
 ID3D12Resource* Dx12_GetBufferResource(StructuredBuffer_t sb)
 {
 	if (!g_DxStructuredBuffers.Valid(sb))

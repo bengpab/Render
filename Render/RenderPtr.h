@@ -20,7 +20,7 @@ struct RenderPtr
 	}
 
 	// move, do nothing
-	RenderPtr(RenderPtr&& other)
+	RenderPtr(RenderPtr&& other) noexcept
 		: Handle(std::move(other.Handle))
 	{
 		other.Handle = RenderType_t::INVALID;
@@ -58,22 +58,22 @@ struct RenderPtr
 		return *this;
 	}
 
-	operator RenderType_t() const
+	operator RenderType_t() const noexcept
 	{
 		return Handle;
 	}
 
-	RenderType_t Get() const 
+	RenderType_t Get() const noexcept
 	{ 
 		return Handle; 
 	}
 
-	operator bool() const
+	operator bool() const noexcept
 	{
 		return Handle != RenderType_t::INVALID;
 	}
 
-	const RenderType_t* operator&() const
+	const RenderType_t* operator&() const noexcept
 	{
 		return &Handle;
 	}

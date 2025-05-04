@@ -26,19 +26,26 @@ struct RaytracingPipelineStateDesc
 	std::wstring DebugName;
 };
 
-RaytracingGeometry_t CreateRaytracingGeometry(	VertexBuffer_t VertexBuffer, 
-												RenderFormat VertexFormat, 
-												uint32_t VertexCount, 
-												uint32_t VertexStride);
+struct RaytracingGeometryDesc
+{
+	// Must supply exactly one of either vertex or structured buffer
+	VertexBuffer_t VertexBuffer = {};
+	StructuredBuffer_t StructuredVertexBuffer = {};
 
-RaytracingGeometry_t CreateRaytracingGeometry(	VertexBuffer_t VertexBuffer, 
-												RenderFormat VertexFormat, 
-												uint32_t VertexCount, 
-												uint32_t VertexStride, 
-												IndexBuffer_t IndexBuffer, 
-												RenderFormat IndexFormat, 
-												uint32_t IndexCount,
-												uint32_t IndexOffset);
+	// Required
+	RenderFormat VertexFormat = RenderFormat::UNKNOWN;
+	uint32_t VertexCount = 0;
+	uint32_t VertexStride = 0;
+
+	// Optional, supply either index or structured buffer
+	IndexBuffer_t IndexBuffer = {};
+	StructuredBuffer_t StructuredIndexBuffer = {};
+	RenderFormat IndexFormat = RenderFormat::UNKNOWN;
+	uint32_t IndexCount = 0;
+	uint32_t IndexOffset = 0;
+};
+
+RaytracingGeometry_t CreateRaytracingGeometry(const RaytracingGeometryDesc& Desc);
 
 RaytracingScene_t CreateRaytracingScene();
 
@@ -49,9 +56,10 @@ void RemoveRaytracingGeometryFromScene(RaytracingGeometry_t Geometry, Raytracing
 
 void RenderRef(RaytracingGeometry_t geometry);
 void RenderRef(RaytracingScene_t scene);
+void RenderRef(RaytracingPipelineState_t RTPipelineState);
 
 void RenderRelease(RaytracingGeometry_t geometry);
 void RenderRelease(RaytracingScene_t scene);
-
+void RenderRelease(RaytracingPipelineState_t RTPipelineState);
 
 }

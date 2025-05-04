@@ -125,6 +125,7 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(ConstantBuffer_t cb);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(DynamicBuffer_t db);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetVbAddress(VertexBuffer_t vb);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetIbAddress(IndexBuffer_t ib);
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetSbAddress(StructuredBuffer_t sb);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetSrvAddress(ID3D12DescriptorHeap* heap, ShaderResourceView_t srv);
 D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetUavAddress(ID3D12DescriptorHeap* heap, UnorderedAccessView_t uav);
 

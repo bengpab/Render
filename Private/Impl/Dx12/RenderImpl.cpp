@@ -171,7 +171,7 @@ bool Render_Init(const RenderInitParams& params)
 
 	{
 		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features = {};
-		if (SUCCEEDED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features, sizeof(Features))))
+		if (SUCCEEDED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features, sizeof(Features))))
 		{
 			g_render.SupportsRaytracing = Features.RaytracingTier >= D3D12_RAYTRACING_TIER_1_0;
 		}

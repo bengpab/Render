@@ -7,16 +7,6 @@
 namespace rl
 {
 
-struct RaytracingGeometryData
-{
-    RenderFormat VertexFormat = RenderFormat::UNKNOWN;
-    uint32_t VertexCount = 0u;
-    uint32_t VertexStride = 0u;
-    RenderFormat IndexFormat = RenderFormat::UNKNOWN;
-    uint32_t IndexCount = 0u;
-    uint32_t IndexOffset = 0u;
-};
-
 struct RaytracingSceneData
 {
     std::vector<RaytracingGeometryPtr> Geometry;
@@ -24,33 +14,46 @@ struct RaytracingSceneData
     bool NeedsUpdate = false;
 };
 
-IDArray<RaytracingGeometry_t, RaytracingGeometryData> g_RaytracingGeometry;
+IDArray<RaytracingGeometry_t, RaytracingGeometryDesc> g_RaytracingGeometry;
 IDArray<RaytracingScene_t, RaytracingSceneData> g_RaytracingScenes;
 
 IDArray<RaytracingPipelineState_t, RaytracingPipelineStateDesc> g_RaytracingPipelines;
 
-RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride)
-{
-    return CreateRaytracingGeometry(VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer_t::INVALID, RenderFormat::UNKNOWN, 0, 0);
-}
 
-RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount, uint32_t IndexOffset)
+RaytracingGeometry_t CreateRaytracingGeometry(const RaytracingGeometryDesc& Desc)
 {
-    if (IndexFormat != RenderFormat::R32_UINT || IndexFormat != RenderFormat::R16_UINT)
+    if (Desc.IndexFormat != RenderFormat::R32_UINT && Desc.IndexFormat != RenderFormat::R16_UINT)
     {
         return RaytracingGeometry_t::INVALID;
     }
 
-    RaytracingGeometryData Data = {};
-    Data.VertexFormat = VertexFormat;
-    Data.VertexCount = VertexCount;
-    Data.IndexFormat = IndexFormat;
-    Data.IndexCount = IndexCount;
-    Data.IndexOffset = IndexOffset;
+    // Must only specify one or the other
+    if (Desc.VertexBuffer == VertexBuffer_t::INVALID)
+    {
+        if (Desc.StructuredVertexBuffer == StructuredBuffer_t::INVALID)
+        {
+            return RaytracingGeometry_t::INVALID;
+        }
+    }
+    else
+    {
+        if (Desc.StructuredVertexBuffer != StructuredBuffer_t::INVALID)
+        {
+            return RaytracingGeometry_t::INVALID;
+        }
+    }
 
-    RaytracingGeometry_t Handle = g_RaytracingGeometry.Create(Data);
+    if (Desc.IndexBuffer != IndexBuffer_t::INVALID)
+    {
+        if (Desc.StructuredVertexBuffer != StructuredBuffer_t::INVALID)
+        {
+            return RaytracingGeometry_t::INVALID;
+        }
+    }
 
-    if (!CreateRaytracingGeometryImpl(Handle, VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer, IndexFormat, IndexCount, IndexOffset))
+    RaytracingGeometry_t Handle = g_RaytracingGeometry.Create(Desc);
+
+    if (!CreateRaytracingGeometryImpl(Handle, Desc))
     {
         g_RaytracingGeometry.Release(Handle);
         return RaytracingGeometry_t::INVALID;
@@ -85,6 +88,22 @@ RaytracingPipelineState_t CreateRaytracingPipelineState(const RaytracingPipeline
     return Handle;
 }
 
+void AddRaytracingGeometryToScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
+{
+    if (Geometry != RaytracingGeometry_t::INVALID && Scene != RaytracingScene_t::INVALID)
+    {
+        AddRaytracingGeometryToSceneImpl(Geometry, Scene);
+    }
+}
+
+void RemoveRaytracingGeometryFromScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
+{
+    if (Geometry != RaytracingGeometry_t::INVALID && Scene != RaytracingScene_t::INVALID)
+    {
+        RemoveRaytracingGeometryFromSceneImpl(Geometry, Scene);
+    }
+}
+
 void RenderRef(RaytracingGeometry_t geometry)
 {
     g_RaytracingGeometry.AddRef(geometry);
@@ -93,6 +112,11 @@ void RenderRef(RaytracingGeometry_t geometry)
 void RenderRef(RaytracingScene_t scene)
 {
     g_RaytracingScenes.AddRef(scene);
+}
+
+void RenderRef(RaytracingPipelineState_t RTPipelineState)
+{
+    g_RaytracingPipelines.AddRef(RTPipelineState);
 }
 
 void RenderRelease(RaytracingGeometry_t geometry)
@@ -108,6 +132,14 @@ void RenderRelease(RaytracingScene_t scene)
     if (g_RaytracingScenes.Release(scene))
     {
         DestroyRaytracingSceneImpl(scene);
+    }
+}
+
+void RenderRelease(RaytracingPipelineState_t RTPipelineState)
+{
+    if (g_RaytracingPipelines.Release(RTPipelineState))
+    {
+        DestroyRaytracingPipelineStateImpl(RTPipelineState);
     }
 }
 
