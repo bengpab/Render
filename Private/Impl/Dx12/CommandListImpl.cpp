@@ -29,7 +29,7 @@ struct CommandListImpl
 	ID3D12GraphicsCommandList* cl = nullptr;
 
 	// We dont need to accquire all these heaps for every cl.
-	// Consider lazy accquisition
+	// TODO: consider lazy accquisition
 	Dx12DescriptorHeap SrvUavHeap = {};
 	Dx12DescriptorHeap RtvHeap = {};
 	Dx12DescriptorHeap DsvHeap = {};
@@ -461,7 +461,17 @@ void CommandList::DispatchMesh(uint32_t x, uint32_t y, uint32_t z)
 
 void CommandList::BuildRaytracingScene(RaytracingScene_t scene)
 {
+	Dx12_BuildRaytracingScene(this, scene);
+}
 
+void CommandList::DispatchRays(uint32_t x, uint32_t y, uint32_t z)
+{
+	D3D12_DISPATCH_RAYS_DESC DxRayDesc = {};
+	// TODO
+	DxRayDesc.Width = x;
+	DxRayDesc.Height = y;
+	DxRayDesc.Depth = z;
+	impl->CL.DxCl->DispatchRays(&DxRayDesc);
 }
 
 // Dx11 Style Bind Commands, Dx12 uses bindless
