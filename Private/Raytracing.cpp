@@ -14,6 +14,7 @@ struct RaytracingGeometryData
     uint32_t VertexStride = 0u;
     RenderFormat IndexFormat = RenderFormat::UNKNOWN;
     uint32_t IndexCount = 0u;
+    uint32_t IndexOffset = 0u;
 };
 
 struct RaytracingSceneData
@@ -30,20 +31,26 @@ IDArray<RaytracingPipelineState_t, RaytracingPipelineStateDesc> g_RaytracingPipe
 
 RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride)
 {
-    return CreateRaytracingGeometry(VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer_t::INVALID, RenderFormat::UNKNOWN, 0);
+    return CreateRaytracingGeometry(VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer_t::INVALID, RenderFormat::UNKNOWN, 0, 0);
 }
 
-RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount)
+RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount, uint32_t IndexOffset)
 {
+    if (IndexFormat != RenderFormat::R32_UINT || IndexFormat != RenderFormat::R16_UINT)
+    {
+        return RaytracingGeometry_t::INVALID;
+    }
+
     RaytracingGeometryData Data = {};
     Data.VertexFormat = VertexFormat;
     Data.VertexCount = VertexCount;
     Data.IndexFormat = IndexFormat;
     Data.IndexCount = IndexCount;
+    Data.IndexOffset = IndexOffset;
 
     RaytracingGeometry_t Handle = g_RaytracingGeometry.Create(Data);
 
-    if (!CreateRaytracingGeometryImpl(Handle, VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer, IndexFormat, IndexCount))
+    if (!CreateRaytracingGeometryImpl(Handle, VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer, IndexFormat, IndexCount, IndexOffset))
     {
         g_RaytracingGeometry.Release(Handle);
         return RaytracingGeometry_t::INVALID;

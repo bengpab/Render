@@ -26,8 +26,19 @@ struct RaytracingPipelineStateDesc
 	std::wstring DebugName;
 };
 
-RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride);
-RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount);
+RaytracingGeometry_t CreateRaytracingGeometry(	VertexBuffer_t VertexBuffer, 
+												RenderFormat VertexFormat, 
+												uint32_t VertexCount, 
+												uint32_t VertexStride);
+
+RaytracingGeometry_t CreateRaytracingGeometry(	VertexBuffer_t VertexBuffer, 
+												RenderFormat VertexFormat, 
+												uint32_t VertexCount, 
+												uint32_t VertexStride, 
+												IndexBuffer_t IndexBuffer, 
+												RenderFormat IndexFormat, 
+												uint32_t IndexCount,
+												uint32_t IndexOffset);
 
 RaytracingScene_t CreateRaytracingScene();
 

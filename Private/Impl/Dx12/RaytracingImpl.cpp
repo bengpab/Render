@@ -43,7 +43,7 @@ SparseArray<TLAS, RaytracingScene_t> g_TLAS;
 
 SparseArray<ComPtr<ID3D12StateObject>, RaytracingPipelineState_t> g_RTPSOs;
 
-bool CreateRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry, VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount)
+bool CreateRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry, VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount, uint32_t IndexOffset)
 {
     return true;
 
@@ -55,13 +55,20 @@ bool CreateRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry, VertexBuffer_
 
     BLAS& Desc = g_BLAS.Alloc(RtGeometry);
 
+    D3D12_GPU_VIRTUAL_ADDRESS IndexBufferGpuAddress = Dx12_GetIbAddress(IndexBuffer);
+    if (IndexOffset > 0)
+    {
+        IndexBufferGpuAddress += IndexOffset * (IndexFormat == RenderFormat::R32_UINT ? 4 : 2);
+    }
+
     Desc.VertexBuffer = VertexBuffer;
     Desc.IndexBuffer = IndexBuffer;
     Desc.DxDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
     Desc.DxDesc.Triangles.VertexBuffer.StartAddress = VertexBufferGpuAddress;
+    Desc.DxDesc.Triangles.VertexBuffer.StrideInBytes = VertexStride;
     Desc.DxDesc.Triangles.VertexCount = VertexCount;
     Desc.DxDesc.Triangles.VertexFormat = Dx12_Format(VertexFormat);
-    Desc.DxDesc.Triangles.IndexBuffer = Dx12_GetIbAddress(IndexBuffer);
+    Desc.DxDesc.Triangles.IndexBuffer = IndexBufferGpuAddress;
     Desc.DxDesc.Triangles.IndexFormat = Dx12_Format(IndexFormat);
     Desc.DxDesc.Triangles.IndexCount = IndexCount;
     Desc.DxDesc.Triangles.Transform3x4 = 0;
