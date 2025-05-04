@@ -1,7 +1,10 @@
 #include "Impl/RaytracingImpl.h"
 
+#include "Impl/Dx/d3dx12.h"
 #include "RenderImpl.h"
 #include "SparseArray.h"
+
+#include <dxcapi.h>
 
 // TODO https://developer.nvidia.com/blog/managing-memory-for-acceleration-structures-in-dxr/
 // Shared buffer allocation strategy for BLAS
@@ -38,6 +41,8 @@ struct TLAS : public AccelerationStructure
 SparseArray<BLAS, RaytracingGeometry_t> g_BLAS;
 SparseArray<TLAS, RaytracingScene_t> g_TLAS;
 
+SparseArray<ComPtr<ID3D12StateObject>, RaytracingPipelineState_t> g_RTPSOs;
+
 bool CreateRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry, VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride, IndexBuffer_t IndexBuffer, RenderFormat IndexFormat, uint32_t IndexCount)
 {
     return true;
@@ -70,6 +75,45 @@ bool CreateRaytracingSceneImpl(RaytracingScene_t RtScene)
     TLAS& Desc = g_TLAS.Alloc(RtScene);
 
     return true;
+}
+
+bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const RaytracingPipelineStateDesc& Desc)
+{
+    CD3DX12_STATE_OBJECT_DESC stateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
+
+    auto rootSignatureSubObject = stateObjectDesc.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+    rootSignatureSubObject->SetRootSignature(Dx12_GetRootSignature(g_render.RootSignature)); // TODO: Allow overrides on desc
+
+    UINT MaxRayRecursion = static_cast<UINT>(Desc.MaxRayRecursion);
+    auto configurationSubObject = stateObjectDesc.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
+    configurationSubObject->Config(MaxRayRecursion);
+
+    auto AddDxilLibary = [&](IDxcBlob* ShaderBlob, LPCWSTR ExportName)
+    {
+        assert(ShaderBlob && "Ray Shader is not valid for PSO compilation");
+
+        CD3DX12_DXIL_LIBRARY_SUBOBJECT* LibSubObject = stateObjectDesc.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+        D3D12_SHADER_BYTECODE Shader = CD3DX12_SHADER_BYTECODE(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
+        LibSubObject->SetDXILLibrary(&Shader);
+        LibSubObject->DefineExport(ExportName, L"main");
+    };
+
+    if (Desc.RayGenShader != RaytracingRayGenShader_t::INVALID)
+    {
+        AddDxilLibary(Dx12_GetRayGenShaderBlob(Desc.RayGenShader), L"RayGen");
+    }
+
+    ComPtr<ID3D12StateObject> DxRTPSO = g_RTPSOs.Alloc(RtPSO);
+
+    if (DXENSURE(g_render.DxDevice->CreateStateObject(stateObjectDesc, IID_PPV_ARGS(&DxRTPSO))))
+    {
+        if (!Desc.DebugName.empty())
+            DxRTPSO->SetName(Desc.DebugName.c_str());
+
+        return true;
+    }
+
+    return false;
 }
 
 void DestroyRaytracingGeometryImpl(RaytracingGeometry_t RtGeometry)

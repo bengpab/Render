@@ -12,12 +12,13 @@ namespace rl
 
 struct
 {
-	SparseArray<ComPtr<IDxcBlob>, VertexShader_t>			CompiledVertexBlobs;
-	SparseArray<ComPtr<IDxcBlob>, PixelShader_t>			CompiledPixelBlobs;
-	SparseArray<ComPtr<IDxcBlob>, GeometryShader_t>			CompiledGeometryBlobs;
-	SparseArray<ComPtr<IDxcBlob>, MeshShader_t>				CompiledMeshBlobs;
-	SparseArray<ComPtr<IDxcBlob>, AmplificationShader_t>	CompiledAmplificationBlobs;
-	SparseArray<ComPtr<IDxcBlob>, ComputeShader_t>			CompiledComputeBlobs;
+	SparseArray<ComPtr<IDxcBlob>, VertexShader_t>				CompiledVertexBlobs;
+	SparseArray<ComPtr<IDxcBlob>, PixelShader_t>				CompiledPixelBlobs;
+	SparseArray<ComPtr<IDxcBlob>, GeometryShader_t>				CompiledGeometryBlobs;
+	SparseArray<ComPtr<IDxcBlob>, MeshShader_t>					CompiledMeshBlobs;
+	SparseArray<ComPtr<IDxcBlob>, AmplificationShader_t>		CompiledAmplificationBlobs;
+	SparseArray<ComPtr<IDxcBlob>, ComputeShader_t>				CompiledComputeBlobs;
+	SparseArray<ComPtr<IDxcBlob>, RaytracingRayGenShader_t>		CompiledRayGenBlobs;
 } g_shaders;
 
 bool CompileShaderInternal(ShaderProfile target, const char* path, const char* includeDirectory, const ShaderMacros& macros, ComPtr<IDxcBlob>& shaderBlob)
@@ -73,6 +74,11 @@ bool CompileShader(ComputeShader_t handle, const char* path, const char* include
 	return CompileShaderInternal(ShaderProfile::CS_6_0, path, includeDirectory, macros, g_shaders.CompiledComputeBlobs.Alloc(handle));
 }
 
+bool CompileShader(RaytracingRayGenShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::LIB_6_3, path, includeDirectory, macros, g_shaders.CompiledRayGenBlobs.Alloc(handle));
+}
+
 IDxcBlob* Dx12_GetVertexShaderBlob(VertexShader_t vs)
 {
 	return g_shaders.CompiledVertexBlobs[vs].Get();
@@ -101,6 +107,11 @@ IDxcBlob* Dx12_GetAmplificationShaderBlob(AmplificationShader_t as)
 IDxcBlob* Dx12_GetComputeShaderBlob(ComputeShader_t cs)
 {
 	return g_shaders.CompiledComputeBlobs[cs].Get();
+}
+
+IDxcBlob* Dx12_GetRayGenShaderBlob(RaytracingRayGenShader_t rgs)
+{
+	return g_shaders.CompiledRayGenBlobs[rgs].Get();
 }
 
 }

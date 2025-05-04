@@ -11,5 +11,6 @@ bool CompileShader(GeometryShader_t handle, const char* path, const char* direct
 bool CompileShader(MeshShader_t handle, const char* path, const char* directory, const ShaderMacros& macros);
 bool CompileShader(AmplificationShader_t handle, const char* path, const char* directory, const ShaderMacros& macros);
 bool CompileShader(ComputeShader_t handle, const char* path, const char* directory, const ShaderMacros& macros);
+bool CompileShader(RaytracingRayGenShader_t handle, const char* path, const char* directory, const ShaderMacros& macros);
 
 }

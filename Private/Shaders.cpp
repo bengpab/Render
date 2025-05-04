@@ -27,12 +27,13 @@ struct ShaderData
 	std::string ShaderIDStr;
 };
 
-IDArray<VertexShader_t,			ShaderData>	g_VertexShaders;
-IDArray<PixelShader_t,			ShaderData>	g_PixelShaders;
-IDArray<GeometryShader_t,		ShaderData>	g_GeometryShaders;
-IDArray<MeshShader_t,			ShaderData>	g_MeshShaders;
-IDArray<AmplificationShader_t,	ShaderData>	g_AmplificationShaders;
-IDArray<ComputeShader_t,		ShaderData>	g_ComputeShaders;
+IDArray<VertexShader_t,				ShaderData>	g_VertexShaders;
+IDArray<PixelShader_t,				ShaderData>	g_PixelShaders;
+IDArray<GeometryShader_t,			ShaderData>	g_GeometryShaders;
+IDArray<MeshShader_t,				ShaderData>	g_MeshShaders;
+IDArray<AmplificationShader_t,		ShaderData>	g_AmplificationShaders;
+IDArray<ComputeShader_t,			ShaderData>	g_ComputeShaders;
+IDArray<RaytracingRayGenShader_t,	ShaderData>	g_RayGenShaders;
 
 std::string CreateShaderIDStr(const char* path, const ShaderMacros& macros)
 {
@@ -189,6 +190,11 @@ ComputeShader_t CreateComputeShader(const char* path, const ShaderMacros& macros
 	return CreateShader(path, macros, "_CS", g_ComputeShaders);
 }
 
+RaytracingRayGenShader_t CreateRayGenShader(const char* path, const ShaderMacros& macros)
+{
+	return CreateShader(path, macros, "_RGS", g_RayGenShaders);
+}
+
 size_t GetVertexShaderCount()
 {
 	return g_VertexShaders.UsedSize();
@@ -242,47 +248,5 @@ void ReloadShaders()
 	ReloadShaderType(g_AmplificationShaders);
 	ReloadShaderType(g_ComputeShaders);
 }
-
-// Don't bother ref counting or releasing shaders, we always keep them in memory as they are expensive to re-initialize
-void RenderRef(VertexShader_t vs)
-{
-}
-
-void RenderRef(PixelShader_t ps)
-{
-}
-
-void RenderRef(GeometryShader_t gs)
-{
-}
-
-void RenderRef(MeshShader_t ms)
-{
-}
-
-void RenderRef(AmplificationShader_t as)
-{
-}
-
-void RenderRef(ComputeShader_t cs)
-{
-}
-
-void RenderRelease(VertexShader_t vs)
-{		
-}
-
-void RenderRelease(PixelShader_t ps)
-{
-}
-
-void RenderRelease(GeometryShader_t gs)
-{
-}
-
-void RenderRelease(ComputeShader_t cs)
-{
-}
-
 
 }

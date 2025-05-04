@@ -26,6 +26,8 @@ struct RaytracingSceneData
 IDArray<RaytracingGeometry_t, RaytracingGeometryData> g_RaytracingGeometry;
 IDArray<RaytracingScene_t, RaytracingSceneData> g_RaytracingScenes;
 
+IDArray<RaytracingPipelineState_t, RaytracingPipelineStateDesc> g_RaytracingPipelines;
+
 RaytracingGeometry_t CreateRaytracingGeometry(VertexBuffer_t VertexBuffer, RenderFormat VertexFormat, uint32_t VertexCount, uint32_t VertexStride)
 {
     return CreateRaytracingGeometry(VertexBuffer, VertexFormat, VertexCount, VertexStride, IndexBuffer_t::INVALID, RenderFormat::UNKNOWN, 0);
@@ -58,6 +60,19 @@ RaytracingScene_t CreateRaytracingScene()
     {
         g_RaytracingScenes.Release(Handle);
         return RaytracingScene_t::INVALID;
+    }
+
+    return Handle;
+}
+
+RaytracingPipelineState_t CreateRaytracingPipelineState(const RaytracingPipelineStateDesc& Desc)
+{
+    RaytracingPipelineState_t Handle = g_RaytracingPipelines.Create(Desc);
+
+    if (!CreateRaytracingPipelineStateImpl(Handle, Desc))
+    {
+        g_RaytracingPipelines.Release(Handle);
+        return RaytracingPipelineState_t::INVALID;
     }
 
     return Handle;

@@ -88,6 +88,7 @@ IDxcBlob* Dx12_GetGeometryShaderBlob(GeometryShader_t gs);
 IDxcBlob* Dx12_GetMeshShaderBlob(MeshShader_t ms);
 IDxcBlob* Dx12_GetAmplificationShaderBlob(AmplificationShader_t as);
 IDxcBlob* Dx12_GetComputeShaderBlob(ComputeShader_t cs);
+IDxcBlob* Dx12_GetRayGenShaderBlob(RaytracingRayGenShader_t rgs);
 
 Dx12CommandList Dx12_AccquireCommandList(CommandListType type);
 Dx12CommandList Dx12_AccquireCommandList(D3D12_COMMAND_LIST_TYPE type);

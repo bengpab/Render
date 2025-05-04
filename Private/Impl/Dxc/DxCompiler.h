@@ -24,6 +24,7 @@ enum class ShaderProfile : uint8_t
 	GS_6_0,
 	MS_6_0,
 	AS_6_0,
+	LIB_6_3,
 	COUNT
 };
 

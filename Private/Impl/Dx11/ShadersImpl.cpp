@@ -176,6 +176,12 @@ bool CompileShader(ComputeShader_t handle, const char* path, const char* directo
 	return SUCCEEDED(g_render.Device->CreateComputeShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &dxCs));
 }
 
+bool CompileShader(RaytracingRayGenShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
 ID3DBlob* Dx11_GetVertexShaderBlob(VertexShader_t handle)
 {
 	return (size_t)handle > 0 && (size_t)handle < g_vertexShaderBlobs.size() ? g_vertexShaderBlobs[(size_t)handle].Get() : nullptr;
