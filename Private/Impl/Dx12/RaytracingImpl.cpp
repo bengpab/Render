@@ -95,20 +95,23 @@ bool CreateRaytracingSceneImpl(RaytracingScene_t RtScene)
 
 bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const RaytracingPipelineStateDesc& Desc)
 {
-    CD3DX12_STATE_OBJECT_DESC stateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
+    CD3DX12_STATE_OBJECT_DESC StateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
 
-    auto rootSignatureSubObject = stateObjectDesc.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+    auto rootSignatureSubObject = StateObjectDesc.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
     rootSignatureSubObject->SetRootSignature(Dx12_GetRootSignature(g_render.RootSignature)); // TODO: Allow overrides on desc
 
     UINT MaxRayRecursion = static_cast<UINT>(Desc.MaxRayRecursion);
-    auto configurationSubObject = stateObjectDesc.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
+    auto configurationSubObject = StateObjectDesc.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
     configurationSubObject->Config(MaxRayRecursion);
+
+    auto shaderConfigStateObject = StateObjectDesc.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
+    shaderConfigStateObject->Config(8, 8);
 
     auto AddDxilLibary = [&](IDxcBlob* ShaderBlob, LPCWSTR ExportName)
     {
         assert(ShaderBlob && "Ray Shader is not valid for PSO compilation");
 
-        CD3DX12_DXIL_LIBRARY_SUBOBJECT* LibSubObject = stateObjectDesc.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
+        CD3DX12_DXIL_LIBRARY_SUBOBJECT* LibSubObject = StateObjectDesc.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
         D3D12_SHADER_BYTECODE Shader = CD3DX12_SHADER_BYTECODE(ShaderBlob->GetBufferPointer(), ShaderBlob->GetBufferSize());
         LibSubObject->SetDXILLibrary(&Shader);
         LibSubObject->DefineExport(ExportName, L"main");
@@ -121,7 +124,7 @@ bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const Ra
 
     ComPtr<ID3D12StateObject> DxRTPSO = g_RTPSOs.Alloc(RtPSO);
 
-    if (DXENSURE(g_render.DxDevice->CreateStateObject(stateObjectDesc, IID_PPV_ARGS(&DxRTPSO))))
+    if (DXENSURE(g_render.DxDevice->CreateStateObject(StateObjectDesc, IID_PPV_ARGS(&DxRTPSO))))
     {
         if (!Desc.DebugName.empty())
             DxRTPSO->SetName(Desc.DebugName.c_str());
