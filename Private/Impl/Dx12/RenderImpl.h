@@ -130,6 +130,8 @@ ID3D12PipelineState* Dx12_GetPipelineState(ComputePipelineState_t pso);
 // It is up to the calling code to free this memory reponsibly
 Dx12StaticBufferAllocation Dx12_CreateByteBuffer(const void* const Data, size_t Size);
 Dx12StaticBufferAllocation Dx12_CreateRWByteBuffer(const void* const Data, size_t Size);
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetByteBufferAddress(const Dx12StaticBufferAllocation& Alloc);
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetByteBufferSize(const Dx12StaticBufferAllocation& Alloc);
 void Dx12_FreeByteBuffer(const Dx12StaticBufferAllocation& Alloc);
 
 D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(VertexBuffer_t vb, uint32_t offset, uint32_t stride);
@@ -175,4 +177,5 @@ ID3D12CommandSignature* Dx12_GetCommandSignature(IndirectCommand_t ic);
 
 void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene);
 ID3D12StateObject* Dx12_GetRaytracingStateObject(RaytracingPipelineState_t RaytracingPipelineState);
+D3D12_DISPATCH_RAYS_DESC Dx12_GetDispatchRaysDesc(RaytracingShaderTable_t RayGenTable, RaytracingShaderTable_t HitGroupTable, RaytracingShaderTable_t MissTable, uint32_t X, uint32_t Y, uint32_t Z);
 }

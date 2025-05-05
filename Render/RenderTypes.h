@@ -40,6 +40,7 @@ FWD_RENDER_TYPE(IndirectCommand_t);
 FWD_RENDER_TYPE(RaytracingGeometry_t);
 FWD_RENDER_TYPE(RaytracingScene_t);
 FWD_RENDER_TYPE(RaytracingPipelineState_t);
+FWD_RENDER_TYPE(RaytracingShaderTable_t);
 
 
 using ShaderResourceViewPtr = RenderPtr<ShaderResourceView_t>;
@@ -57,6 +58,7 @@ using TexturePtr = RenderPtr<Texture_t>;
 using RaytracingGeometryPtr = RenderPtr<RaytracingGeometry_t>;
 using RaytracingScenePtr = RenderPtr<RaytracingScene_t>;
 using RaytracingPipelineStatePtr = RenderPtr<RaytracingPipelineState_t>;
+using RaytracingShaderTablePtr = RenderPtr<RaytracingShaderTable_t>;
 
 struct CommandList;
 struct CommandListSubmissionGroup;

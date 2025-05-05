@@ -41,6 +41,7 @@ struct TLAS : public AccelerationStructure
 struct Dx12ShaderTable
 {
     Dx12StaticBufferAllocation GpuShaderTable;
+    uint32_t HitGroupStride = 0;
 };
 
 SparseArray<BLAS, RaytracingGeometry_t> g_BLAS;
@@ -160,6 +161,9 @@ bool CreateRaytracingShaderTableImpl(RaytracingShaderTable_t ShaderTable, Raytra
         }
     };
 
+    uint32_t RecordStride = 0;
+    uint32_t CalculatedStride = 0;
+    bool CalculateHitGroupStride = Layout.GetHitGroupStride() != 0;
     for (const RaytracingShaderRecord& Record : Layout.GetRecords())
     {
         if (Record.Type == RaytracingShaderRecordType::RAYGEN)
@@ -179,10 +183,20 @@ bool CreateRaytracingShaderTableImpl(RaytracingShaderTable_t ShaderTable, Raytra
             size_t BufIt = BufferData.size();
             BufferData.resize(BufferData.size() + 16);
             memcpy(&BufferData[BufIt], Record.Data.Data, 16);
-        }
+        }        
+
+        if (CalculateHitGroupStride && CalculatedStride == 0)
+        {
+            RecordStride++;
+            if (RecordStride == Layout.GetHitGroupStride())
+            {
+                CalculatedStride = static_cast<uint32_t>(BufferData.size());
+            }
+        }        
     }
 
     DxShaderTable.GpuShaderTable = Dx12_CreateByteBuffer(BufferData.data(), BufferData.size());
+    DxShaderTable.HitGroupStride = CalculatedStride;
 
     return DxShaderTable.GpuShaderTable.pGPUMem != 0;
 }
@@ -342,6 +356,37 @@ void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene)
 ID3D12StateObject* Dx12_GetRaytracingStateObject(RaytracingPipelineState_t RaytracingPipelineState)
 {
     return g_RTPSOs.Valid(RaytracingPipelineState) ? g_RTPSOs[RaytracingPipelineState].Get() : nullptr;
+}
+
+D3D12_DISPATCH_RAYS_DESC Dx12_GetDispatchRaysDesc(RaytracingShaderTable_t RayGenTable, RaytracingShaderTable_t HitGroupTable, RaytracingShaderTable_t MissTable, uint32_t X, uint32_t Y, uint32_t Z)
+{
+    D3D12_DISPATCH_RAYS_DESC DxRayDesc = {};
+
+    if (Dx12ShaderTable* DxRayGenTable = g_ShaderTables.Get(RayGenTable))
+    {
+        DxRayDesc.RayGenerationShaderRecord.StartAddress = Dx12_GetByteBufferAddress(DxRayGenTable->GpuShaderTable);
+        DxRayDesc.RayGenerationShaderRecord.SizeInBytes = Dx12_GetByteBufferSize(DxRayGenTable->GpuShaderTable);
+    }
+
+    if (Dx12ShaderTable* DxHitGroupTable = g_ShaderTables.Get(HitGroupTable))
+    {
+        DxRayDesc.HitGroupTable.StartAddress = Dx12_GetByteBufferAddress(DxHitGroupTable->GpuShaderTable);
+        DxRayDesc.HitGroupTable.SizeInBytes = Dx12_GetByteBufferSize(DxHitGroupTable->GpuShaderTable);
+        DxRayDesc.HitGroupTable.StrideInBytes = DxHitGroupTable->HitGroupStride;
+    }
+
+    if (Dx12ShaderTable* DxMissTable = g_ShaderTables.Get(MissTable))
+    {
+        DxRayDesc.MissShaderTable.StartAddress = Dx12_GetByteBufferAddress(DxMissTable->GpuShaderTable);
+        DxRayDesc.MissShaderTable.SizeInBytes = Dx12_GetByteBufferSize(DxMissTable->GpuShaderTable);
+        DxRayDesc.MissShaderTable.StrideInBytes = DxRayDesc.MissShaderTable.SizeInBytes; // One record
+    }
+
+    DxRayDesc.Width = X;
+    DxRayDesc.Height = Y;
+    DxRayDesc.Depth = Z;
+
+    return DxRayDesc;
 }
 
 }

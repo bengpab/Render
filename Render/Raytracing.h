@@ -22,6 +22,7 @@ struct RaytracingShaderTableLayout
 	void AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader, uint8_t* Data, size_t DataSize);
 
 	const std::vector<RaytracingShaderRecord>& GetRecords() const noexcept { return Records; }
+	uint32_t GetHitGroupStride() const noexcept { return HitGroupStride; }
 private:
 	std::vector<RaytracingShaderRecord> Records;
 	uint32_t HitGroupStride = 0;

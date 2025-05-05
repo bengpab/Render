@@ -563,6 +563,16 @@ Dx12StaticBufferAllocation Dx12_CreateRWByteBuffer(const void* const Data, size_
 	return g_BufferAllocator.AllocRW(Size, Data);
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetByteBufferAddress(const Dx12StaticBufferAllocation& Alloc)
+{
+	return Alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)Alloc.Offset;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetByteBufferSize(const Dx12StaticBufferAllocation& Alloc)
+{
+	return Alloc.Size;
+}
+
 void Dx12_FreeByteBuffer(const Dx12StaticBufferAllocation& Alloc)
 {
 	g_BufferAllocator.Free(Alloc);

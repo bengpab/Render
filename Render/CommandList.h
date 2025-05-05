@@ -82,7 +82,7 @@ struct CommandList
 
 	// Raytracing
 	void BuildRaytracingScene(RaytracingScene_t scene);
-	void DispatchRays(uint32_t x, uint32_t y, uint32_t z);
+	void DispatchRays(RaytracingShaderTable_t RayGenTable, RaytracingShaderTable_t HitGroupTable, RaytracingShaderTable_t MissTable, uint32_t X, uint32_t Y, uint32_t Z);
 
 	// Dx11 Style Bind Commands
 	void BindVertexSRVs(uint32_t startSlot, uint32_t count, const ShaderResourceView_t* const srvs);
