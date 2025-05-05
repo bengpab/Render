@@ -174,5 +174,5 @@ ID3D12RootSignature* Dx12_GetRootSignature(RootSignature_t rs);
 ID3D12CommandSignature* Dx12_GetCommandSignature(IndirectCommand_t ic);
 
 void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene);
-
+ID3D12StateObject* Dx12_GetRaytracingStateObject(RaytracingPipelineState_t RaytracingPipelineState);
 }

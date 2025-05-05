@@ -38,20 +38,18 @@ struct TLAS : public AccelerationStructure
     std::vector<RaytracingGeometry_t> Meshes;
 };
 
-struct GpuShaderTable
+struct Dx12ShaderTable
 {
     Dx12StaticBufferAllocation GpuShaderTable;
 };
 
 SparseArray<BLAS, RaytracingGeometry_t> g_BLAS;
 SparseArray<TLAS, RaytracingScene_t> g_TLAS;
-
+SparseArray<Dx12ShaderTable, RaytracingShaderTable_t> g_ShaderTables;
 SparseArray<ComPtr<ID3D12StateObject>, RaytracingPipelineState_t> g_RTPSOs;
 
 bool CreateRaytracingGeometryImpl(RaytracingGeometry_t Handle, const RaytracingGeometryDesc& Desc)
 {
-    return true;
-
     D3D12_GPU_VIRTUAL_ADDRESS VertexBufferGpuAddress = Dx12_GetVbAddress(Desc.VertexBuffer);
     if (VertexBufferGpuAddress == 0)
     {
@@ -140,9 +138,53 @@ bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const Ra
     return false;
 }
 
-bool CreateRaytracingShaderTable(RaytracingShaderTable_t ShaderTable, const RaytracingShaderTableLayout& Layout)
+bool CreateRaytracingShaderTableImpl(RaytracingShaderTable_t ShaderTable, RaytracingPipelineState_t RTPipelineState, const RaytracingShaderTableLayout& Layout)
 {
-    return false;
+    ID3D12StateObject* DxPipelineState = Dx12_GetRaytracingStateObject(RTPipelineState);
+    if (!DxPipelineState)
+        return false;
+
+    Dx12ShaderTable& DxShaderTable = g_ShaderTables.Alloc(ShaderTable);
+
+    std::vector<byte> BufferData;
+
+    auto AddShaderRecord = [&](LPCWSTR ExportName)
+    {
+        ComPtr<ID3D12StateObjectProperties> StateObjectProperties = nullptr;
+        if (DXENSURE(DxPipelineState->QueryInterface(IID_PPV_ARGS(&StateObjectProperties))))
+        {
+            void* ShaderIdentifierData = StateObjectProperties->GetShaderIdentifier(ExportName);
+            size_t BufIt = BufferData.size();
+            BufferData.resize(BufferData.size() + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+            memcpy(&BufferData[BufIt], ShaderIdentifierData, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        }
+    };
+
+    for (const RaytracingShaderRecord& Record : Layout.GetRecords())
+    {
+        if (Record.Type == RaytracingShaderRecordType::RAYGEN)
+        {
+            AddShaderRecord(L"RayGen");
+        }
+        else if (Record.Type == RaytracingShaderRecordType::MISS)
+        {
+            AddShaderRecord(L"Miss");
+        }
+        else if (Record.Type == RaytracingShaderRecordType::HITGROUP)
+        {
+            AddShaderRecord(L"HitGroup");
+        }
+        else if (Record.Type == RaytracingShaderRecordType::DATA)
+        {
+            size_t BufIt = BufferData.size();
+            BufferData.resize(BufferData.size() + 16);
+            memcpy(&BufferData[BufIt], Record.Data.Data, 16);
+        }
+    }
+
+    DxShaderTable.GpuShaderTable = Dx12_CreateByteBuffer(BufferData.data(), BufferData.size());
+
+    return DxShaderTable.GpuShaderTable.pGPUMem != 0;
 }
 
 void AddRaytracingGeometryToSceneImpl(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
@@ -295,6 +337,11 @@ void Dx12_BuildRaytracingScene(CommandList* cl, RaytracingScene_t scene)
     DxRtCL->ResourceBarrier((UINT)UAVBarriers.size(), UAVBarriers.data());
 
     DxRtCL->BuildRaytracingAccelerationStructure(&TopLevelAccelerationStructureDesc, 0, nullptr);
+}
+
+ID3D12StateObject* Dx12_GetRaytracingStateObject(RaytracingPipelineState_t RaytracingPipelineState)
+{
+    return g_RTPSOs.Valid(RaytracingPipelineState) ? g_RTPSOs[RaytracingPipelineState].Get() : nullptr;
 }
 
 }

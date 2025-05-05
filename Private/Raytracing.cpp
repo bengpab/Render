@@ -7,52 +7,6 @@
 namespace rl
 {
 
-enum class RaytracingShaderRecordType : uint32_t
-{
-    RAYGEN,
-    MISS,
-    HITGROUP,
-    DATA,
-};
-
-struct RaytracingShaderRecordRayGenShader
-{
-    RaytracingRayGenShader_t RayGenShader = {};
-};
-
-struct RaytracingShaderRecordMissShader
-{
-    RaytracingMissShader_t MissShader = {};
-};
-
-struct RaytracingShaderRecordHitGroup
-{
-    RaytracingAnyHitShader_t AnyHitShader = {};
-    RaytracingClosestHitShader_t ClosestHitShader = {};
-};
-
-struct RaytracingShaderRecordData
-{
-    uint32_t Data[4];
-};
-
-struct RaytracingShaderRecord
-{
-    RaytracingShaderRecordType Type;
-    union
-    {
-        RaytracingShaderRecordRayGenShader RayGenShader;
-        RaytracingShaderRecordMissShader MissShader;
-        RaytracingShaderRecordHitGroup HitGroup;
-        RaytracingShaderRecordData Data;
-    };
-
-    RaytracingShaderRecord(RaytracingShaderRecordType InType)
-        : Type(InType)
-    {
-    }
-};
-
 struct RaytracingSceneData
 {
     std::vector<RaytracingGeometryPtr> Geometry;

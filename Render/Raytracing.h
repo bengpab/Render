@@ -14,13 +14,16 @@ RENDER_TYPE(RaytracingPipelineState_t);
 
 RENDER_TYPE(RaytracingShaderTable_t);
 
+struct RaytracingShaderRecord;
 struct RaytracingShaderTableLayout
 {
 	void AddRayGenShader(RaytracingRayGenShader_t RayGenShader);
 	void AddMissShader(RaytracingMissShader_t MissShader);
 	void AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader, uint8_t* Data, size_t DataSize);
+
+	const std::vector<RaytracingShaderRecord>& GetRecords() const noexcept { return Records; }
 private:
-	std::vector<struct RaytracingShaderRecord> Records;
+	std::vector<RaytracingShaderRecord> Records;
 	uint32_t HitGroupStride = 0;
 };
 
