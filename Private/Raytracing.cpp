@@ -209,22 +209,29 @@ void RaytracingShaderTableLayout::AddMissShader(RaytracingMissShader_t MissShade
     Records.push_back(Record);
 }
 
-void RaytracingShaderTableLayout::AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader)
+void RaytracingShaderTableLayout::AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader, uint8_t* Data, size_t DataSize)
 {
+    size_t NumRecords = (DataSize + 15) / 16;
+
+    if (HitGroupStride > 0 && HitGroupStride != (NumRecords + 1))
+    {
+        OutputDebugStringA("Trying to add hit group with a different stride to the previously set ones");
+        return;
+    }
+    else
+    {
+        HitGroupStride = static_cast<uint32_t>(NumRecords + 1); // Num data records + the shader record
+    }
+
     RaytracingShaderRecord Record(RaytracingShaderRecordType::HITGROUP);
     Record.HitGroup.AnyHitShader = AnyHitShader;
     Record.HitGroup.ClosestHitShader = ClosestHitShader;
     Records.push_back(Record);
-}
 
-void RaytracingShaderTableLayout::AddData(uint8_t* Data, size_t Size)
-{
-    size_t NumRecords = (Size + 15) / 16;
-
-    for (uint32_t RecordIt = 0; RecordIt < NumRecords; RecordIt++, Data += 4, Size -= 4)
+    for (uint32_t RecordIt = 0; RecordIt < NumRecords; RecordIt++, Data += 4, DataSize -= 4)
     {
         RaytracingShaderRecord Record(RaytracingShaderRecordType::DATA);
-        memcpy(Record.Data.Data, Data, Size < 4 ? Size : 4);
+        memcpy(Record.Data.Data, Data, DataSize < 4 ? DataSize : 4);
         Records.push_back(Record);
     }
 }

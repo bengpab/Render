@@ -18,10 +18,10 @@ struct RaytracingShaderTableLayout
 {
 	void AddRayGenShader(RaytracingRayGenShader_t RayGenShader);
 	void AddMissShader(RaytracingMissShader_t MissShader);
-	void AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader);
-	void AddData(uint8_t* Data, size_t Size);
+	void AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader, uint8_t* Data, size_t DataSize);
 private:
 	std::vector<struct RaytracingShaderRecord> Records;
+	uint32_t HitGroupStride = 0;
 };
 
 struct RaytracingPipelineStateDesc
