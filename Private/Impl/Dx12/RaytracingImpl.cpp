@@ -38,6 +38,11 @@ struct TLAS : public AccelerationStructure
     std::vector<RaytracingGeometry_t> Meshes;
 };
 
+struct GpuShaderTable
+{
+    Dx12StaticBufferAllocation GpuShaderTable;
+};
+
 SparseArray<BLAS, RaytracingGeometry_t> g_BLAS;
 SparseArray<TLAS, RaytracingScene_t> g_TLAS;
 
@@ -132,6 +137,11 @@ bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const Ra
         return true;
     }
 
+    return false;
+}
+
+bool CreateRaytracingShaderTable(RaytracingShaderTable_t ShaderTable, const RaytracingShaderTableLayout& Layout)
+{
     return false;
 }
 

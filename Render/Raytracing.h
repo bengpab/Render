@@ -12,6 +12,18 @@ RENDER_TYPE(RaytracingScene_t);
 // RTPSO
 RENDER_TYPE(RaytracingPipelineState_t);
 
+RENDER_TYPE(RaytracingShaderTable_t);
+
+struct RaytracingShaderTableLayout
+{
+	void AddRayGenShader(RaytracingRayGenShader_t RayGenShader);
+	void AddMissShader(RaytracingMissShader_t MissShader);
+	void AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader);
+	void AddData(uint8_t* Data, size_t Size);
+private:
+	std::vector<struct RaytracingShaderRecord> Records;
+};
+
 struct RaytracingPipelineStateDesc
 {
 	RaytracingRayGenShader_t RayGenShader = {};
@@ -48,6 +60,9 @@ RaytracingScene_t CreateRaytracingScene();
 
 RaytracingPipelineState_t CreateRaytracingPipelineState(const RaytracingPipelineStateDesc& Desc);
 
+RaytracingShaderTable_t CreateRaytracingShaderTable(const RaytracingShaderTableLayout& Layout);
+
+// Perhaps return an geometry index from here to assist with creating shader tables
 void AddRaytracingGeometryToScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
 void RemoveRaytracingGeometryFromScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
 

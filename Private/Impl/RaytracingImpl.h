@@ -10,6 +10,8 @@ bool CreateRaytracingSceneImpl(RaytracingScene_t RtScene);
 
 bool CreateRaytracingPipelineStateImpl(RaytracingPipelineState_t RtPSO, const RaytracingPipelineStateDesc& Desc);
 
+bool CreateRaytracingShaderTable(RaytracingShaderTable_t ShaderTable, const RaytracingShaderTableLayout& Layout);
+
 void AddRaytracingGeometryToSceneImpl(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
 void RemoveRaytracingGeometryFromSceneImpl(RaytracingGeometry_t Geometry, RaytracingScene_t Scene);
 

@@ -7,6 +7,52 @@
 namespace rl
 {
 
+enum class RaytracingShaderRecordType : uint32_t
+{
+    RAYGEN,
+    MISS,
+    HITGROUP,
+    DATA,
+};
+
+struct RaytracingShaderRecordRayGenShader
+{
+    RaytracingRayGenShader_t RayGenShader = {};
+};
+
+struct RaytracingShaderRecordMissShader
+{
+    RaytracingMissShader_t MissShader = {};
+};
+
+struct RaytracingShaderRecordHitGroup
+{
+    RaytracingAnyHitShader_t AnyHitShader = {};
+    RaytracingClosestHitShader_t ClosestHitShader = {};
+};
+
+struct RaytracingShaderRecordData
+{
+    uint32_t Data[4];
+};
+
+struct RaytracingShaderRecord
+{
+    RaytracingShaderRecordType Type;
+    union
+    {
+        RaytracingShaderRecordRayGenShader RayGenShader;
+        RaytracingShaderRecordMissShader MissShader;
+        RaytracingShaderRecordHitGroup HitGroup;
+        RaytracingShaderRecordData Data;
+    };
+
+    RaytracingShaderRecord(RaytracingShaderRecordType InType)
+        : Type(InType)
+    {
+    }
+};
+
 struct RaytracingSceneData
 {
     std::vector<RaytracingGeometryPtr> Geometry;
@@ -19,6 +65,7 @@ IDArray<RaytracingScene_t, RaytracingSceneData> g_RaytracingScenes;
 
 IDArray<RaytracingPipelineState_t, RaytracingPipelineStateDesc> g_RaytracingPipelines;
 
+IDArray<RaytracingShaderTable_t, RaytracingShaderTableLayout> g_RaytracingShaderTables;
 
 RaytracingGeometry_t CreateRaytracingGeometry(const RaytracingGeometryDesc& Desc)
 {
@@ -88,6 +135,11 @@ RaytracingPipelineState_t CreateRaytracingPipelineState(const RaytracingPipeline
     return Handle;
 }
 
+RaytracingShaderTable_t CreateRaytracingShaderTable(const RaytracingShaderTableLayout& Layout)
+{
+    return RaytracingShaderTable_t();
+}
+
 void AddRaytracingGeometryToScene(RaytracingGeometry_t Geometry, RaytracingScene_t Scene)
 {
     if (Geometry != RaytracingGeometry_t::INVALID && Scene != RaytracingScene_t::INVALID)
@@ -140,6 +192,40 @@ void RenderRelease(RaytracingPipelineState_t RTPipelineState)
     if (g_RaytracingPipelines.Release(RTPipelineState))
     {
         DestroyRaytracingPipelineStateImpl(RTPipelineState);
+    }
+}
+
+void RaytracingShaderTableLayout::AddRayGenShader(RaytracingRayGenShader_t RayGenShader)
+{
+    RaytracingShaderRecord Record(RaytracingShaderRecordType::RAYGEN);
+    Record.RayGenShader.RayGenShader = RayGenShader;
+    Records.push_back(Record);
+}
+
+void RaytracingShaderTableLayout::AddMissShader(RaytracingMissShader_t MissShader)
+{
+    RaytracingShaderRecord Record(RaytracingShaderRecordType::MISS);
+    Record.MissShader.MissShader = MissShader;
+    Records.push_back(Record);
+}
+
+void RaytracingShaderTableLayout::AddHitGroup(RaytracingAnyHitShader_t AnyHitShader, RaytracingClosestHitShader_t ClosestHitShader)
+{
+    RaytracingShaderRecord Record(RaytracingShaderRecordType::HITGROUP);
+    Record.HitGroup.AnyHitShader = AnyHitShader;
+    Record.HitGroup.ClosestHitShader = ClosestHitShader;
+    Records.push_back(Record);
+}
+
+void RaytracingShaderTableLayout::AddData(uint8_t* Data, size_t Size)
+{
+    size_t NumRecords = (Size + 15) / 16;
+
+    for (uint32_t RecordIt = 0; RecordIt < NumRecords; RecordIt++, Data += 4, Size -= 4)
+    {
+        RaytracingShaderRecord Record(RaytracingShaderRecordType::DATA);
+        memcpy(Record.Data.Data, Data, Size < 4 ? Size : 4);
+        Records.push_back(Record);
     }
 }
 

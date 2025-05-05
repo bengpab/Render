@@ -78,6 +78,18 @@ struct Dx12RenderGlobals
 	bool SupportsRaytracing = false;
 };
 
+struct Dx12StaticBufferAllocation
+{
+	D3D12_GPU_VIRTUAL_ADDRESS pGPUMem = D3D12_GPU_VIRTUAL_ADDRESS{ 0 };
+
+	size_t Offset = 0u;
+	size_t Size = 0u;
+
+	ID3D12Resource* pResource;
+
+	bool SingleBuffer = false;
+};
+
 extern Dx12RenderGlobals g_render;
 
 uint64_t Dx12_FlushQueue(Dx12CommandQueue& queue);

@@ -30,21 +30,9 @@ struct BufferAllocationBlock;
 using FreeBlocksByOffsetMap = std::map<size_t, BufferAllocationBlock>;
 using FreeBlocksBySizeMap = std::multimap<size_t, FreeBlocksByOffsetMap::iterator>;
 
-struct BufferAllocation
-{
-	D3D12_GPU_VIRTUAL_ADDRESS pGPUMem = D3D12_GPU_VIRTUAL_ADDRESS{ 0 };
-
-	size_t Offset = 0u;
-	size_t Size = 0u;
-
-	ID3D12Resource* pResource;
-
-	bool SingleBuffer = false;
-};
-
 struct BufferAllocationUploadRequest
 {
-	BufferAllocation Allocation;
+	Dx12StaticBufferAllocation Allocation;
 
 	ID3D12Resource* pDst = nullptr;
 	ID3D12Resource* pSrc = nullptr;
@@ -53,7 +41,7 @@ struct BufferAllocationUploadRequest
 std::vector<BufferAllocationUploadRequest> g_uploadRequests;
 std::set<ID3D12Resource*> g_uploadTargetBuffers;
 
-static void RequestUploadAlloc(const BufferAllocation& alloc, ID3D12Resource* pDst, ID3D12Resource* pSrc)
+static void RequestUploadAlloc(const Dx12StaticBufferAllocation& alloc, ID3D12Resource* pDst, ID3D12Resource* pSrc)
 {
 	g_uploadRequests.emplace_back(alloc, pDst, pSrc);
 	g_uploadTargetBuffers.emplace(pDst);
@@ -111,7 +99,7 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() { return pGpuMemory; }
 
-	BufferAllocation Alloc(size_t size, size_t alignment, const void* const pData)
+	Dx12StaticBufferAllocation Alloc(size_t size, size_t alignment, const void* const pData)
 	{
 		size_t alignedSize = AlignUp(size, alignment);
 
@@ -173,7 +161,7 @@ public:
 		// Using size instead of aligned size is intentional so that the source alloc doesnt also need to be aligned.
 		memcpy((uint8_t*)pCpuMemory + alignedOffset, pData, size);
 
-		BufferAllocation alloc = { pGpuMemory, alignedOffset, alignedSize, pBuffer.Get()};
+		Dx12StaticBufferAllocation alloc = { pGpuMemory, alignedOffset, alignedSize, pBuffer.Get()};
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 
@@ -184,14 +172,14 @@ public:
 		return alloc;
 	}
 
-	void Update(BufferAllocation alloc, const void* const pData)
+	void Update(const Dx12StaticBufferAllocation& alloc, const void* const pData)
 	{
 		memcpy((uint8_t*)pCpuMemory + alloc.Offset, pData, alloc.Size);
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 	}
 
-	void Free(BufferAllocation alloc)
+	void Free(const Dx12StaticBufferAllocation& alloc)
 	{
 		FreeBlocksByOffsetMap::iterator nextBlockIt = FreeBlocksByOffset.upper_bound(alloc.Offset);
 		FreeBlocksByOffsetMap::iterator prevBlockIt = nextBlockIt != FreeBlocksByOffset.begin() ? --nextBlockIt : FreeBlocksByOffset.end();
@@ -272,16 +260,16 @@ public:
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() { return pGpuMemory; }
 
-	BufferAllocation Alloc(size_t size, const void* const pData)
+	Dx12StaticBufferAllocation Alloc(size_t size, const void* const pData)
 	{
 		if (size > Size)
 		{
-			return BufferAllocation{};
+			return Dx12StaticBufferAllocation{};
 		}
 
 		memcpy((uint8_t*)pCpuMemory, pData, size);
 
-		BufferAllocation alloc = { pGpuMemory, 0, size, pBuffer.Get(), true };
+		Dx12StaticBufferAllocation alloc = { pGpuMemory, 0, size, pBuffer.Get(), true };
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 
@@ -292,7 +280,7 @@ public:
 	{
 		memcpy((uint8_t*)pCpuMemory, data, Size);
 
-		BufferAllocation alloc = { pGpuMemory, 0, Size, pBuffer.Get(), true};
+		Dx12StaticBufferAllocation alloc = { pGpuMemory, 0, Size, pBuffer.Get(), true};
 
 		RequestUploadAlloc(alloc, pBuffer.Get(), pUploadBuffer.Get());
 	}
@@ -303,11 +291,11 @@ struct BufferAllocationPool
 	std::vector<std::unique_ptr<BufferAllocationPage>> Pages;
 	std::vector<BufferAllocationSingleBuffer> SingleBuffers;
 
-	BufferAllocation AllocSmallBuffer(size_t size, size_t alignment, const void* const pData)
+	Dx12StaticBufferAllocation AllocSmallBuffer(size_t size, size_t alignment, const void* const pData)
 	{
 		assert(size > 0 && pData != nullptr);
 
-		BufferAllocation alloc = {};
+		Dx12StaticBufferAllocation alloc = {};
 
 		for (std::unique_ptr<BufferAllocationPage>& page : Pages)
 		{
@@ -331,7 +319,7 @@ struct BufferAllocationPool
 		return alloc;
 	}
 
-	BufferAllocation AllocLargeBuffer(size_t size, const void* const pData)
+	Dx12StaticBufferAllocation AllocLargeBuffer(size_t size, const void* const pData)
 	{
 		assert(size > 0 && pData != nullptr);
 
@@ -340,7 +328,7 @@ struct BufferAllocationPool
 		return buffer.Alloc(size, pData);
 	}
 
-	BufferAllocation AllocRW(size_t size, const void* const pData)
+	Dx12StaticBufferAllocation AllocRW(size_t size, const void* const pData)
 	{
 		assert(size > 0 && pData != nullptr);
 
@@ -349,7 +337,7 @@ struct BufferAllocationPool
 		return buffer.Alloc(size, pData);
 	}
 
-	BufferAllocation Alloc(size_t size, size_t alignment, const void* const pData)
+	Dx12StaticBufferAllocation Alloc(size_t size, size_t alignment, const void* const pData)
 	{
 		assert(size > 0 && pData != nullptr);
 
@@ -364,7 +352,7 @@ struct BufferAllocationPool
 		}
 	}
 
-	void Update(BufferAllocation alloc, const void* const pData)
+	void Update(const Dx12StaticBufferAllocation& alloc, const void* const pData)
 	{
 		assert(alloc.Size > 0 && pData != nullptr);
 
@@ -398,7 +386,7 @@ struct BufferAllocationPool
 		assert(0 && "Trying to free a non-existent allocation");
 	}
 
-	void Free(BufferAllocation alloc)
+	void Free(const Dx12StaticBufferAllocation& alloc)
 	{
 		if (alloc.SingleBuffer)
 		{
@@ -437,10 +425,10 @@ struct BufferAllocationPool
 
 BufferAllocationPool g_BufferAllocator;
 
-SparseArray<BufferAllocation, VertexBuffer_t> g_DxVertexBuffers;
-SparseArray<BufferAllocation, IndexBuffer_t> g_DxIndexBuffers;
-SparseArray<BufferAllocation, StructuredBuffer_t> g_DxStructuredBuffers;
-SparseArray<BufferAllocation, ConstantBuffer_t> g_DxConstantBuffers;
+SparseArray<Dx12StaticBufferAllocation, VertexBuffer_t> g_DxVertexBuffers;
+SparseArray<Dx12StaticBufferAllocation, IndexBuffer_t> g_DxIndexBuffers;
+SparseArray<Dx12StaticBufferAllocation, StructuredBuffer_t> g_DxStructuredBuffers;
+SparseArray<Dx12StaticBufferAllocation, ConstantBuffer_t> g_DxConstantBuffers;
 
 bool CreateVertexBufferImpl(VertexBuffer_t vb, const void* const data, size_t size)
 {
@@ -572,7 +560,7 @@ D3D12_VERTEX_BUFFER_VIEW Dx12_GetVertexBufferView(VertexBuffer_t vb, uint32_t of
 		return {};
 	}
 
-	const BufferAllocation& alloc = g_DxVertexBuffers[vb];
+	const Dx12StaticBufferAllocation& alloc = g_DxVertexBuffers[vb];
 
 	D3D12_VERTEX_BUFFER_VIEW view;
 	view.BufferLocation = alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset + (D3D12_GPU_VIRTUAL_ADDRESS)offset;
@@ -589,7 +577,7 @@ D3D12_INDEX_BUFFER_VIEW Dx12_GetIndexBufferView(IndexBuffer_t ib, RenderFormat f
 		return {};
 	}
 
-	const BufferAllocation& alloc = g_DxIndexBuffers[ib];
+	const Dx12StaticBufferAllocation& alloc = g_DxIndexBuffers[ib];
 
 	D3D12_INDEX_BUFFER_VIEW view;
 	view.BufferLocation = alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset + (D3D12_GPU_VIRTUAL_ADDRESS)offset;
@@ -606,7 +594,7 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetCbvAddress(ConstantBuffer_t cb)
 		return {};
 	}
 
-	const BufferAllocation& alloc = g_DxConstantBuffers[cb];
+	const Dx12StaticBufferAllocation& alloc = g_DxConstantBuffers[cb];
 
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
 }
@@ -618,7 +606,7 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetVbAddress(VertexBuffer_t vb)
 		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
 	}
 
-	const BufferAllocation& alloc = g_DxVertexBuffers[vb];
+	const Dx12StaticBufferAllocation& alloc = g_DxVertexBuffers[vb];
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
 }
 
@@ -629,7 +617,7 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetIbAddress(IndexBuffer_t ib)
 		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
 	}
 
-	const BufferAllocation& alloc = g_DxIndexBuffers[ib];
+	const Dx12StaticBufferAllocation& alloc = g_DxIndexBuffers[ib];
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
 }
 
@@ -640,7 +628,7 @@ D3D12_GPU_VIRTUAL_ADDRESS Dx12_GetSbAddress(StructuredBuffer_t sb)
 		return (D3D12_GPU_VIRTUAL_ADDRESS)0;
 	}
 
-	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+	const Dx12StaticBufferAllocation& alloc = g_DxStructuredBuffers[sb];
 	return alloc.pGPUMem + (D3D12_GPU_VIRTUAL_ADDRESS)alloc.Offset;
 }
 
@@ -651,7 +639,7 @@ ID3D12Resource* Dx12_GetBufferResource(StructuredBuffer_t sb)
 		return {};
 	}
 
-	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+	const Dx12StaticBufferAllocation& alloc = g_DxStructuredBuffers[sb];
 
 	return alloc.pResource;
 }
@@ -663,7 +651,7 @@ uint32_t Dx12_GetBufferOffset(StructuredBuffer_t sb)
 		return {};
 	}
 
-	const BufferAllocation& alloc = g_DxStructuredBuffers[sb];
+	const Dx12StaticBufferAllocation& alloc = g_DxStructuredBuffers[sb];
 
 	return (uint32_t)alloc.Offset;
 }
