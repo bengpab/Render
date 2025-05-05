@@ -182,6 +182,24 @@ bool CompileShader(RaytracingRayGenShader_t handle, const char* path, const char
 	return false;
 }
 
+bool CompileShader(RaytracingMissShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
+bool CompileShader(RaytracingAnyHitShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
+bool CompileShader(RaytracingClosestHitShader_t handle, const char* path, const char* directory, const ShaderMacros& macros)
+{
+	assert(0 && "Unsupported");
+	return false;
+}
+
 ID3DBlob* Dx11_GetVertexShaderBlob(VertexShader_t handle)
 {
 	return (size_t)handle > 0 && (size_t)handle < g_vertexShaderBlobs.size() ? g_vertexShaderBlobs[(size_t)handle].Get() : nullptr;

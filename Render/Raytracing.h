@@ -12,9 +12,6 @@ RENDER_TYPE(RaytracingScene_t);
 // RTPSO
 RENDER_TYPE(RaytracingPipelineState_t);
 
-// Shaders
-
-
 struct RaytracingPipelineStateDesc
 {
 	RaytracingRayGenShader_t RayGenShader = {};

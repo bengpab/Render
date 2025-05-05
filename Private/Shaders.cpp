@@ -27,13 +27,16 @@ struct ShaderData
 	std::string ShaderIDStr;
 };
 
-IDArray<VertexShader_t,				ShaderData>	g_VertexShaders;
-IDArray<PixelShader_t,				ShaderData>	g_PixelShaders;
-IDArray<GeometryShader_t,			ShaderData>	g_GeometryShaders;
-IDArray<MeshShader_t,				ShaderData>	g_MeshShaders;
-IDArray<AmplificationShader_t,		ShaderData>	g_AmplificationShaders;
-IDArray<ComputeShader_t,			ShaderData>	g_ComputeShaders;
-IDArray<RaytracingRayGenShader_t,	ShaderData>	g_RayGenShaders;
+IDArray<VertexShader_t,					ShaderData>	g_VertexShaders;
+IDArray<PixelShader_t,					ShaderData>	g_PixelShaders;
+IDArray<GeometryShader_t,				ShaderData>	g_GeometryShaders;
+IDArray<MeshShader_t,					ShaderData>	g_MeshShaders;
+IDArray<AmplificationShader_t,			ShaderData>	g_AmplificationShaders;
+IDArray<ComputeShader_t,				ShaderData>	g_ComputeShaders;
+IDArray<RaytracingRayGenShader_t,		ShaderData>	g_RayGenShaders;
+IDArray<RaytracingMissShader_t,			ShaderData>	g_RayMissShaders;
+IDArray<RaytracingAnyHitShader_t,		ShaderData>	g_RayAnyHitShaders;
+IDArray<RaytracingClosestHitShader_t,	ShaderData>	g_RayClosestHitShaders;
 
 std::string CreateShaderIDStr(const char* path, const ShaderMacros& macros)
 {
@@ -192,7 +195,30 @@ ComputeShader_t CreateComputeShader(const char* path, const ShaderMacros& macros
 
 RaytracingRayGenShader_t CreateRayGenShader(const char* path, const ShaderMacros& macros)
 {
+	if (!Render_SupportsRaytracing())
+		return{};
 	return CreateShader(path, macros, "_RGS", g_RayGenShaders);
+}
+
+RaytracingMissShader_t CreateMissShader(const char* path, const ShaderMacros& macros)
+{
+	if (!Render_SupportsRaytracing())
+		return{};
+	return CreateShader(path, macros, "_RMS", g_RayMissShaders);
+}
+
+RaytracingAnyHitShader_t CreateAnyHitShader(const char* path, const ShaderMacros& macros)
+{
+	if (!Render_SupportsRaytracing())
+		return{};
+	return CreateShader(path, macros, "_RAS", g_RayAnyHitShaders);
+}
+
+RaytracingClosestHitShader_t CreateClosestHitShader(const char* path, const ShaderMacros& macros)
+{
+	if (!Render_SupportsRaytracing())
+		return{};
+	return CreateShader(path, macros, "_RCS", g_RayClosestHitShaders);
 }
 
 size_t GetVertexShaderCount()

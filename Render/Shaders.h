@@ -45,6 +45,9 @@ AmplificationShader_t	CreateAmplificationShader(const char* path, const ShaderMa
 ComputeShader_t			CreateComputeShader(const char* path, const ShaderMacros& macros = {});
 
 RaytracingRayGenShader_t CreateRayGenShader(const char* path, const ShaderMacros& macros = {});
+RaytracingMissShader_t CreateMissShader(const char* path, const ShaderMacros& macros = {});
+RaytracingAnyHitShader_t CreateAnyHitShader(const char* path, const ShaderMacros& macros = {});
+RaytracingClosestHitShader_t CreateClosestHitShader(const char* path, const ShaderMacros& macros = {});
 
 size_t GetVertexShaderCount();
 size_t GetPixelShaderCount();

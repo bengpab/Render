@@ -19,6 +19,9 @@ struct
 	SparseArray<ComPtr<IDxcBlob>, AmplificationShader_t>		CompiledAmplificationBlobs;
 	SparseArray<ComPtr<IDxcBlob>, ComputeShader_t>				CompiledComputeBlobs;
 	SparseArray<ComPtr<IDxcBlob>, RaytracingRayGenShader_t>		CompiledRayGenBlobs;
+	SparseArray<ComPtr<IDxcBlob>, RaytracingMissShader_t>		CompiledRayMissBlobs;
+	SparseArray<ComPtr<IDxcBlob>, RaytracingAnyHitShader_t>		CompiledRayAnyHitBlobs;
+	SparseArray<ComPtr<IDxcBlob>, RaytracingClosestHitShader_t>	CompiledRayClosestHitBlobs;
 } g_shaders;
 
 bool CompileShaderInternal(ShaderProfile target, const char* path, const char* includeDirectory, const ShaderMacros& macros, ComPtr<IDxcBlob>& shaderBlob)
@@ -79,6 +82,21 @@ bool CompileShader(RaytracingRayGenShader_t handle, const char* path, const char
 	return CompileShaderInternal(ShaderProfile::LIB_6_3, path, includeDirectory, macros, g_shaders.CompiledRayGenBlobs.Alloc(handle));
 }
 
+bool CompileShader(RaytracingMissShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::LIB_6_3, path, includeDirectory, macros, g_shaders.CompiledRayMissBlobs.Alloc(handle));
+}
+
+bool CompileShader(RaytracingAnyHitShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::LIB_6_3, path, includeDirectory, macros, g_shaders.CompiledRayAnyHitBlobs.Alloc(handle));
+}
+
+bool CompileShader(RaytracingClosestHitShader_t handle, const char* path, const char* includeDirectory, const ShaderMacros& macros)
+{
+	return CompileShaderInternal(ShaderProfile::LIB_6_3, path, includeDirectory, macros, g_shaders.CompiledRayClosestHitBlobs.Alloc(handle));
+}
+
 IDxcBlob* Dx12_GetVertexShaderBlob(VertexShader_t vs)
 {
 	return g_shaders.CompiledVertexBlobs[vs].Get();
@@ -112,6 +130,21 @@ IDxcBlob* Dx12_GetComputeShaderBlob(ComputeShader_t cs)
 IDxcBlob* Dx12_GetRayGenShaderBlob(RaytracingRayGenShader_t rgs)
 {
 	return g_shaders.CompiledRayGenBlobs[rgs].Get();
+}
+
+IDxcBlob* Dx12_GetRayMissShaderBlob(RaytracingMissShader_t rms)
+{
+	return g_shaders.CompiledRayMissBlobs[rms].Get();
+}
+
+IDxcBlob* Dx12_GetRayAnyHitShaderBlob(RaytracingAnyHitShader_t ras)
+{
+	return g_shaders.CompiledRayAnyHitBlobs[ras].Get();
+}
+
+IDxcBlob* Dx12_GetRayClosestHitShaderBlob(RaytracingClosestHitShader_t rcs)
+{
+	return g_shaders.CompiledRayClosestHitBlobs[rcs].Get();
 }
 
 }
