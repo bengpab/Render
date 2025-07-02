@@ -8,94 +8,106 @@ namespace rl
 
 SparseArray<ComPtr<ID3D12RootSignature>, RootSignature_t> g_DxRootSignatures;
 
-bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& desc)
+static D3D12_SHADER_VISIBILITY Dx12_ShaderVisibility(ShaderVisibility Visibility)
 {
-	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+	switch (Visibility)
+	{
+	case ShaderVisibility::ALL: return D3D12_SHADER_VISIBILITY_ALL;
+	case ShaderVisibility::VERTEX: return D3D12_SHADER_VISIBILITY_VERTEX;
+	case ShaderVisibility::GEOMETRY: return D3D12_SHADER_VISIBILITY_GEOMETRY;
+	case ShaderVisibility::PIXEL: return D3D12_SHADER_VISIBILITY_PIXEL;
+	case ShaderVisibility::AMPLIFICATION: return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+	case ShaderVisibility::MESH: return D3D12_SHADER_VISIBILITY_MESH;
+	}
+	assert(0 && "Dx12_ShaderVisibility invalid arg");
+	return D3D12_SHADER_VISIBILITY_ALL;
+}
+
+
+bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& Desc)
+{
+	D3D12_FEATURE_DATA_ROOT_SIGNATURE FeatureData = {};
+	FeatureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+	if (FAILED(g_render.DxDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &FeatureData, sizeof(FeatureData))))
 	{
 		OutputDebugStringA("Only root sig version 1.1 supported");
 		return false;
 	}
 
-	D3D12_ROOT_SIGNATURE_FLAGS flags =
+	D3D12_ROOT_SIGNATURE_FLAGS Flags =
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
 
-	if (((uint32_t)desc.Flags & (uint32_t)RootSignatureFlags::ALLOW_INPUT_LAYOUT) != 0)
-		flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	if (((uint32_t)Desc.Flags & (uint32_t)RootSignatureFlags::ALLOW_INPUT_LAYOUT) != 0)
+		Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	std::vector<D3D12_ROOT_PARAMETER1> rootParams;
-	rootParams.resize(desc.Slots.size());
+	std::vector<D3D12_ROOT_PARAMETER1> RootParams;
+	RootParams.resize(Desc.Slots.size());
 
-	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE1>> rangeTable;
-	rangeTable.resize(desc.Slots.size());
+	std::vector<std::vector<D3D12_DESCRIPTOR_RANGE1>> RangeTable;
+	RangeTable.resize(Desc.Slots.size());
 
-	for (uint32_t slotIt = 0; slotIt < desc.Slots.size(); slotIt++)
+	for (uint32_t SlotIt = 0; SlotIt < Desc.Slots.size(); SlotIt++)
 	{
-		const RootSignatureSlot& slotDesc = desc.Slots[slotIt];
+		const RootSignatureSlot& SlotDesc = Desc.Slots[SlotIt];
 
-		D3D12_ROOT_PARAMETER1& rootParam = rootParams[slotIt];
+		D3D12_ROOT_PARAMETER1& RootParam = RootParams[SlotIt];
+		RootParam.ShaderVisibility = Dx12_ShaderVisibility(SlotDesc.Visibility);
 
-		switch (slotDesc.Type)
+		switch (SlotDesc.Type)
 		{
 		case RootSignatureSlotType::CONSTANTS:
 		{
-			rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-			rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			rootParam.Constants.Num32BitValues = slotDesc.Num32BitVals;
-			rootParam.Constants.ShaderRegister = slotDesc.BaseRegister;
-			rootParam.Constants.RegisterSpace = slotDesc.BaseRegisterSpace;
+			RootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+			RootParam.Constants.Num32BitValues = SlotDesc.Num32BitVals;
+			RootParam.Constants.ShaderRegister = SlotDesc.BaseRegister;
+			RootParam.Constants.RegisterSpace = SlotDesc.BaseRegisterSpace;
 		}
 		break;
 		case RootSignatureSlotType::CBV:
 		{
-			rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-			rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			rootParam.Descriptor.ShaderRegister = slotDesc.BaseRegister;
-			rootParam.Descriptor.RegisterSpace = slotDesc.BaseRegisterSpace;
-			rootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+			RootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+			RootParam.Descriptor.ShaderRegister = SlotDesc.BaseRegister;
+			RootParam.Descriptor.RegisterSpace = SlotDesc.BaseRegisterSpace;
+			RootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		}
 		break;
 		case RootSignatureSlotType::SRV:
 		{
-			rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-			rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			rootParam.Descriptor.ShaderRegister = slotDesc.BaseRegister;
-			rootParam.Descriptor.RegisterSpace = slotDesc.BaseRegisterSpace;
-			rootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+			RootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+			RootParam.Descriptor.ShaderRegister = SlotDesc.BaseRegister;
+			RootParam.Descriptor.RegisterSpace = SlotDesc.BaseRegisterSpace;
+			RootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		}
 		break;
 		case RootSignatureSlotType::UAV:
 		{
-			rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-			rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			rootParam.Descriptor.ShaderRegister = slotDesc.BaseRegister;
-			rootParam.Descriptor.RegisterSpace = slotDesc.BaseRegisterSpace;
-			rootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+			RootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+			RootParam.Descriptor.ShaderRegister = SlotDesc.BaseRegister;
+			RootParam.Descriptor.RegisterSpace = SlotDesc.BaseRegisterSpace;
+			RootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 		}
 		break;
 		case RootSignatureSlotType::DESCRIPTOR_TABLE:
 		{
-			std::vector<D3D12_DESCRIPTOR_RANGE1>& ranges = rangeTable[slotIt];
-			ranges.resize(slotDesc.RangeCount);
-			for (uint32_t rangeIt = 0; rangeIt < slotDesc.RangeCount; rangeIt++)
+			std::vector<D3D12_DESCRIPTOR_RANGE1>& Ranges = RangeTable[SlotIt];
+			Ranges.resize(SlotDesc.RangeCount);
+			for (uint32_t RangeIt = 0; RangeIt < SlotDesc.RangeCount; RangeIt++)
 			{
-				D3D12_DESCRIPTOR_RANGE1& range = ranges[rangeIt];
-				range.RangeType = Dx12_DescriptorRangeType(slotDesc.DescriptorTableType);
-				range.NumDescriptors = UINT_MAX;
-				range.BaseShaderRegister = slotDesc.BaseRegister;
-				range.RegisterSpace = slotDesc.BaseRegisterSpace + rangeIt;
-				range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
-				range.OffsetInDescriptorsFromTableStart = 0u;
+				D3D12_DESCRIPTOR_RANGE1& Range = Ranges[RangeIt];
+				Range.RangeType = Dx12_DescriptorRangeType(SlotDesc.DescriptorTableType);
+				Range.NumDescriptors = UINT_MAX;
+				Range.BaseShaderRegister = SlotDesc.BaseRegister;
+				Range.RegisterSpace = SlotDesc.BaseRegisterSpace + RangeIt;
+				Range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
+				Range.OffsetInDescriptorsFromTableStart = 0u;
 			}
 
-			rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-			rootParam.DescriptorTable.NumDescriptorRanges = slotDesc.RangeCount;
-			rootParam.DescriptorTable.pDescriptorRanges = rangeTable[slotIt].data();
+			RootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			RootParam.DescriptorTable.NumDescriptorRanges = SlotDesc.RangeCount;
+			RootParam.DescriptorTable.pDescriptorRanges = RangeTable[SlotIt].data();
 		}
 		break;
 		default:
@@ -103,57 +115,57 @@ bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& desc)
 		}
 	}
 
-	std::vector<D3D12_STATIC_SAMPLER_DESC> dxStaticSamplers;
-	dxStaticSamplers.resize(desc.GlobalSamplers.size());
+	std::vector<D3D12_STATIC_SAMPLER_DESC> DXStaticSamplers;
+	DXStaticSamplers.resize(Desc.GlobalSamplers.size());
 
-	for (uint32_t sampIt = 0; sampIt < desc.GlobalSamplers.size(); sampIt++)
+	for (uint32_t SampIt = 0; SampIt < Desc.GlobalSamplers.size(); SampIt++)
 	{
-		const SamplerDesc& sd = desc.GlobalSamplers[sampIt];
-		D3D12_STATIC_SAMPLER_DESC& desc = dxStaticSamplers[sampIt];
-		desc.Filter = Dx12_Filter(sd.Comparison != SamplerComparisonFunc::NONE, sd.FilterMode.Min, sd.FilterMode.Mag, sd.FilterMode.Mip);
-		desc.AddressU = Dx12_TextureAddressMode(sd.AddressMode.U);
-		desc.AddressV = Dx12_TextureAddressMode(sd.AddressMode.V);
-		desc.AddressW = Dx12_TextureAddressMode(sd.AddressMode.W);
-		desc.MipLODBias = sd.MipLODBias;
-		desc.MaxAnisotropy = sd.MaxAnisotropy;
-		desc.ComparisonFunc = Dx12_ComparisonFunc(sd.Comparison);
-		desc.BorderColor = Dx12_BorderColor(sd.BorderColor);
-		desc.MinLOD = sd.MinLOD;
-		desc.MaxLOD = sd.MaxLOD;
-		desc.ShaderRegister = sampIt;
-		desc.RegisterSpace = 0u;
-		desc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		const SamplerDesc& SamplerDesc = Desc.GlobalSamplers[SampIt];
+		D3D12_STATIC_SAMPLER_DESC& DXSamplerDesc = DXStaticSamplers[SampIt];
+		DXSamplerDesc.Filter = Dx12_Filter(SamplerDesc.Comparison != SamplerComparisonFunc::NONE, SamplerDesc.FilterMode.Min, SamplerDesc.FilterMode.Mag, SamplerDesc.FilterMode.Mip);
+		DXSamplerDesc.AddressU = Dx12_TextureAddressMode(SamplerDesc.AddressMode.U);
+		DXSamplerDesc.AddressV = Dx12_TextureAddressMode(SamplerDesc.AddressMode.V);
+		DXSamplerDesc.AddressW = Dx12_TextureAddressMode(SamplerDesc.AddressMode.W);
+		DXSamplerDesc.MipLODBias = SamplerDesc.MipLODBias;
+		DXSamplerDesc.MaxAnisotropy = SamplerDesc.MaxAnisotropy;
+		DXSamplerDesc.ComparisonFunc = Dx12_ComparisonFunc(SamplerDesc.Comparison);
+		DXSamplerDesc.BorderColor = Dx12_BorderColor(SamplerDesc.BorderColor);
+		DXSamplerDesc.MinLOD = SamplerDesc.MinLOD;
+		DXSamplerDesc.MaxLOD = SamplerDesc.MaxLOD;
+		DXSamplerDesc.ShaderRegister = SampIt;
+		DXSamplerDesc.RegisterSpace = 0u;
+		DXSamplerDesc.ShaderVisibility = Dx12_ShaderVisibility(SamplerDesc.Visibility);
 	}
 
-	D3D12_VERSIONED_ROOT_SIGNATURE_DESC dxRootSigDesc = {};
-	dxRootSigDesc.Version = featureData.HighestVersion;
+	D3D12_VERSIONED_ROOT_SIGNATURE_DESC DXRootSigDesc = {};
+	DXRootSigDesc.Version = FeatureData.HighestVersion;
 
-	dxRootSigDesc.Desc_1_1.NumParameters = (UINT)rootParams.size();
-	dxRootSigDesc.Desc_1_1.pParameters = rootParams.data();
-	dxRootSigDesc.Desc_1_1.NumStaticSamplers = (UINT)dxStaticSamplers.size();
-	dxRootSigDesc.Desc_1_1.pStaticSamplers = dxStaticSamplers.data();
+	DXRootSigDesc.Desc_1_1.NumParameters = (UINT)RootParams.size();
+	DXRootSigDesc.Desc_1_1.pParameters = RootParams.data();
+	DXRootSigDesc.Desc_1_1.NumStaticSamplers = (UINT)DXStaticSamplers.size();
+	DXRootSigDesc.Desc_1_1.pStaticSamplers = DXStaticSamplers.data();
 
-	dxRootSigDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+	DXRootSigDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-	if ((desc.Flags & RootSignatureFlags::ALLOW_INPUT_LAYOUT) != RootSignatureFlags::NONE)
+	if ((Desc.Flags & RootSignatureFlags::ALLOW_INPUT_LAYOUT) != RootSignatureFlags::NONE)
 	{
-		dxRootSigDesc.Desc_1_1.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+		DXRootSigDesc.Desc_1_1.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	}
 
-	ComPtr<ID3DBlob> dxSerializedRootSig;
-	ComPtr<ID3DBlob> errorBlob;
-	if (!DXENSURE(D3D12SerializeVersionedRootSignature(&dxRootSigDesc, &dxSerializedRootSig, &errorBlob)))
+	ComPtr<ID3DBlob> DXSerializedRootSig;
+	ComPtr<ID3DBlob> ErrorBlob;
+	if (!DXENSURE(D3D12SerializeVersionedRootSignature(&DXRootSigDesc, &DXSerializedRootSig, &ErrorBlob)))
 	{
-		if (errorBlob)
+		if (ErrorBlob)
 		{
-			OutputDebugStringA((LPCSTR)errorBlob->GetBufferPointer());
+			OutputDebugStringA((LPCSTR)ErrorBlob->GetBufferPointer());
 		}
 		return false;
 	}
 
-	ComPtr<ID3D12RootSignature>& dxRootSig = g_DxRootSignatures.Alloc(rs);
+	ComPtr<ID3D12RootSignature>& DXRootSig = g_DxRootSignatures.Alloc(rs);
 
-	if (!DXENSURE(g_render.DxDevice->CreateRootSignature(0u, dxSerializedRootSig->GetBufferPointer(), dxSerializedRootSig->GetBufferSize(), IID_PPV_ARGS(&dxRootSig))))
+	if (!DXENSURE(g_render.DxDevice->CreateRootSignature(0u, DXSerializedRootSig->GetBufferPointer(), DXSerializedRootSig->GetBufferSize(), IID_PPV_ARGS(&DXRootSig))))
 	{
 		return false;
 	}

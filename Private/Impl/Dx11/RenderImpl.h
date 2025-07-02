@@ -59,6 +59,20 @@ struct Dx11ComputePipelineState
 	ComputeShader_t _cs;
 };
 
+struct SamplersArray
+{
+	std::vector<ComPtr<ID3D11SamplerState>> DxSamplers;
+	std::vector<ID3D11SamplerState*> DxSamplersRaw;
+};
+
+struct RootSignatureSamplers
+{
+	SamplersArray AllSamplers;
+	SamplersArray VertexSamplers;
+	SamplersArray GeometrySamplers;
+	SamplersArray PixelSamplers;
+};
+
 Dx11GraphicsPipelineState* Dx11_GetGraphicsPipelineState(GraphicsPipelineState_t pso);
 Dx11ComputePipelineState* Dx11_GetComputePipelineState(ComputePipelineState_t pso);
 
@@ -90,6 +104,6 @@ void Dx11_CalculatePitch(DXGI_FORMAT format, UINT width, UINT height, UINT* rowP
 
 void Dx11_SetTextureResource(Texture_t tex, const ComPtr<ID3D11Resource>& resource);
 
-const std::vector<ID3D11SamplerState*>* Dx11_GetGlobalSamplers(RootSignature_t rs);
+const RootSignatureSamplers* Dx11_GetGlobalSamplers(RootSignature_t rs);
 
 }
