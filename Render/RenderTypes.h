@@ -92,6 +92,16 @@ enum class RenderDebugWarnings : uint32_t
     RENDER_TARGET_NOT_SET,
 };
 
+enum class ShaderVisibility : uint32_t
+{
+    ALL,
+    VERTEX,
+    GEOMETRY,
+    PIXEL,
+    AMPLIFICATION,
+    MESH,
+};
+
 enum class RenderFormat : uint32_t
 {
     UNKNOWN = 0,

@@ -6,12 +6,6 @@
 namespace rl
 {
 
-struct RootSignatureSamplers
-{
-	std::vector<ComPtr<ID3D11SamplerState>> DxSamplers;
-	std::vector<ID3D11SamplerState*> DxSamplersRaw;
-};
-
 SparseArray<RootSignatureSamplers, RootSignature_t> g_GlobalSamplers;
 
 static D3D11_TEXTURE_ADDRESS_MODE Dx11_AdressMode(SamplerAddressMode am)
@@ -87,12 +81,32 @@ bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& desc)
 {
 	RootSignatureSamplers& samplers = g_GlobalSamplers.Alloc(rs);
 
-	samplers.DxSamplers.resize(desc.GlobalSamplers.size());
-	samplers.DxSamplersRaw.resize(desc.GlobalSamplers.size());
-	
 	for (uint32_t i = 0; i < desc.GlobalSamplers.size(); i++)
 	{
 		const SamplerDesc& samp = desc.GlobalSamplers[i];
+
+		SamplersArray* pSamplersArray = nullptr;
+		switch (samp.Visibility)
+		{
+		case ShaderVisibility::ALL:
+			pSamplersArray = &samplers.AllSamplers;
+			break;
+		case ShaderVisibility::VERTEX:
+			pSamplersArray = &samplers.VertexSamplers;
+			break;
+		case ShaderVisibility::GEOMETRY:
+			pSamplersArray = &samplers.GeometrySamplers;
+			break;
+		case ShaderVisibility::PIXEL:
+			pSamplersArray = &samplers.PixelSamplers;
+			break;
+		}
+
+		if (pSamplersArray == nullptr)
+		{
+			OutputDebugStringA("Unsupported sampler stage passed to root signature");
+			continue;
+		}
 
 		D3D11_SAMPLER_DESC sd = {};
 		sd.Filter = Dx11_Filter(samp.Comparison != SamplerComparisonFunc::NONE, samp.FilterMode.Min, samp.FilterMode.Mag, samp.FilterMode.Mip);
@@ -118,9 +132,9 @@ bool RootSignature_CreateImpl(RootSignature_t rs, const RootSignatureDesc& desc)
 			break;
 		}
 
-		DXENSURE(g_render.Device->CreateSamplerState(&sd, &samplers.DxSamplers[i]));
+		DXENSURE(g_render.Device->CreateSamplerState(&sd, &pSamplersArray->DxSamplers[i]));
 
-		samplers.DxSamplersRaw[i] = samplers.DxSamplers[i].Get();
+		pSamplersArray->DxSamplersRaw[i] = pSamplersArray->DxSamplers[i].Get();
 	}
 
 	return true;
@@ -131,11 +145,11 @@ void RootSignature_DestroyImpl(RootSignature_t rs)
 	g_GlobalSamplers.Free(rs);
 }
 
-const std::vector<ID3D11SamplerState*>* Dx11_GetGlobalSamplers(RootSignature_t rs)
+const RootSignatureSamplers* Dx11_GetGlobalSamplers(RootSignature_t rs)
 {
 	if (g_GlobalSamplers.Valid(rs))
 	{
-		return &g_GlobalSamplers[rs].DxSamplersRaw;
+		return &g_GlobalSamplers[rs];
 	}
 
 	return nullptr;

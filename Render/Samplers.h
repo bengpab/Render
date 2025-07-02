@@ -74,24 +74,31 @@ struct SamplerDesc
 	SamplerBorderColor BorderColor = SamplerBorderColor::TRANSPARENT_BLACK;
 	uint32_t MaxAnisotropy = 16;
 
-	inline SamplerDesc& AddressModeUVW(SamplerAddressMode am)
+	ShaderVisibility Visibility = ShaderVisibility::ALL;
+
+	inline SamplerDesc& AddressModeUVW(SamplerAddressMode am) noexcept
 	{
 		AddressMode.U = AddressMode.V = AddressMode.W = am; return *this;		
 	}
 
-	inline SamplerDesc& FilterModeMinMagMip(SamplerFilterMode fm)
+	inline SamplerDesc& FilterModeMinMagMip(SamplerFilterMode fm) noexcept
 	{
 		FilterMode.Min = FilterMode.Mag = FilterMode.Mip = fm; return *this;
 	}
 
-	inline SamplerDesc& ComparisonFunc(SamplerComparisonFunc cf)
+	inline SamplerDesc& ComparisonFunc(SamplerComparisonFunc cf) noexcept
 	{
 		Comparison = cf; return *this;
 	}
 
-	inline SamplerDesc& BorderCol(SamplerBorderColor col)
+	inline SamplerDesc& BorderCol(SamplerBorderColor col) noexcept
 	{
 		BorderColor = col; return *this;
+	}
+
+	inline SamplerDesc& ShaderVisibility(ShaderVisibility InVisibility) noexcept
+	{
+		Visibility = InVisibility; return *this;
 	}
 };
 

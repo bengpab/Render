@@ -44,42 +44,45 @@ struct RootSignatureSlot
 	// Constants Settings
 	uint32_t Num32BitVals;
 
-	static constexpr RootSignatureSlot MakeSlot(RootSignatureSlotType type, uint32_t reg)
+	ShaderVisibility Visibility = ShaderVisibility::ALL;
+
+	static constexpr RootSignatureSlot MakeSlot(RootSignatureSlotType Type, uint32_t BaseRegister, ShaderVisibility Visibility = ShaderVisibility::ALL)
 	{
-		RootSignatureSlot slot = {};
-		slot.Type = type;
-		slot.BaseRegister = reg;
-		return slot;
+		RootSignatureSlot Slot = {};
+		Slot.Type = Type;
+		Slot.BaseRegister = BaseRegister;
+		Slot.Visibility = Visibility;
+		return Slot;
 	}
 
-	static constexpr RootSignatureSlot ConstantsSlot(uint32_t num32BitVals, uint32_t reg)
+	static constexpr RootSignatureSlot ConstantsSlot(uint32_t Num32BitVals, uint32_t BaseRegister, ShaderVisibility Visibility = ShaderVisibility::ALL)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::CONSTANTS, reg);
-		slot.Num32BitVals = num32BitVals;
-		return slot;
+		RootSignatureSlot Slot = MakeSlot(RootSignatureSlotType::CONSTANTS, BaseRegister, Visibility);
+		Slot.Num32BitVals = Num32BitVals;
+		return Slot;
 	}
 
-	static constexpr RootSignatureSlot CBVSlot(uint32_t reg, uint32_t space)
+	static constexpr RootSignatureSlot CBVSlot(uint32_t BaseRegister, uint32_t Space, ShaderVisibility Visibility = ShaderVisibility::ALL)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::CBV, reg);
-		slot.BaseRegisterSpace = space;
-		return slot;
+		RootSignatureSlot Slot = MakeSlot(RootSignatureSlotType::CBV, BaseRegister, Visibility);
+		Slot.BaseRegisterSpace = Space;
+		return Slot;
 	}
 
-	static constexpr RootSignatureSlot SRVSlot(uint32_t reg, uint32_t space)
+	static constexpr RootSignatureSlot SRVSlot(uint32_t BaseRegister, uint32_t Space, ShaderVisibility Visibility = ShaderVisibility::ALL)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::SRV, reg);
-		slot.BaseRegisterSpace = space;
-		return slot;
+		RootSignatureSlot Slot = MakeSlot(RootSignatureSlotType::SRV, BaseRegister, Visibility);
+		Slot.BaseRegisterSpace = Space;
+		return Slot;
 	}
 
-	static constexpr RootSignatureSlot DescriptorTableSlot(uint32_t baseReg, uint32_t baseSpace, RootSignatureDescriptorTableType tableType, uint32_t rangeCount = (uint32_t)0xffff)
+	static constexpr RootSignatureSlot DescriptorTableSlot(uint32_t BaseRegister, uint32_t Space, RootSignatureDescriptorTableType TableType, uint32_t RangeCount = (uint32_t)0xffff, ShaderVisibility Visibility = ShaderVisibility::ALL)
 	{
-		RootSignatureSlot slot = MakeSlot(RootSignatureSlotType::DESCRIPTOR_TABLE, baseReg);
-		slot.DescriptorTableType = tableType;
-		slot.RangeCount = rangeCount;
-		slot.BaseRegisterSpace = baseSpace;
-		return slot;
+		RootSignatureSlot Slot = MakeSlot(RootSignatureSlotType::DESCRIPTOR_TABLE, BaseRegister, Visibility);
+		Slot.DescriptorTableType = TableType;
+		Slot.RangeCount = RangeCount;
+		Slot.BaseRegisterSpace = Space;
+		return Slot;
 	}
 };
 
@@ -92,7 +95,7 @@ struct RootSignatureDesc
 
 RENDER_TYPE(RootSignature_t);
 
-RootSignature_t CreateRootSignature(const RootSignatureDesc& desc);
+RootSignature_t CreateRootSignature(const RootSignatureDesc& Desc);
 
 void RenderRef(RootSignature_t rs);
 void RenderRelease(RootSignature_t rs);

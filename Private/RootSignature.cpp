@@ -9,11 +9,11 @@ namespace rl
 
 IDArray<RootSignature_t, RootSignatureDesc> g_RootSignatures;
 
-RootSignature_t CreateRootSignature(const RootSignatureDesc& desc)
+RootSignature_t CreateRootSignature(const RootSignatureDesc& Desc)
 {
-	RootSignature_t rs = g_RootSignatures.Create(desc);
+	RootSignature_t rs = g_RootSignatures.Create(Desc);
 
-	if (!RootSignature_CreateImpl(rs, desc))
+	if (!RootSignature_CreateImpl(rs, Desc))
 	{
 		g_RootSignatures.Release(rs);
 		return RootSignature_t::INVALID;

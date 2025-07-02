@@ -43,13 +43,32 @@ void CommandList::SetRootSignature(RootSignature_t rs)
 {
 	if (rs != BoundRootSignature)
 	{
-		const auto* globalSamplers = Dx11_GetGlobalSamplers(rs);
+		const RootSignatureSamplers* globalSamplers = Dx11_GetGlobalSamplers(rs);
 
 		if (globalSamplers)
 		{
-			impl->context->VSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
-			impl->context->CSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
-			impl->context->PSSetSamplers(0, (UINT)globalSamplers->size(), globalSamplers->data());
+			if (!globalSamplers->AllSamplers.DxSamplersRaw.empty())
+			{
+				impl->context->VSSetSamplers(0, (UINT)globalSamplers->AllSamplers.DxSamplersRaw.size(), globalSamplers->AllSamplers.DxSamplersRaw.data());
+				impl->context->CSSetSamplers(0, (UINT)globalSamplers->AllSamplers.DxSamplersRaw.size(), globalSamplers->AllSamplers.DxSamplersRaw.data());
+				impl->context->GSSetSamplers(0, (UINT)globalSamplers->AllSamplers.DxSamplersRaw.size(), globalSamplers->AllSamplers.DxSamplersRaw.data());
+				impl->context->PSSetSamplers(0, (UINT)globalSamplers->AllSamplers.DxSamplersRaw.size(), globalSamplers->AllSamplers.DxSamplersRaw.data());
+			}
+
+			if (!globalSamplers->VertexSamplers.DxSamplers.empty())
+			{
+				impl->context->VSSetSamplers(0, (UINT)globalSamplers->VertexSamplers.DxSamplersRaw.size(), globalSamplers->VertexSamplers.DxSamplersRaw.data());
+			}
+
+			if (!globalSamplers->GeometrySamplers.DxSamplers.empty())
+			{
+				impl->context->VSSetSamplers(0, (UINT)globalSamplers->GeometrySamplers.DxSamplersRaw.size(), globalSamplers->GeometrySamplers.DxSamplersRaw.data());
+			}
+
+			if (!globalSamplers->PixelSamplers.DxSamplers.empty())
+			{
+				impl->context->VSSetSamplers(0, (UINT)globalSamplers->PixelSamplers.DxSamplersRaw.size(), globalSamplers->PixelSamplers.DxSamplersRaw.data());
+			}
 		}
 
 		BoundRootSignature = rs;
