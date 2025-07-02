@@ -102,6 +102,7 @@ target_sources(RenderDx11 PRIVATE
                 "Private/Impl/Dx11/Dx11Types.h"
                 "Private/Impl/Dx11/IndirectCommandsImpl.cpp"
                 "Private/Impl/Dx11/PipelineStateImpl.cpp"
+                "Private/Impl/Dx12/RaytracingImpl.cpp"
                 "Private/Impl/Dx11/RenderImpl.cpp"
                 "Private/Impl/Dx11/RenderImpl.h"
                 "Private/Impl/Dx11/RootSignatureImpl.cpp"
