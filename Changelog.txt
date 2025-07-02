@@ -1,3 +1,21 @@
+## Render 1.3
+- Added: [all] structured buffers
+- Fixed: [dx12] static buffer upload resources being created in common state instead of generic read
+- Changed: [dx12] default texture layout from 64kb undefined to unknown in dx12
+- Added: [all] FrameID to view
+- Added: [dx12] UAV barriers for structured buffers
+- Fixed: [dx12] an issue allocating large buffers on dx12
+- Added: [all] debug names to back buffer textures
+- Added: [dx12] mesh and amplification shaders
+- Added: [dx12] function to reload PSOs
+- Fixed: [all] samplers by default being clamped to mip 0.
+- Began: [dx12] Raytracing implementation, but future work will continue on an RT branch.
+- Added: [all] shader visibility for root signatures in dx12 and samplers in dx11.
+
+## Render 1.2
+- Added: [all] RenderPtr type which is a smart pointer style struct for render types.
+- Added: [all] pipeline hashing.
+
 ## Render 1.1
 - Added: Support for multiple viewports, mainly for ImGui docking branch. This includes a new option to sync backbuffer flips after the present call, or to delay the sync until the next viewport frame.
          It is more efficient to sync at the start of a frame when you know you will be processing command lists for other viewports as the backbuffer will be more likely to become available before then.
