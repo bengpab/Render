@@ -36,8 +36,27 @@ add_library(RenderDx12
             "Render/View.h"
 )
 
+add_library(RenderVK
+            "Render/Binding.h"
+            "Render/Buffers.h"
+            "Render/CommandList.h"
+            "Render/IndirectCommands.h"
+            "Render/PipelineState.h"
+            "Render/Render.h"
+            "Render/RenderDefines.h"
+		    "Render/RenderPtr.h"
+            "Render/RenderTypes.h"
+            "Render/RootSignature.h"
+            "Render/Samplers.h"
+            "Render/Shaders.h"
+            "Render/Textures.h"
+            "Render/View.h"
+            "lib/Volk/volk.h"
+)
+
 set_target_properties(RenderDx11 PROPERTIES OUTPUT_NAME_DEBUG RenderExampleDx11_Debug)
 set_target_properties(RenderDx12 PROPERTIES OUTPUT_NAME_DEBUG RenderExampleDx12_Debug)
+set_target_properties(RenderVK PROPERTIES OUTPUT_NAME_DEBUG RenderExampleVK_Debug)
 
 target_include_directories(RenderDx11 PRIVATE 
                             "Render" 
@@ -47,6 +66,13 @@ target_include_directories(RenderDx11 PRIVATE
 target_include_directories(RenderDx12 PRIVATE 
                             "Render" 
                             "Private"
+)
+
+target_include_directories(RenderVK PRIVATE 
+                            "Render" 
+                            "Private"
+				            "lib/Volk"
+                            "lib/Vulkan"
 )
 
 target_sources(RenderDx11 PRIVATE
@@ -86,6 +112,25 @@ target_sources(RenderDx12 PRIVATE
                 "Private/Impl/IndirectCommandsImpl.h"
                 "Private/Impl/PipelineStateImpl.h"
                 "Private/Impl/RaytracingImpl.h"
+                "Private/Impl/RootSignatureImpl.h"
+                "Private/Impl/ShadersImpl.h"
+                "Private/Impl/TexturesImpl.h"
+)
+
+target_sources(RenderVK PRIVATE
+                "Private/Binding.cpp"
+                "Private/Buffers.cpp"
+                "Private/IDArray.h"
+                "Private/IndirectCommands.cpp"
+                "Private/PipelineState.cpp"
+                "Private/RootSignature.cpp"
+                "Private/Shaders.cpp"
+                "Private/SparseArray.h"
+                "Private/Textures.cpp"
+                "Private/Impl/BindingImpl.h"
+                "Private/Impl/BuffersImpl.h"
+                "Private/Impl/IndirectCommandsImpl.h"
+                "Private/Impl/PipelineStateImpl.h"
                 "Private/Impl/RootSignatureImpl.h"
                 "Private/Impl/ShadersImpl.h"
                 "Private/Impl/TexturesImpl.h"
@@ -135,6 +180,27 @@ target_sources(RenderDx12 PRIVATE
                 "Private/Impl/Dxc/DXCompiler.h"
 )
 
+target_sources(RenderVK PRIVATE
+                "Private/Impl/VK/VKHelpers.h"
+		        "Private/Impl/VK/RenderImpl.cpp"
+                "Private/Impl/VK/RenderImpl.h"
+                "Private/Impl/VK/ViewImpl.cpp"
+                "Private/Impl/VK/ShadersImpl.cpp"
+                "Private/Impl/VK/SpirVShaderCompiler.h"
+                "Private/Impl/VK/SpirVShaderCompiler.cpp"
+                "Private/Impl/VK/PipelineStateImpl.cpp"
+		"Private/Impl/VK/VKFormats.cpp"
+		"Private/Impl/VK/VKFormats.h"
+)
+
+#add_library(Vulkan1 STATIC IMPORTED)
+#set_target_properties(Vulkan1 PROPERTIES IMPORTED_LOCATION "lib/Vulkan/vulkan-1.lib")
+#target_link_libraries(RenderVK Vulkan1)
+
+target_compile_definitions(RenderVK PRIVATE VULKAN_BACKEND=1)
+target_compile_definitions(RenderVK PRIVATE VK_NO_PROTOTYPES=1)
+target_compile_definitions(RenderVK PRIVATE VK_USE_PLATFORM_WIN32_KHR=1)
+
 # Dx11 only needs to copy the dxcompiler
 
 add_custom_command(TARGET RenderDx11 POST_BUILD
@@ -168,3 +234,10 @@ add_custom_command(TARGET RenderDx12 POST_BUILD
 COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${CMAKE_CURRENT_SOURCE_DIR}/redist/dxil.dll"
 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/dxil.dll")
+
+# VK must copy the vulkan lib
+
+add_custom_command(TARGET RenderDx11 POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy_if_different
+"${CMAKE_CURRENT_SOURCE_DIR}/lib/Vulkan/vulkan-1.lib"
+"${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/vulkan-1.lib")
